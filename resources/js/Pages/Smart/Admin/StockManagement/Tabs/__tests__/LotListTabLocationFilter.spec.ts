@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach } from 'vitest';
+import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { mount } from '@vue/test-utils';
 import LotListTab from '../LotListTab.vue';
 import { i18n, setI18nLanguage } from '@/locales';
@@ -8,7 +8,7 @@ vi.mock('../Modals/EditLotModal.vue', () => ({ default: { template: '<div></div>
 vi.mock('../ConsumableLotDetail.vue', () => ({ default: { template: '<div></div>' } }));
 vi.mock('@/Components/DeleteConfirmationModal.vue', () => ({ default: { template: '<div></div>' } }));
 
-vi.mock('@inertiajs/vue3', async (importOriginal) => {
+vi.mock('@inertiajs/vue3', async (importOriginal: () => Promise<any>) => {
   const actual: any = await importOriginal();
   return {
     ...actual,
@@ -64,6 +64,10 @@ describe('LotListTab.vue - Location Filter for Consumables', () => {
       vendor_id: 1,
       location: 'Gudang Utama, Lantai 1, Ruang A',
       location_id: 3,
+      floor: null,
+      floor_id: null,
+      room: null,
+      room_id: null,
       unitPrice: 50000,
       imageUrl: '',
       assetCount: 0,
@@ -83,6 +87,10 @@ describe('LotListTab.vue - Location Filter for Consumables', () => {
       vendor_id: 2,
       location: 'Gudang Cabang',
       location_id: 4,
+      floor: null,
+      floor_id: null,
+      room: null,
+      room_id: null,
       unitPrice: 52000,
       imageUrl: '',
       assetCount: 0,

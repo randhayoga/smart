@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach } from 'vitest';
+import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { mount } from '@vue/test-utils';
 import ModelDetail from '../ModelDetail.vue';
 import { i18n, setI18nLanguage } from '@/locales';
@@ -11,7 +11,7 @@ vi.mock('../Modals/EditModelModal.vue', () => ({ default: { template: '<div></di
 vi.mock('@/Components/DeleteConfirmationModal.vue', () => ({ default: { template: '<div></div>' } }));
 vi.mock('@/Components/DeleteErrorModal.vue', () => ({ default: { template: '<div></div>' } }));
 
-vi.mock('@inertiajs/vue3', async (importOriginal) => {
+vi.mock('@inertiajs/vue3', async (importOriginal: () => Promise<any>) => {
   const actual: any = await importOriginal();
   return {
     ...actual,

@@ -49,6 +49,7 @@ interface RequestDetail {
   durationHours?: number;
   status: string;
   type: 'permintaan' | 'peminjaman';
+  specific_type?: string | null;
   items: RequestItem[];
   approvedAt?: string;
   has_insufficient_stock?: boolean;

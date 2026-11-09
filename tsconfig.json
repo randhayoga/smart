@@ -16,5 +16,6 @@
             "ziggy-js": ["./vendor/tightenco/ziggy"]
         }
     },
-    "include": ["resources/js/**/*.ts", "resources/js/**/*.vue"]
+    "include": ["resources/js/**/*.ts", "resources/js/**/*.vue"],
+    "exclude": ["node_modules", "public", "resources/js/**/__tests__/**", "**/*.spec.ts", "**/*.test.ts"]
 }

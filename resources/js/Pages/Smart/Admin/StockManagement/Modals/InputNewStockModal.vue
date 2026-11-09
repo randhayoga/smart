@@ -133,7 +133,7 @@ const form = useForm({
   input_asset: false,
   asset_specification: '',
   borrowing_type: 'LT' as 'LT' | 'ST',
-  condition: 'Bagus' as 'Bagus' | 'Rusak',
+  condition: 'Bagus' as 'Bagus' | 'Rusak' | null,
   qc_pass: null as boolean | null,
   location_id: null as number | null,
   price: '' as string | number,

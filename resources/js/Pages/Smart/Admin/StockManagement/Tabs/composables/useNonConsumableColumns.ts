@@ -394,7 +394,7 @@ export function useNonConsumableColumns(options: {
 
             return h('div', { class: 'leading-tight space-y-0.5' }, [
               h('div', { class: cn('font-semibold', textClass) }, statusLabel),
-              h('div', { class: 'text-xs text-muted-foreground font-normal' }, formattedDate),
+              h('div', { class: 'text-xs text-muted-foreground font-normal' }, formattedDate ?? ''),
             ]);
           },
         });

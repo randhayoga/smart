@@ -4,6 +4,11 @@
  * Persists across modal open/close cycles and page navigations in SPA mode,
  * achieving 0ms latency and 0 redundant HTTP requests.
  */
+export interface UserOption {
+  id: number | string;
+  name: string;
+}
+
 let cachedUsers: UserOption[] | null = null;
 let activeFetchUsersPromise: Promise<UserOption[]> | null = null;
 </script>
@@ -30,11 +35,6 @@ import {
 } from '@/Components/ui/dropdown-menu';
 import Combobox from '@/Components/Combobox.vue';
 import CurrencyInput from '@/Components/CurrencyInput.vue';
-
-interface UserOption {
-  id: number | string;
-  name: string;
-}
 
 const props = defineProps<{
   asset: any;

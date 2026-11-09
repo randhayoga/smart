@@ -59,6 +59,8 @@ interface UnitDetails {
   barang_code: string;
   barang_spec: string;
   barang_unit: string;
+  model_spec?: string;
+  comp_specification?: string;
   lifecycles: AuditTrail[];
 }
 
@@ -67,10 +69,15 @@ interface ApprovalItem {
   unit_id: number;
   asset_code: string;
   category: string;
+  category_code?: string;
+  model_category_code?: string;
   subcategory: string;
   brand: string;
   nama: string;
   specification: string;
+  model_spec?: string;
+  barang_spec?: string;
+  comp_specification?: string;
   decision: string;
   note: string | null;
   requested_by: string;

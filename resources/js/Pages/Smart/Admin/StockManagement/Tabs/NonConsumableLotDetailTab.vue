@@ -33,6 +33,10 @@ interface Props {
     current_quantity?: number | null;
     age?: number | null;
     burden?: string;
+    entry_type?: string | null;
+    memo_url?: string | null;
+    memo_number?: string | null;
+    date_of_grant?: string | null;
     project_id?: number | null;
     project_name?: string | null;
     project_no?: string | null;

@@ -418,7 +418,7 @@ const activeStepIndex = computed(() => {
                   {{ typeLabelTitle }}
                 </span>
                 <span 
-                  v-for="badge in getRequestStatusBadges(request.raw_status || request.status, t)" 
+                  v-for="badge in getRequestStatusBadges(request.raw_status || request.status)" 
                   :key="badge.label" 
                   class="inline-flex items-center px-2.5 py-0.5 rounded-md text-sm font-semibold"
                   :class="badge.class"

@@ -78,6 +78,8 @@ interface RequestHistory {
   uuid?: string;
   number: string;
   type: 'permintaan' | 'peminjaman';
+  type_key?: string | null;
+  specific_type?: string | null;
   pemanfaatan: 'corporate' | 'project';
   pemanfaatanDetail: string;
   durationStart?: string;

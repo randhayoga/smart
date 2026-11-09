@@ -12,12 +12,21 @@ import { formatQcStatus, getQcColorClass } from '@/lib/qualityControl';
 import { getConditionColorClass } from '@/lib/assetStatus';
 import StatusBadge from '@/Components/StatusBadge.vue';
 
+interface ModalDisplayField {
+  label: string;
+  value: any;
+  isStatus?: boolean;
+  statusValue?: any;
+  approvalStatusValue?: any;
+  colorClass?: string;
+}
+
 interface Props {
   isOpen: boolean;
   itemCount: number;
   itemName?: string;
   itemData?: Record<string, any> | any[] | null;
-  fields?: { label: string; value: any }[] | null;
+  fields?: ModalDisplayField[] | null;
   title?: string;
   message?: string | null;
   confirmButtonText?: string;
@@ -133,12 +142,12 @@ const isSoftItem = (data: any) => {
 
 const formatRenewalReminder = (reminder: number | null | undefined) => {
   if (reminder === 0) return t('inventory.renewalReminderDisabled');
-  if (reminder !== null && reminder !== undefined && reminder !== '') return `${reminder} ${t('inventory.renewalReminderSuffix')}`;
+  if (reminder !== null && reminder !== undefined) return `${reminder} ${t('inventory.renewalReminderSuffix')}`;
   return '-';
 };
 
 const getSoftLicenseFields = (data: any) => {
-  const fields: { label: string; value: any }[] = [];
+  const fields: ModalDisplayField[] = [];
   const expDate = data.license_exp_date || data.unit_details?.license_exp_date || data.asset_details?.license_exp_date;
   const reminder = data.renewal_reminder ?? data.unit_details?.renewal_reminder ?? data.asset_details?.renewal_reminder;
 
@@ -262,7 +271,7 @@ const displayFields = computed(() => {
   const data = (Array.isArray(rawData) ? rawData[0] : rawData) as Record<string, any>;
   if (!data) return [];
 
-  const fields: { label: string; value: any }[] = [];
+  const fields: ModalDisplayField[] = [];
 
   // Determine fields for Approval Actions (Perubahan Status Aset & Aktivasi Aset Baru)
   if (isApprovalAction.value) {
@@ -531,7 +540,7 @@ const bulkItemsFields = computed(() => {
   const itemsToRender = props.itemData.slice(0, maxDisplay);
 
   return itemsToRender.map(data => {
-    const fields: { label: string; value: any }[] = [];
+    const fields: ModalDisplayField[] = [];
     if (!data) return fields;
 
     // Check if Approval Actions

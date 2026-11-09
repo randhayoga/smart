@@ -107,6 +107,7 @@ interface FulfillmentRequestData {
   uuid: string;
   number: string;
   type: 'permintaan' | 'peminjaman';
+  specific_type?: string | null;
   typeLabel: string;
   pemanfaatan: 'corporate' | 'project';
   pemanfaatanDetail: string;
