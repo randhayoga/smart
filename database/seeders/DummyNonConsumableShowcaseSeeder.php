@@ -152,19 +152,19 @@ class DummyNonConsumableShowcaseSeeder extends Seeder
         $unitUom = Uom::firstOrCreate(['name' => 'Unit']);
         $ictOrganizer = Organizer::firstOrCreate(['name' => 'ICT']);
 
-        // 1. Create Model
+        // 1. Create Model (Computer Category forces specification null on model)
         $dgxModel = InventoryModel::create([
             'number' => self::SHOWCASE_DGX_MODEL_NUMBER,
             'type_id' => $serverType->id,
             'brand_id' => $nvidiaBrand->id,
             'uom_id' => $unitUom->id,
             'name' => 'Nvidia DGX Spark',
-            'specification' => 'AI Supercomputer Server, 8x NVIDIA H100 GPU',
+            'specification' => null,
         ]);
 
         $inventoryLogService->logModelCreated($dgxModel, $adminUser, 'Menambahkan model baru: Nvidia DGX Spark');
 
-        // 2. Create Procurement LOT
+        // 2. Create Procurement LOT (Non-consumable lots store location on individual assets)
         $purchaseDate = Carbon::create(2026, 2, 15, 10, 0, 0);
         $dgxLot = Lot::create([
             'number' => self::SHOWCASE_DGX_LOT_NUMBER,
@@ -176,14 +176,14 @@ class DummyNonConsumableShowcaseSeeder extends Seeder
             'entry_type' => 'Procurement',
             'po_number' => 'PO-ICT-2026-DGX01',
             'purchase_grant_date' => $purchaseDate,
-            'location_id' => $locationId,
+            'location_id' => null,
             'image_url' => 'inventory/lots/dummy_dgx.jpg',
             'burden' => 'Corporate',
             'created_at' => $purchaseDate,
             'updated_at' => $purchaseDate,
         ]);
 
-        $inboundLog = $inventoryLogService->logLotCreated($dgxLot, $adminUser, 'Penerimaan server Nvidia DGX Spark PO-ICT-2026-DGX01', 2);
+        $inboundLog = $inventoryLogService->logLotCreated($dgxLot, $adminUser, null, 2);
         $inboundLog->update(['created_at' => $purchaseDate]);
 
         // 3. Asset 1: Active Unit (Approved Activation)
@@ -197,6 +197,7 @@ class DummyNonConsumableShowcaseSeeder extends Seeder
             'borrowing_type' => 'LT',
             'classification' => 'Aset',
             'price' => 350000000,
+            'comp_specification' => 'AI Supercomputer Server, 8x NVIDIA H100 GPU',
             'image_url' => 'inventory/models/dummy_dgx.jpg',
             'burden' => 'Corporate',
             'created_at' => $asset1Date,
@@ -217,6 +218,18 @@ class DummyNonConsumableShowcaseSeeder extends Seeder
 
         AssetLifecycle::create([
             'asset_id' => $asset1->id,
+            'action_type' => 'Registrasi',
+            'status' => 'Belum Diverifikasi',
+            'condition' => 'Bagus',
+            'location_id' => $locationId,
+            'start_date' => $asset1Date,
+            'end_date' => $asset1Date->copy()->addHours(4),
+            'actor_id' => $adminUser->id,
+            'note' => 'Aset berhasil diregistrasi ke dalam sistem.',
+        ]);
+
+        AssetLifecycle::create([
+            'asset_id' => $asset1->id,
             'action_type' => 'Approval',
             'status' => 'Tersedia',
             'condition' => 'Bagus',
@@ -227,17 +240,18 @@ class DummyNonConsumableShowcaseSeeder extends Seeder
             'note' => 'Aktivasi aset disetujui oleh DM IFS. Catatan: Disetujui untuk operasional AI Research',
         ]);
 
-        // 4. Asset 2: Pending Activation Unit
+        // 4. Asset 2: Pending Activation Unit (Belum Diverifikasi)
         $asset2Date = Carbon::create(2026, 2, 16, 11, 0, 0);
         $asset2 = Asset::withoutEvents(fn () => Asset::create([
             'number' => self::SHOWCASE_ASSET_NUMBERS[1],
             'lot_id' => $dgxLot->id,
             'location_id' => $locationId,
-            'status' => 'Menunggu Verifikasi',
+            'status' => 'Belum Diverifikasi',
             'condition' => 'Bagus',
             'borrowing_type' => 'LT',
             'classification' => 'Aset',
             'price' => 350000000,
+            'comp_specification' => 'AI Supercomputer Server, 8x NVIDIA H100 GPU',
             'image_url' => 'inventory/models/dummy_dgx.jpg',
             'burden' => 'Corporate',
             'created_at' => $asset2Date,
@@ -259,13 +273,13 @@ class DummyNonConsumableShowcaseSeeder extends Seeder
         AssetLifecycle::create([
             'asset_id' => $asset2->id,
             'action_type' => 'Registrasi',
-            'status' => 'Menunggu Verifikasi',
+            'status' => 'Belum Diverifikasi',
             'condition' => 'Bagus',
             'location_id' => $locationId,
             'start_date' => $asset2Date,
             'end_date' => null,
             'actor_id' => $adminUser->id,
-            'note' => 'Registrasi unit server baru menunggu verifikasi manajer',
+            'note' => 'Aset berhasil diregistrasi ke dalam sistem.',
         ]);
     }
 
@@ -305,14 +319,14 @@ class DummyNonConsumableShowcaseSeeder extends Seeder
             'entry_type' => 'Hibah',
             'memo_number' => 'MEMO-CFS-2026-HB01',
             'purchase_grant_date' => $hibahDate,
-            'location_id' => $locationId,
+            'location_id' => null,
             'image_url' => 'inventory/lots/dummy_chair.webp',
             'burden' => 'Corporate',
             'created_at' => $hibahDate,
             'updated_at' => $hibahDate,
         ]);
 
-        $inboundLog = $inventoryLogService->logLotCreated($chairLot, $adminUser, 'Penerimaan hibah kursi kerja MEMO-CFS-2026-HB01', 5);
+        $inboundLog = $inventoryLogService->logLotCreated($chairLot, $adminUser, null, 5);
         $inboundLog->update(['created_at' => $hibahDate]);
 
         // 2. Unit 1: Active Chair (Tersedia)
@@ -334,24 +348,36 @@ class DummyNonConsumableShowcaseSeeder extends Seeder
 
         AssetLifecycle::create([
             'asset_id' => $chair1->id,
+            'action_type' => 'Registrasi',
+            'status' => 'Belum Diverifikasi',
+            'condition' => 'Bagus',
+            'location_id' => $locationId,
+            'start_date' => $chair1Date,
+            'end_date' => $chair1Date->copy()->addHours(2),
+            'actor_id' => $adminUser->id,
+            'note' => 'Aset berhasil diregistrasi ke dalam sistem.',
+        ]);
+
+        AssetLifecycle::create([
+            'asset_id' => $chair1->id,
             'action_type' => 'Approval',
             'status' => 'Tersedia',
             'condition' => 'Bagus',
             'location_id' => $locationId,
-            'start_date' => $chair1Date,
+            'start_date' => $chair1Date->copy()->addHours(2),
             'end_date' => null,
             'actor_id' => $ifsDm->id,
-            'note' => 'Aktivasi aset kursi kerja hibah disetujui',
+            'note' => 'Aktivasi aset disetujui oleh DM IFS. Catatan: Disetujui untuk operasional kantor',
         ]);
 
-        // 3. Unit 2: Pending DM Deactivation (Tersedia, approval_status: Pending:DM)
+        // 3. Unit 2: Pending DM Deactivation (Tersedia, approval_status: Pending:DM, condition: Rusak Total)
         $chair2Date = Carbon::create(2026, 3, 10, 10, 0, 0);
         $chair2 = Asset::withoutEvents(fn () => Asset::create([
             'number' => self::SHOWCASE_ASSET_NUMBERS[3],
             'lot_id' => $chairLot->id,
             'location_id' => $locationId,
             'status' => 'Tersedia',
-            'condition' => 'Rusak Berat',
+            'condition' => 'Rusak Total',
             'approval_status' => 'Pending:DM',
             'borrowing_type' => 'LT',
             'classification' => 'Aset',
@@ -362,11 +388,11 @@ class DummyNonConsumableShowcaseSeeder extends Seeder
             'updated_at' => $chair2Date,
         ]));
 
-        AssetDeletionApproval::create([
+        AssetDeletionApproval::withoutEvents(fn () => AssetDeletionApproval::create([
             'asset_id' => $chair2->id,
             'requester_id' => $adminUser->id,
             'approver_id' => null,
-            'proposed_condition' => 'Rusak Berat',
+            'proposed_condition' => 'Rusak Total',
             'previous_condition' => 'Bagus',
             'previous_status' => 'Tersedia',
             'decision' => 'pending',
@@ -378,18 +404,18 @@ class DummyNonConsumableShowcaseSeeder extends Seeder
             'lost_doc_url' => null,
             'created_at' => $chair2Date,
             'updated_at' => $chair2Date,
-        ]);
+        ]));
 
         AssetLifecycle::create([
             'asset_id' => $chair2->id,
             'action_type' => 'Perubahan kondisi',
             'status' => 'Tersedia',
-            'condition' => 'Rusak Berat',
+            'condition' => 'Rusak Total',
             'location_id' => $locationId,
             'start_date' => $chair2Date,
             'end_date' => null,
             'actor_id' => $adminUser->id,
-            'note' => "Pengajuan perubahan kondisi aset dari 'Bagus' menjadi 'Rusak Berat'",
+            'note' => 'Pengajuan deaktivasi kursi kerja rusak hidrolik dan patah kaki',
         ]);
 
         // 4. Unit 3: Pending BoD/BoC Deactivation (Tidak Aktif, approval_status: Pending:BoD/BoC)
@@ -411,7 +437,7 @@ class DummyNonConsumableShowcaseSeeder extends Seeder
             'updated_at' => $chair3AppDate,
         ]));
 
-        AssetDeletionApproval::create([
+        AssetDeletionApproval::withoutEvents(fn () => AssetDeletionApproval::create([
             'asset_id' => $chair3->id,
             'requester_id' => $adminUser->id,
             'approver_id' => $ifsDm->id,
@@ -427,21 +453,33 @@ class DummyNonConsumableShowcaseSeeder extends Seeder
             'lost_doc_url' => 'lost_docs/dummy_lost.pdf',
             'created_at' => $chair3ReqDate,
             'updated_at' => $chair3AppDate,
+        ]));
+
+        AssetLifecycle::create([
+            'asset_id' => $chair3->id,
+            'action_type' => 'Perubahan kondisi',
+            'status' => 'Tersedia',
+            'condition' => 'Hilang',
+            'location_id' => $locationId,
+            'start_date' => $chair3ReqDate,
+            'end_date' => $chair3AppDate,
+            'actor_id' => $adminUser->id,
+            'note' => 'Pengajuan penghapusan karena unit kursi hilang saat renovasi ruangan',
         ]);
 
         AssetLifecycle::create([
             'asset_id' => $chair3->id,
-            'action_type' => 'Perubahan status',
+            'action_type' => 'Persetujuan',
             'status' => 'Tidak Aktif',
             'condition' => 'Hilang',
             'location_id' => $locationId,
             'start_date' => $chair3AppDate,
             'end_date' => null,
             'actor_id' => $ifsDm->id,
-            'note' => 'Penghapusan disetujui DM IFS, menunggu konfirmasi BoD/BoC',
+            'note' => 'Disetujui untuk diteruskan ke BoD/BoC',
         ]);
 
-        // 5. Unit 4: Approved BoD/BoC Deactivation (Dihapus)
+        // 5. Unit 4: Approved BoD/BoC Deactivation (Dihapus, condition: Rusak Total)
         $chair4ReqDate = Carbon::create(2026, 3, 15, 9, 0, 0);
         $chair4BodDate = Carbon::create(2026, 3, 16, 10, 30, 0);
         $chair4 = Asset::withoutEvents(fn () => Asset::create([
@@ -449,7 +487,7 @@ class DummyNonConsumableShowcaseSeeder extends Seeder
             'lot_id' => $chairLot->id,
             'location_id' => $locationId,
             'status' => 'Dihapus',
-            'condition' => 'Rusak Berat',
+            'condition' => 'Rusak Total',
             'approval_status' => null,
             'borrowing_type' => 'LT',
             'classification' => 'Aset',
@@ -460,11 +498,11 @@ class DummyNonConsumableShowcaseSeeder extends Seeder
             'updated_at' => $chair4BodDate,
         ]));
 
-        AssetDeletionApproval::create([
+        AssetDeletionApproval::withoutEvents(fn () => AssetDeletionApproval::create([
             'asset_id' => $chair4->id,
             'requester_id' => $adminUser->id,
             'approver_id' => $ifsDm->id,
-            'proposed_condition' => 'Rusak Berat',
+            'proposed_condition' => 'Rusak Total',
             'previous_condition' => 'Bagus',
             'previous_status' => 'Tersedia',
             'decision' => 'approved',
@@ -476,21 +514,21 @@ class DummyNonConsumableShowcaseSeeder extends Seeder
             'bod_boc_approval_url' => 'bod_boc_approvals/dummy_approve.pdf',
             'created_at' => $chair4ReqDate,
             'updated_at' => $chair4BodDate,
-        ]);
+        ]));
 
         AssetLifecycle::create([
             'asset_id' => $chair4->id,
             'action_type' => 'Persetujuan',
             'status' => 'Dihapus',
-            'condition' => 'Rusak Berat',
+            'condition' => 'Rusak Total',
             'location_id' => $locationId,
             'start_date' => $chair4BodDate,
             'end_date' => null,
             'actor_id' => $adminUser->id,
-            'note' => 'Dokumen Persetujuan BoD/BoC diunggah. Status diubah menjadi Dihapus.',
+            'note' => 'BoD/BoC menyetujui penghapusan asset dengan kondisi Rusak Total',
         ]);
 
-        // 6. Unit 5: Rejected BoD/BoC Deactivation (Tersedia)
+        // 6. Unit 5: Rejected BoD/BoC Deactivation (Tersedia, proposed: Rusak Total)
         $chair5ReqDate = Carbon::create(2026, 3, 18, 10, 0, 0);
         $chair5BodDate = Carbon::create(2026, 3, 20, 15, 0, 0);
         $chair5 = Asset::withoutEvents(fn () => Asset::create([
@@ -509,11 +547,11 @@ class DummyNonConsumableShowcaseSeeder extends Seeder
             'updated_at' => $chair5BodDate,
         ]));
 
-        AssetDeletionApproval::create([
+        AssetDeletionApproval::withoutEvents(fn () => AssetDeletionApproval::create([
             'asset_id' => $chair5->id,
             'requester_id' => $adminUser->id,
             'approver_id' => $ifsDm->id,
-            'proposed_condition' => 'Rusak Berat',
+            'proposed_condition' => 'Rusak Total',
             'previous_condition' => 'Bagus',
             'previous_status' => 'Tersedia',
             'decision' => 'rejected',
@@ -525,7 +563,7 @@ class DummyNonConsumableShowcaseSeeder extends Seeder
             'bod_boc_disapproval_url' => 'bod_boc_disapprovals/dummy_reject.pdf',
             'created_at' => $chair5ReqDate,
             'updated_at' => $chair5BodDate,
-        ]);
+        ]));
 
         AssetLifecycle::create([
             'asset_id' => $chair5->id,
@@ -536,7 +574,7 @@ class DummyNonConsumableShowcaseSeeder extends Seeder
             'start_date' => $chair5BodDate,
             'end_date' => null,
             'actor_id' => $adminUser->id,
-            'note' => 'BoD/BoC menolak penghapusan asset dengan kondisi Rusak Berat',
+            'note' => 'BoD/BoC menolak penghapusan asset dengan kondisi Rusak Total',
         ]);
     }
 }

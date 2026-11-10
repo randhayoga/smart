@@ -180,12 +180,6 @@ const columnFilters = ref<ColumnFiltersState>([])
 const columnVisibility = ref<VisibilityState>({ ...(props.defaultColumnVisibility || {}) })
 const rowSelection = ref({})
 
-watch(() => props.defaultSorting, (newVal) => {
-  if (newVal && newVal.length > 0) {
-    sorting.value = [...newVal]
-  }
-}, { deep: true })
-
 watch(() => props.defaultColumnVisibility, (newVal) => {
   if (newVal) {
     columnVisibility.value = { ...newVal }
@@ -270,10 +264,21 @@ watch(() => table.getPageCount(), (pageCount) => {
   }
 })
 
+const isSameSorting = (a?: SortingState, b?: SortingState): boolean => {
+  if (a === b) return true
+  if (!a && !b) return true
+  if (!a || !b) return false
+  if (a.length !== b.length) return false
+  return a.every((item, i) => item.id === b[i]?.id && item.desc === b[i]?.desc)
+}
+
 // Update sorting when defaultSorting or columns change
-watch(() => props.defaultSorting, (newVal) => {
+watch(() => props.defaultSorting, (newVal, oldVal) => {
+  if (isSameSorting(newVal, oldVal)) {
+    return
+  }
   if (newVal && newVal.length > 0) {
-    sorting.value = newVal
+    sorting.value = [...newVal]
   } else {
     sorting.value = resolveDefaultSorting()
   }

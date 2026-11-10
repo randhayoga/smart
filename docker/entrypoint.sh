@@ -4,6 +4,7 @@ set -e
 # Container startup entrypoint: manages dependencies, file permissions, database migrations, and starts Octane
 
 mkdir -p storage/framework/cache
+rm -f bootstrap/cache/*.php
 
 # Composer dependencies check
 COMPOSER_HASH_FILE="storage/framework/cache/.composer-hash"

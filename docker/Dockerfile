@@ -3,43 +3,28 @@ FROM dunglas/frankenphp:1-php8.4
 # Set the working directory in the container
 WORKDIR /var/www/smart
 
-# Install system dependencies
-RUN apt-get update && apt-get install -y \
-    libxml2-dev \
-    libmcrypt-dev \
-    gnupg \
-    apt-transport-https \
+# Install minimal system dependencies & PHP extensions via install-php-extensions
+# install-php-extensions automatically downloads Microsoft ODBC Driver 18 for SQL Server,
+# compiles sqlsrv & pdo_sqlsrv extensions, and purges build-time dev packages.
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    gnupg2 \
     curl \
+    ca-certificates \
     unzip \
-    build-essential \
-    libgmp-dev \
-    libpng-dev \
-    libjpeg-dev \
-    libwebp-dev \
-    libfreetype6-dev \
-    libonig-dev \
-    libzip-dev \
+    && install-php-extensions \
+    pdo_sqlsrv \
+    sqlsrv \
+    pdo_mysql \
+    mbstring \
+    exif \
+    pcntl \
+    bcmath \
+    gd \
+    gmp \
     zip \
-    && rm -rf /var/lib/apt/lists/*
-
-# Configure and install core PHP extensions
-RUN docker-php-ext-configure gd --with-freetype --with-jpeg --with-webp
-RUN docker-php-ext-install pdo pdo_mysql mbstring exif pcntl bcmath gd gmp zip
-
-# Install Microsoft ODBC Driver 18 for SQL Server
-RUN curl -sSL -O https://packages.microsoft.com/config/debian/$(grep VERSION_ID /etc/os-release | cut -d '"' -f 2 | cut -d '.' -f 1)/packages-microsoft-prod.deb \
-    && dpkg -i packages-microsoft-prod.deb \
-    && rm packages-microsoft-prod.deb \
-    && apt-get update \
-    && ACCEPT_EULA=Y apt-get install -y msodbcsql18 \
-    && apt-get install -y unixodbc unixodbc-dev \
-    && apt-get install -y libgssapi-krb5-2 \
-    && rm -rf /var/lib/apt/lists/*
-
-# Install and enable SQL Server PHP extensions (sqlsrv & pdo_sqlsrv)
-RUN pecl install sqlsrv-5.13.0 \
-    && pecl install pdo_sqlsrv-5.13.0 \
-    && docker-php-ext-enable sqlsrv pdo_sqlsrv
+    intl \
+    opcache \
+    && apt-get clean && rm -rf /var/lib/apt/lists/*
 
 # Configure PHP settings and install Composer
 COPY docker/docker-php-size.ini /usr/local/etc/php/conf.d

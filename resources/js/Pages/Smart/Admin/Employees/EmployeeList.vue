@@ -19,10 +19,12 @@ import TableSearch from '@/Components/TableSearch.vue';
 import Combobox from '@/Components/Combobox.vue';
 import DataTable from '@/Components/DataTable.vue';
 import ResetFilterButton from '@/Components/ResetFilterButton.vue';
-import type { ColumnDef } from '@tanstack/vue-table';
+import type { ColumnDef, SortingState } from '@tanstack/vue-table';
 import EmployeeDetailModal, { type EmployeeData } from './Modals/EmployeeDetailModal.vue';
 
 const { t } = useI18n();
+
+const defaultSorting: SortingState = [{ id: 'employee_id', desc: false }];
 
 interface Props {
   employees: EmployeeData[];
@@ -286,7 +288,7 @@ const pageSizeNumber = computed(() => {
         :data="filteredEmployees"
         :page-size="pageSizeNumber"
         :show-selection-count="false"
-        :default-sorting="[{ id: 'employee_id', desc: false }]"
+        :default-sorting="defaultSorting"
         :row-class="getRowClass"
       />
     </div>

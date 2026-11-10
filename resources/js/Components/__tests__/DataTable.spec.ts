@@ -461,6 +461,47 @@ describe('DataTable.vue pageSize allRows skeleton transition', () => {
     const rows = vm.table.getRowModel().rows;
     expect(rows.map((r: any) => r.original.number)).toEqual(['AST-001', 'AST-099', 'AST-050']);
   });
+
+  it('preserves user interactive sorting when defaultSorting prop updates with equivalent array reference', async () => {
+    const columns: ColumnDef<any>[] = [
+      { accessorKey: 'employee_id', header: 'NPK' },
+      { accessorKey: 'name', header: 'Nama' },
+    ];
+    const data = [
+      { employee_id: '002', name: 'Zack' },
+      { employee_id: '001', name: 'Alice' },
+    ];
+
+    const wrapper = mount(DataTable, {
+      props: {
+        columns: columns as any,
+        data,
+        defaultSorting: [{ id: 'employee_id', desc: false }],
+      },
+      global: {
+        plugins: [i18n],
+      },
+    });
+
+    const vm = wrapper.vm as any;
+    expect(vm.table.getState().sorting).toEqual([{ id: 'employee_id', desc: false }]);
+
+    // User sorts by name ascending
+    vm.table.setSorting([{ id: 'name', desc: false }]);
+    await nextTick();
+    expect(vm.table.getState().sorting).toEqual([{ id: 'name', desc: false }]);
+
+    // Parent re-renders and passes a new array literal with identical defaultSorting content
+    await wrapper.setProps({
+      defaultSorting: [{ id: 'employee_id', desc: false }],
+    });
+    await nextTick();
+
+    // Sorting MUST remain 'name' ascending and not reset to defaultSorting
+    expect(vm.table.getState().sorting).toEqual([{ id: 'name', desc: false }]);
+    expect(vm.table.getRowModel().rows[0].original.name).toBe('Alice');
+    expect(vm.table.getRowModel().rows[1].original.name).toBe('Zack');
+  });
 });
 
 

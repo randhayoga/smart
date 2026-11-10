@@ -30,6 +30,7 @@ class DatabaseSeeder extends Seeder
             DummyRequestShowcaseSeeder::class,
             DummyMaintenanceQcSeeder::class,
             DummyNonConsumableShowcaseSeeder::class,
+            DummySoftwareShowcaseSeeder::class,
         ]);
 
         // =========================================================================
@@ -47,6 +48,7 @@ class DatabaseSeeder extends Seeder
         //     DummyRequestShowcaseSeeder::class,
         //     DummyMaintenanceQcSeeder::class,
         //     DummyNonConsumableShowcaseSeeder::class,
+        //     DummySoftwareShowcaseSeeder::class,
         // ]);
     }
 }

@@ -141,4 +141,35 @@ describe('EmployeeList Layout Tests', () => {
     expect(vm.getRowClass({ is_active: false })).toContain('bg-red-50');
     expect(vm.getRowClass({ is_active: true })).toBe('');
   });
+
+  it('provides a stable defaultSorting reference to DataTable when modal opens and closes', async () => {
+    const wrapper = mount(EmployeeList, {
+      props: {
+        employees: [
+          { id: 1, employee_id: '001', name: 'Active User', department: 'IT', is_active: true },
+        ] as any,
+        departments: ['IT'],
+      },
+      global: {
+        plugins: [i18n],
+      },
+    });
+
+    const dataTable = wrapper.findComponent({ name: 'DataTable' });
+    const initialDefaultSorting = dataTable.props('defaultSorting');
+    expect(initialDefaultSorting).toEqual([{ id: 'employee_id', desc: false }]);
+
+    // Open detail modal
+    const vm = wrapper.vm as any;
+    vm.openDetailModal({ id: 1, employee_id: '001', name: 'Active User', department: 'IT', is_active: true });
+    await wrapper.vm.$nextTick();
+
+    // defaultSorting prop reference should remain identical and not trigger resets
+    expect(dataTable.props('defaultSorting')).toBe(initialDefaultSorting);
+
+    // Close detail modal
+    vm.isDetailModalOpen = false;
+    await wrapper.vm.$nextTick();
+    expect(dataTable.props('defaultSorting')).toBe(initialDefaultSorting);
+  });
 });
