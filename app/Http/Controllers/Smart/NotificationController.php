@@ -117,10 +117,22 @@ class NotificationController extends Controller
         $publisher = app(\App\Services\Mercure\MercurePublisher::class);
         $jwtService = app(\App\Services\Mercure\MercureJwtService::class);
 
+        $token = $jwtService->generateUserSubscriberToken($userId);
+
         return response()->json([
             'hubUrl' => config('mercure.public_url'),
             'topic' => $publisher->getUserTopic($userId),
-            'token' => $jwtService->generateUserSubscriberToken($userId),
-        ]);
+            'token' => $token,
+        ])->cookie(
+            (string) config('mercure.cookie_name', 'mercure_access_token'),
+            $token,
+            60,
+            '/.well-known/mercure',
+            null,
+            $request->isSecure(),
+            false,
+            false,
+            'lax'
+        );
     }
 }

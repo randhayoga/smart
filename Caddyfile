@@ -4,7 +4,6 @@
 # Configures the FrankenPHP worker mode, Mercure SSE hub injection,
 # request logging with authorization token redaction, and PHP routing.
 # ==============================================================================
-
 {
 	{$CADDY_GLOBAL_OPTIONS}
 

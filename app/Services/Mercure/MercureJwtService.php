@@ -3,39 +3,57 @@
 namespace App\Services\Mercure;
 
 use DateTimeImmutable;
+use Illuminate\Support\Str;
 use Lcobucci\JWT\Configuration;
+use Lcobucci\JWT\Encoding\ChainedFormatter;
 use Lcobucci\JWT\Signer\Hmac\Sha256;
 use Lcobucci\JWT\Signer\Key\InMemory;
 
 /**
- * Mercure JWT Service generating and signing RFC 7519 compliant JSON Web Tokens for Mercure Hub authorization.
+ * Mercure JWT Service generating and signing RFC 9068 (OAuth 2.0 Access Token) and RFC 9396 (RAR authorization_details)
+ * compliant JSON Web Tokens for Mercure 1.0 Hub authorization.
  */
 class MercureJwtService
 {
+    public const AUTHORIZATION_DETAIL_TYPE = 'https://mercure.rocks/authorization-detail';
+
     /**
      * Generate a dynamic JWT for subscribing to Mercure topics.
      *
-     * @param array<int, string>|string $subscribeTopics Topics the client is authorized to receive (can be wildcards or exact URIs)
-     * @param array<string, mixed> $payload Additional private claims to embed into the token
+     * @param array<int, string>|string $subscribeTopics Topics the client is authorized to receive
+     * @param array<string, mixed> $payload Additional private claims to embed into the authorization detail
      * @param int|null $lifetimeSeconds Token lifetime in seconds (defaults to config)
+     * @param string|null $subject Optional token subject identifier (sub claim)
      * @return string Signed JWT string
      */
     public function generateSubscriberToken(
         array|string $subscribeTopics = [],
         array $payload = [],
-        ?int $lifetimeSeconds = null
+        ?int $lifetimeSeconds = null,
+        ?string $subject = null
     ): string {
         $topics = is_array($subscribeTopics) ? $subscribeTopics : [$subscribeTopics];
         $lifetime = $lifetimeSeconds ?? (int) config('mercure.subscriber_token_lifetime', 3600);
         $secret = (string) config('mercure.subscriber_key', config('mercure.jwt_secret'));
 
+        $detail = [
+            'type' => self::AUTHORIZATION_DETAIL_TYPE,
+            'actions' => ['subscribe'],
+            'topics' => array_map(
+                static fn (string $topic): array => ['match' => $topic],
+                array_values($topics)
+            ),
+        ];
+
+        if (! empty($payload)) {
+            $detail['payload'] = (object) $payload;
+        }
+
         return $this->createToken(
-            mercureClaim: [
-                'subscribe' => array_values($topics),
-                'payload' => $payload,
-            ],
+            authorizationDetails: [$detail],
             secretKey: $secret,
-            lifetimeSeconds: $lifetime
+            lifetimeSeconds: $lifetime,
+            subject: $subject
         );
     }
 
@@ -50,9 +68,9 @@ class MercureJwtService
         int|string $userId,
         ?int $lifetimeSeconds = null
     ): string {
-        $topic = rtrim(config('app.url', 'http://localhost'), '/') . "/notifications/users/{$userId}";
+        $topic = rtrim((string) config('app.url', 'http://localhost'), '/') . "/notifications/users/{$userId}";
 
-        return $this->generateSubscriberToken([$topic], [], $lifetimeSeconds);
+        return $this->generateSubscriberToken([$topic], [], $lifetimeSeconds, (string) $userId);
     }
 
     /**
@@ -70,42 +88,62 @@ class MercureJwtService
         $lifetime = $lifetimeSeconds ?? (int) config('mercure.publisher_token_lifetime', 300);
         $secret = (string) config('mercure.publisher_key', config('mercure.jwt_secret'));
 
+        $detail = [
+            'type' => self::AUTHORIZATION_DETAIL_TYPE,
+            'actions' => ['publish'],
+            'topics' => array_map(
+                static fn (string $topic): array => ['match' => $topic],
+                array_values($topics)
+            ),
+        ];
+
         return $this->createToken(
-            mercureClaim: [
-                'publish' => array_values($topics),
-            ],
+            authorizationDetails: [$detail],
             secretKey: $secret,
             lifetimeSeconds: $lifetime
         );
     }
 
     /**
-     * Build and sign the JWT according to RFC 7519 and Mercure specifications.
+     * Build and sign the JWT according to RFC 9068 and RFC 9396 Mercure 1.0 specifications.
      *
-     * @param array<string, mixed> $mercureClaim The 'mercure' claim structure
+     * @param array<int, array<string, mixed>> $authorizationDetails The 'authorization_details' claim structure
      * @param string $secretKey The HMAC secret key
      * @param int $lifetimeSeconds Lifetime of token
+     * @param string|null $subject Optional 'sub' claim
      * @return string
      */
     protected function createToken(
-        array $mercureClaim,
+        array $authorizationDetails,
         string $secretKey,
-        int $lifetimeSeconds
+        int $lifetimeSeconds,
+        ?string $subject = null
     ): string {
         $jwtConfig = Configuration::forSymmetricSigner(
             new Sha256(),
             InMemory::plainText($secretKey)
         );
 
-        $now = new DateTimeImmutable();
+        $issuer = rtrim((string) config('mercure.issuer', config('app.url', 'http://localhost')), '/');
+        $publicUrl = (string) config('mercure.public_url', 'http://localhost/.well-known/mercure');
+        $audience = str_starts_with($publicUrl, 'http://') || str_starts_with($publicUrl, 'https://')
+            ? $publicUrl
+            : $issuer . '/' . ltrim($publicUrl, '/');
+
+        $now = (new DateTimeImmutable())->setTimestamp(time());
         $expiresAt = $now->modify("+{$lifetimeSeconds} seconds");
 
-        $builder = $jwtConfig->builder()
-            ->issuedBy(config('app.url', 'http://localhost'))
+        $builder = $jwtConfig->builder(ChainedFormatter::withUnixTimestampDates())
+            ->withHeader('typ', 'at+jwt')
+            ->issuedBy($issuer)
+            ->permittedFor($audience)
+            ->identifiedBy('urn:uuid:' . Str::uuid()->toString())
+            ->relatedTo($subject ?? ('urn:uuid:' . Str::uuid()->toString()))
+            ->withClaim('client_id', $issuer)
             ->issuedAt($now)
             ->canOnlyBeUsedAfter($now)
             ->expiresAt($expiresAt)
-            ->withClaim('mercure', $mercureClaim);
+            ->withClaim('authorization_details', $authorizationDetails);
 
         return $builder->getToken($jwtConfig->signer(), $jwtConfig->signingKey())->toString();
     }

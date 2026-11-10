@@ -23,11 +23,27 @@ return [
     |
     */
 
-    'mercure' => env('MERCURE_JWT_SECRET') ? [
-        'publisher_jwt' => env('MERCURE_JWT_SECRET'),
-        'subscriber_jwt' => env('MERCURE_JWT_SECRET'),
-        'subscriptions' => true,
-    ] : false,
+    'mercure' => env('MERCURE_JWT_SECRET') ? (static function (): array {
+        $issuer = rtrim((string) env('MERCURE_ISSUER', env('APP_URL', 'http://localhost')), '/');
+        $publicUrl = (string) env('MERCURE_PUBLIC_URL', 'http://localhost/.well-known/mercure');
+        $resourceIdentifier = str_starts_with($publicUrl, 'http://') || str_starts_with($publicUrl, 'https://')
+            ? $publicUrl
+            : $issuer . '/' . ltrim($publicUrl, '/');
+        $publisherKey = (string) env('MERCURE_PUBLISHER_JWT_KEY', env('MERCURE_JWT_SECRET'));
+        $subscriberKey = (string) env('MERCURE_SUBSCRIBER_JWT_KEY', env('MERCURE_JWT_SECRET'));
+
+        return [
+            'resource_identifier' => $resourceIdentifier,
+            'cookie_name' => (string) env('MERCURE_COOKIE_NAME', 'mercure_access_token'),
+            'issuer' => sprintf(
+                "%s {\n\t\t\t\tpublisher {\n\t\t\t\t\tjwt %s\n\t\t\t\t}\n\t\t\t\tsubscriber {\n\t\t\t\t\tjwt %s\n\t\t\t\t}\n\t\t\t}",
+                $issuer,
+                $publisherKey,
+                $subscriberKey,
+            ),
+            'subscriptions' => true,
+        ];
+    })() : false,
 
     /*
     |--------------------------------------------------------------------------

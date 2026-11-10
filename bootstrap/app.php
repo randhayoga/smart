@@ -13,6 +13,7 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->encryptCookies(except: [
             'ci_session',
+            'mercure_access_token',
         ]);
 
         $middleware->web(append: [

@@ -28,6 +28,20 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Mercure Issuer & Cookie Configuration (Mercure 1.0 / RFC 9068)
+    |--------------------------------------------------------------------------
+    |
+    | The trusted OAuth 2.0 issuer identifier (iss claim) and cookie name used
+    | to authenticate EventSource subscriber connections.
+    |
+    */
+
+    'issuer' => rtrim((string) env('MERCURE_ISSUER', env('APP_URL', 'http://localhost')), '/'),
+
+    'cookie_name' => env('MERCURE_COOKIE_NAME', 'mercure_access_token'),
+
+    /*
+    |--------------------------------------------------------------------------
     | Mercure JWT Keys
     |--------------------------------------------------------------------------
     |

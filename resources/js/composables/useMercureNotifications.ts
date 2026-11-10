@@ -51,11 +51,13 @@ export function useMercureNotifications() {
     }
 
     try {
-      const url = new URL(hubUrl, window.location.origin);
-      url.searchParams.append('topic', topic);
-      url.searchParams.append('authorization', token);
+      const isSecure = window.location.protocol === 'https:';
+      document.cookie = `mercure_access_token=${token}; path=/.well-known/mercure; max-age=3600; SameSite=Lax${isSecure ? '; Secure' : ''}`;
 
-      const es = new EventSource(url.toString());
+      const url = new URL(hubUrl, window.location.origin);
+      url.searchParams.append('match', topic);
+
+      const es = new EventSource(url.toString(), { withCredentials: true });
       activeEventSource = es;
 
       es.onopen = () => {
