@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Smart\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Services\Inventory\ConsumableMovementQueryService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -17,7 +18,7 @@ class DashboardController extends Controller
     /**
      * Display the admin dashboard overview page.
      */
-    public function index(Request $request): Response|RedirectResponse
+    public function index(Request $request, ConsumableMovementQueryService $movementQueryService): Response|RedirectResponse
     {
         $user = $request->user();
         
@@ -73,12 +74,22 @@ class DashboardController extends Controller
             ])
             ->values();
         
+        $filters = $request->only([
+            'category_id', 'type_id', 'model_id', 'year', 'month', 'utilization', 'department_id', 'project_id'
+        ]);
+
+        $isStockMovement = $request->query('tab') === 'stock_movement';
+
         return Inertia::render('Smart/MultiRoles/Dashboard', [
             'user' => $user,
             'consumableTypeStats' => $consumableTypeStats,
             'consumableSubcategoryStats' => $consumableTypeStats,
             'cfsCategoryStats' => $cfsCategoryStats,
             'ictCategoryStats' => $ictCategoryStats,
+            'stockMovementFilters' => fn () => $movementQueryService->getFilterOptions(),
+            'stockMovementData' => $isStockMovement
+                ? fn () => $movementQueryService->getMovementMetrics($filters)
+                : Inertia::lazy(fn () => $movementQueryService->getMovementMetrics($filters)),
         ]);
     }
 }

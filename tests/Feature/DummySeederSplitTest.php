@@ -2,13 +2,16 @@
 
 namespace Tests\Feature;
 
+use App\Models\Inventory\Asset;
+use App\Models\Inventory\AssetActivationApproval;
+use App\Models\Inventory\AssetDeletionApproval;
 use App\Models\Inventory\Barang;
 use App\Models\Inventory\Lot;
 use App\Models\Inventory\Unit;
 use App\Models\Master\Category;
 use App\Models\Master\Subcategory;
 use Database\Seeders\DummyConsumableDatabaseSeeder;
-use Database\Seeders\DummyNonConsumableDatabaseSeeder;
+use Database\Seeders\DummyNonConsumableShowcaseSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -81,24 +84,30 @@ class DummySeederSplitTest extends TestCase
         $this->assertEquals(0, Unit::count());
     }
 
-    public function test_non_consumable_seeder_creates_non_consumable_records_and_units(): void
+    public function test_non_consumable_showcase_seeder_creates_showcase_records(): void
     {
-        $this->seed(DummyNonConsumableDatabaseSeeder::class);
+        $this->seed(DummyNonConsumableShowcaseSeeder::class);
 
-        $subcategories = Subcategory::whereIn('code', ['FUR-KK', 'FUR-MK', 'COMP-NB', 'KEN-MO'])->get();
-        foreach ($subcategories as $sub) {
-            $this->assertFalse((bool)$sub->is_consumable);
-        }
+        $dgxModel = Barang::where('number', DummyNonConsumableShowcaseSeeder::SHOWCASE_DGX_MODEL_NUMBER)->first();
+        $this->assertNotNull($dgxModel);
+        $this->assertFalse($dgxModel->is_consumable);
+        $this->assertEquals('Nvidia DGX Spark', $dgxModel->name);
 
-        $laptop = Barang::where('number', 'COMP-NB-0001')->first();
-        $this->assertNotNull($laptop);
-        $this->assertFalse($laptop->is_consumable);
+        $dgxLot = Lot::where('number', DummyNonConsumableShowcaseSeeder::SHOWCASE_DGX_LOT_NUMBER)->first();
+        $this->assertNotNull($dgxLot);
+        $this->assertEquals(2, $dgxLot->initial_quantity);
 
-        $laptopLot = Lot::where('number', 'LOT-0001-26-COMP-NB-0001')->first();
-        $this->assertNotNull($laptopLot);
-        $this->assertEquals(0, $laptopLot->initial_quantity);
+        $chairLot = Lot::where('number', DummyNonConsumableShowcaseSeeder::SHOWCASE_CHAIR_LOT_NUMBER)->first();
+        $this->assertNotNull($chairLot);
+        $this->assertEquals(5, $chairLot->initial_quantity);
 
-        $units = Unit::all();
-        $this->assertGreaterThan(0, $units->count());
+        $assets = Asset::whereIn('number', DummyNonConsumableShowcaseSeeder::SHOWCASE_ASSET_NUMBERS)->get();
+        $this->assertCount(7, $assets);
+
+        $activationApprovals = AssetActivationApproval::whereHas('asset', fn ($q) => $q->whereIn('number', DummyNonConsumableShowcaseSeeder::SHOWCASE_ASSET_NUMBERS))->get();
+        $this->assertCount(2, $activationApprovals);
+
+        $deactivationApprovals = AssetDeletionApproval::whereHas('asset', fn ($q) => $q->whereIn('number', DummyNonConsumableShowcaseSeeder::SHOWCASE_ASSET_NUMBERS))->get();
+        $this->assertCount(4, $deactivationApprovals);
     }
 }

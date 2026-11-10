@@ -121,8 +121,8 @@ describe('DetailAssetModal.vue - Status, BoD/BoC Buttons, and Deletion Note', ()
     const text = wrapper.text();
 
     // In Indonesian locale
-    expect(text).toContain('Unggah Dokumen Persetujuan BoD/BoC');
-    expect(text).toContain('Unggah Dokumen Penolakan BoD/BoC');
+    expect(text).toContain('Persetujuan BoD/C');
+    expect(text).toContain('Penolakan BoD/C');
   });
 
   it('does not render BoD/BoC upload buttons when asset is not Pending:BoD/BoC', () => {
@@ -137,8 +137,8 @@ describe('DetailAssetModal.vue - Status, BoD/BoC Buttons, and Deletion Note', ()
     const wrapper = mountModal(asset);
     const text = wrapper.text();
 
-    expect(text).not.toContain('Unggah Dokumen Persetujuan BoD/BoC');
-    expect(text).not.toContain('Unggah Dokumen Penolakan BoD/BoC');
+    expect(text).not.toContain('Persetujuan BoD/C');
+    expect(text).not.toContain('Penolakan BoD/C');
   });
 
   it('renders document view buttons when bod_boc_approval_url or bod_boc_disapproval_url exist', () => {
@@ -155,8 +155,8 @@ describe('DetailAssetModal.vue - Status, BoD/BoC Buttons, and Deletion Note', ()
     const wrapper = mountModal(asset);
     const text = wrapper.text();
 
-    expect(text).toContain('Buka Form Persetujuan BoD/BoC');
-    expect(text).toContain('Buka Form Penolakan BoD/BoC');
+    expect(text).toContain('Persetujuan BoD/C');
+    expect(text).toContain('Penolakan BoD/C');
   });
 
   it('fetches lifecycles on-demand when switching to Jejak Audit tab with an asset missing lifecycles array', async () => {

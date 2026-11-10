@@ -1,11 +1,24 @@
-import { describe, it, expect, beforeEach } from 'vitest';
+import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { mount } from '@vue/test-utils';
 import InventoryAuditCard from '../InventoryAuditCard.vue';
 import { i18n, setI18nLanguage } from '@/locales';
 
+const mockVisit = vi.fn();
+
+vi.mock('@inertiajs/vue3', async (importOriginal) => {
+  const actual: any = await importOriginal();
+  return {
+    ...actual,
+    router: {
+      visit: (...args: any[]) => mockVisit(...args),
+    },
+  };
+});
+
 describe('InventoryAuditCard.vue', () => {
   beforeEach(() => {
     setI18nLanguage('id');
+    mockVisit.mockClear();
   });
 
   const sampleLogs = [
@@ -13,7 +26,10 @@ describe('InventoryAuditCard.vue', () => {
       id: 1,
       barang_number: 'BRG-001',
       barang_name: 'Spidol Hitam',
+      lot_id: 12,
       lot_number: 'LOT-001',
+      model_id: 99,
+      is_consumable: true,
       action_type: 'stock_out',
       quantity_change: -5,
       actor: 'Admin',
@@ -26,9 +42,12 @@ describe('InventoryAuditCard.vue', () => {
     },
     {
       id: 2,
-      barang_number: 'BRG-001',
-      barang_name: 'Spidol Hitam',
-      lot_number: 'LOT-001',
+      barang_number: 'BRG-002',
+      barang_name: 'Laptop ThinkPad',
+      lot_id: 15,
+      lot_number: 'LOT-002',
+      model_id: 101,
+      is_consumable: false,
       action_type: 'stock_in',
       quantity_change: 20,
       actor: 'Admin',
@@ -57,5 +76,49 @@ describe('InventoryAuditCard.vue', () => {
 
     // Row without request should not have request link
     expect(wrapper.text()).toContain('Penerimaan stok awal');
+  });
+
+  it('navigates consumable LOT link to model page with tab lots and lot_id query, and non-consumable to lot detail page', async () => {
+    const wrapper = mount(InventoryAuditCard, {
+      props: {
+        logs: sampleLogs,
+      },
+      global: {
+        plugins: [i18n],
+      },
+    });
+
+    const buttons = wrapper.findAll('button.font-mono');
+    const consumableLotBtn = buttons.find(b => b.text().includes('LOT-001'));
+    const nonConsumableLotBtn = buttons.find(b => b.text().includes('LOT-002'));
+
+    expect(consumableLotBtn?.exists()).toBe(true);
+    expect(nonConsumableLotBtn?.exists()).toBe(true);
+
+    await consumableLotBtn?.trigger('click');
+    expect(mockVisit).toHaveBeenCalledWith('/smart/stock-management/99?tab=lots&lot_id=12');
+
+    mockVisit.mockClear();
+    await nonConsumableLotBtn?.trigger('click');
+    expect(mockVisit).toHaveBeenCalledWith('/smart/stock-management/lots/15');
+  });
+
+  it('hides filter bar and search when hideFilters is true', () => {
+    const wrapper = mount(InventoryAuditCard, {
+      props: {
+        logs: sampleLogs,
+        hideFilters: true,
+      },
+      global: {
+        plugins: [i18n],
+      },
+    });
+
+    // TableSearch should be omitted
+    expect(wrapper.findComponent({ name: 'TableSearch' }).exists()).toBe(false);
+    // Rows per page should still be visible in header
+    expect(wrapper.text()).toContain('Baris per halaman');
+    // Data table still renders rows
+    expect(wrapper.text()).toContain('BRG-001');
   });
 });

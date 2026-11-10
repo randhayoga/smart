@@ -275,13 +275,25 @@ class NotificationFrameworkTest extends TestCase
         // Deduct consumable quantity from 20 to 5 (below threshold 10) via manual request
         $requester = User::factory()->create();
         $orgchart = HrdOrgchart::factory()->create();
-        $response = $this->actingAs($admin)->post(route('smart.inventory.lots.manual-request', $lot), [
+        $location = \App\Models\Master\Location::factory()->create();
+        $response = $this->actingAs($admin)->post(route('smart.requests.manual.store'), [
+            'request_type' => 'consumable',
             'user_id' => $requester->id,
-            'request_date' => now()->format('Y-m-d'),
+            'approver_id' => $admin->id,
             'utilization' => 'corporate',
             'org_id' => $orgchart->id,
-            'quantity' => 15,
-            'note' => 'Manual deduction',
+            'reasoning' => 'Manual deduction',
+            'handover_method' => 'pickup',
+            'handover_location_id' => $location->id,
+            'date' => now()->format('Y-m-d'),
+            'items' => [
+                [
+                    'model_id' => $barang->id,
+                    'quantity' => 15,
+                ],
+            ],
+            'form_file' => \Illuminate\Http\UploadedFile::fake()->create('form.pdf', 50, 'application/pdf'),
+            'handover_proof' => \Illuminate\Http\UploadedFile::fake()->create('proof.jpg', 50, 'image/jpeg'),
         ]);
 
         $response->assertRedirect();

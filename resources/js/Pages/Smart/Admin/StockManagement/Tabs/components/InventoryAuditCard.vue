@@ -38,15 +38,18 @@ export interface InventoryLogItem {
   request_id?: number | null;
   request_number?: string | null;
   fulfillment_id?: number | null;
+  is_consumable?: boolean;
 }
 
 const props = withDefaults(defineProps<{
   logs: InventoryLogItem[];
   title?: string;
   hideBarangColumn?: boolean;
+  hideFilters?: boolean;
 }>(), {
   title: undefined,
   hideBarangColumn: false,
+  hideFilters: false,
 });
 
 const { t } = useI18n();
@@ -108,6 +111,10 @@ const computedAuditPageSize = computed(() => {
 });
 
 const filteredLogs = computed(() => {
+  if (props.hideFilters) {
+    return props.logs;
+  }
+
   let list = [...props.logs];
 
   if (auditSearch.value.trim() !== '') {
@@ -252,10 +259,17 @@ const auditColumns = computed<ColumnDef<InventoryLogItem>[]>(() => {
         const lotTarget = item.lot_param || item.lot_id || (hasLot ? val.replace(/[^a-zA-Z0-9]/g, '') : null);
 
         if (hasLot && lotTarget) {
+          const isConsumable = item.is_consumable ?? false;
+          const modelTarget = item.model_param || item.model_id;
+
+          const targetUrl = (isConsumable && modelTarget && item.lot_id)
+            ? `/smart/stock-management/${modelTarget}?tab=lots&lot_id=${item.lot_id}`
+            : `/smart/stock-management/lots/${lotTarget}`;
+
           return h('button', {
             type: 'button',
             class: 'font-mono text-sm font-semibold text-primary hover:underline hover:text-primary/80 transition-colors cursor-pointer text-left focus:outline-none whitespace-nowrap',
-            onClick: () => router.visit(`/smart/stock-management/lots/${lotTarget}`)
+            onClick: () => router.visit(targetUrl)
           }, val);
         }
 
@@ -339,10 +353,32 @@ const auditColumns = computed<ColumnDef<InventoryLogItem>[]>(() => {
 <template>
   <div class="px-4 bg-card rounded-xl border border-border shadow-sm overflow-hidden">
     <div class="py-3 no-print">
-      <h2 class="text-lg font-bold text-foreground">{{ effectiveTitle }}</h2>
+      <!-- Title & Rows Per Page (Header row when filters are hidden) -->
+      <div :class="['flex items-center justify-between', hideFilters ? 'pb-1' : '']">
+        <h2 class="text-lg font-bold text-foreground">{{ effectiveTitle }}</h2>
 
-      <!-- Filters & Actions -->
-      <div class="mt-4 flex flex-col space-y-4">
+        <!-- Rows Per Page (Shown in header if hideFilters is true) -->
+        <div v-if="hideFilters" class="flex items-center gap-3 text-sm text-muted-foreground ml-auto">
+          <span>{{ t('admin.rowsPerPage') }}</span>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" :class="['w-[100px] justify-between rounded-[14px] font-normal', (auditRowsPerPage === 'Semua baris' || !auditRowsPerPage) ? 'text-muted-foreground' : 'text-foreground']">
+                {{ auditRowsPerPageLabel }}
+                <ChevronDown class="w-4 h-4 opacity-50 shrink-0" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent class="w-[100px] rounded-[14px] z-[110]" align="start" :side-offset="4">
+              <DropdownMenuItem @select="auditRowsPerPage = 'Semua baris'">{{ t('admin.allRows') }}</DropdownMenuItem>
+              <DropdownMenuItem @select="auditRowsPerPage = '10'">10</DropdownMenuItem>
+              <DropdownMenuItem @select="auditRowsPerPage = '25'">25</DropdownMenuItem>
+              <DropdownMenuItem @select="auditRowsPerPage = '50'">50</DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
+      </div>
+
+      <!-- Filters & Actions (Hidden when hideFilters is true) -->
+      <div v-if="!hideFilters" class="mt-4 flex flex-col space-y-4">
         <div class="flex flex-wrap items-end gap-3">
           <!-- Search -->
           <div class="space-y-1.5 flex-1 min-w-[200px] max-w-md">

@@ -27,8 +27,10 @@ class InventoryAuditController extends Controller
 
         $rows = DB::table('inventory_logs as il')
             ->leftJoin('models as m', 'm.id', '=', 'il.model_id')
+            ->leftJoin('types as t', 't.id', '=', 'm.type_id')
             ->leftJoin('lots as l', 'l.id', '=', 'il.lot_id')
             ->leftJoin('models as lm', 'lm.id', '=', 'l.model_id')
+            ->leftJoin('types as lt', 'lt.id', '=', 'lm.type_id')
             ->leftJoin('requests as r', 'r.id', '=', 'il.request_id')
             ->select([
                 'il.id',
@@ -49,6 +51,7 @@ class InventoryAuditController extends Controller
                 'l.number as lot_number',
                 'lm.number as lot_model_number',
                 'lm.name as lot_model_name',
+                DB::raw('COALESCE(t.is_consumable, lt.is_consumable, 0) as is_consumable'),
             ])
             ->orderByDesc('il.created_at')
             ->orderByDesc('il.id')
@@ -109,6 +112,7 @@ class InventoryAuditController extends Controller
                 'request_id' => $row->request_id ? (int) $row->request_id : null,
                 'fulfillment_id' => $row->fulfillment_id ? (int) $row->fulfillment_id : null,
                 'request_number' => $row->request_number ?? null,
+                'is_consumable' => (bool) ($row->is_consumable ?? false),
                 'waktu' => $createdAt ? $createdAt->format('d-m-Y H:i:s') : '-',
                 'created_at_raw' => $createdAt ? $createdAt->toISOString() : null,
             ];

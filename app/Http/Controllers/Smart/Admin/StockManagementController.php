@@ -222,7 +222,7 @@ class StockManagementController extends Controller
                     ->all()
                 : [];
 
-            $inventoryLogs = $logRows->map(function ($row) use ($userNames) {
+            $inventoryLogs = $logRows->map(function ($row) use ($userNames, $isConsumable) {
                 $prevState = is_string($row->previous_state)
                     ? (json_decode($row->previous_state, true) ?? [])
                     : (is_array($row->previous_state) ? $row->previous_state : []);
@@ -268,6 +268,7 @@ class StockManagementController extends Controller
                     'request_id' => $row->request_id ? (int) $row->request_id : null,
                     'fulfillment_id' => $row->fulfillment_id ? (int) $row->fulfillment_id : null,
                     'request_number' => $row->request_number ?? null,
+                    'is_consumable' => (bool) $isConsumable,
                     'waktu' => $createdAt ? $createdAt->format('d-m-Y H:i:s') : '-',
                     'created_at_raw' => $createdAt ? $createdAt->toISOString() : null,
                 ];

@@ -211,10 +211,8 @@ const closeOnEscape = (e: KeyboardEvent) => {
 
 const initialLotId = ref<number | null>(null);
 
-onMounted(() => {
-  document.addEventListener('keydown', closeOnEscape);
-
-  const urlParams = new URLSearchParams(window.location.search);
+const handleUrlLotParams = (searchUrl: string) => {
+  const urlParams = new URL(searchUrl, window.location.origin).searchParams;
   const tabParam = urlParams.get('tab');
   const lotIdParam = urlParams.get('lot_id');
 
@@ -224,6 +222,17 @@ onMounted(() => {
       initialLotId.value = parseInt(lotIdParam, 10) || null;
     }
   }
+};
+
+watch(() => page.url, (newUrl) => {
+  if (newUrl) {
+    handleUrlLotParams(newUrl);
+  }
+});
+
+onMounted(() => {
+  document.addEventListener('keydown', closeOnEscape);
+  handleUrlLotParams(window.location.search || page.url);
 });
 
 onUnmounted(() => {

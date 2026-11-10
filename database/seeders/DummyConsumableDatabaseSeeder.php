@@ -19,6 +19,7 @@ class DummyConsumableDatabaseSeeder extends Seeder
             DummyConsumableMasterSeeder::class,
             DummyConsumableModelSeeder::class,
             DummyConsumableLotSeeder::class,
+            DummyConsumableMovementLogSeeder::class,
         ]);
     }
 }

@@ -46,7 +46,7 @@ class RequestDetailController extends Controller
             'items.type:id,category_id,name',
             'items.type.category:id,code,name',
             'items.type.models' => fn($q) => $q->select('id', 'type_id', 'name')->with('lots:id,model_id,image_url'),
-            'project:id,no_project,project_name',
+            'project:id_project,no_project,project_name',
             'department:id,org_name,org_code',
             'statusLogs:id,request_id,status_from,status_to,changed_by,note,created_at',
             'statusLogs.changer:id,employee_name',

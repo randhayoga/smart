@@ -16,6 +16,7 @@ use App\Models\Request\RequestFulfillment;
 use App\Models\Request\RequestItem;
 use App\Models\Request\RequestReturn;
 use App\Models\Request\RequestStatusLog;
+use App\Models\TbProject;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
@@ -448,5 +449,33 @@ class RequestDetailControllerTest extends TestCase
 
         $responseAsset = $this->actingAs($this->admin)->post(route('smart.requests.finishAsset', [$req->id, 999]));
         $responseAsset->assertStatus(403);
+    }
+
+    public function test_show_endpoint_handles_project_utilization_with_tb_project(): void
+    {
+        $project = TbProject::factory()->create([
+            'no_project' => 'PRJ-TEST-01',
+            'project_name' => 'Project Alpha Testing',
+        ]);
+
+        $req = SmartRequest::create([
+            'request_number' => 'PRJ-REQ-01',
+            'user_id' => $this->borrower->id,
+            'approver_id' => $this->admin->id,
+            'utilization' => 'project',
+            'project_id' => $project->id_project,
+            'status' => 'borrow',
+            'start_date' => now(),
+            'end_date' => now()->addDays(7),
+        ]);
+
+        $response = $this->actingAs($this->admin)->get(route('smart.requests.show', $req->id));
+
+        $response->assertStatus(200);
+        $response->assertInertia(fn ($page) => $page
+            ->component('Smart/Admin/Requests/RequestDetail')
+            ->where('request.pemanfaatan', 'project')
+            ->where('request.pemanfaatanDetail', 'PRJ-TEST-01 (Project Alpha Testing)')
+        );
     }
 }
