@@ -52,26 +52,26 @@ const { t } = useI18n();
     </div>
 
     <!-- Table Container -->
-    <div class="rounded-lg border border-border overflow-hidden bg-background">
+    <div class="rounded-lg border border-border overflow-hidden bg-card">
       <Table>
         <TableHeader>
           <TableRow class="bg-muted/50 hover:bg-transparent border-b border-border">
-            <TableHead class="w-1/6 h-10 text-sm font-semibold text-foreground text-left px-4 border-r border-border/60">
+            <TableHead class="w-1/6 h-10 text-sm font-semibold text-foreground text-left px-2 border-r border-border/60">
               {{ t('admin.rankingCategory') }}
             </TableHead>
-            <TableHead class="w-1/6 h-10 text-sm font-semibold text-foreground text-left px-4 border-r border-border/60">
+            <TableHead class="w-1/6 h-10 text-sm font-semibold text-foreground text-left px-2 border-r border-border/60">
               {{ t('admin.rankingType') }}
             </TableHead>
-            <TableHead class="w-1/6 h-10 text-sm font-semibold text-foreground text-left px-4 border-r border-border/60">
+            <TableHead class="w-1/6 h-10 text-sm font-semibold text-foreground text-left px-2 border-r border-border/60">
               {{ t('admin.rankingModel') }}
             </TableHead>
-            <TableHead class="w-1/4 h-10 text-sm font-semibold text-foreground text-left px-4 border-r border-border/60">
+            <TableHead class="w-1/4 h-10 text-sm font-semibold text-foreground text-left px-2 border-r border-border/60">
               {{ t('admin.rankingDepartmentsProjects') }}
             </TableHead>
-            <TableHead class="w-1/12 h-10 text-sm font-semibold text-foreground text-right px-4 border-r border-border/60">
+            <TableHead class="w-1/12 h-10 text-sm font-semibold text-foreground text-right px-2 border-r border-border/60">
               {{ t('admin.rankingRequest') }}
             </TableHead>
-            <TableHead class="w-1/12 h-10 text-sm font-semibold text-foreground text-right px-4">
+            <TableHead class="w-1/12 h-10 text-sm font-semibold text-foreground text-right px-2">
               {{ t('admin.rankingStockOut') }}
             </TableHead>
           </TableRow>
@@ -88,7 +88,7 @@ const { t } = useI18n();
               <TableCell
                 v-if="row.category_row_span > 0"
                 :rowspan="row.category_row_span"
-                class="align-top font-semibold text-foreground border-r border-border/80 px-4 py-3"
+                class="align-top font-semibold text-foreground border-r border-border/80 px-2 py-2.5"
               >
                 {{ row.category_name }}
               </TableCell>
@@ -97,7 +97,7 @@ const { t } = useI18n();
               <TableCell
                 v-if="row.type_row_span > 0"
                 :rowspan="row.type_row_span"
-                class="align-top font-medium text-foreground border-r border-border/80 px-4 py-3"
+                class="align-top font-medium text-foreground border-r border-border/80 px-2 py-2.5"
               >
                 {{ row.type_name }}
               </TableCell>
@@ -106,23 +106,23 @@ const { t } = useI18n();
               <TableCell
                 v-if="row.model_row_span > 0"
                 :rowspan="row.model_row_span"
-                class="align-top font-medium text-foreground border-r border-border/80 px-4 py-3"
+                class="align-top font-medium text-foreground border-r border-border/80 px-2 py-2.5"
               >
                 {{ row.model_name }}
               </TableCell>
 
               <!-- Destination Cell -->
-              <TableCell class="align-middle text-muted-foreground border-r border-border/60 px-4 py-3">
+              <TableCell class="align-middle text-muted-foreground border-r border-border/60 px-2 py-2.5">
                 {{ row.destination }}
               </TableCell>
 
               <!-- Total Requests -->
-              <TableCell class="align-middle text-right text-muted-foreground border-r border-border/60 px-4 py-3 text-sm">
+              <TableCell class="align-middle text-right text-muted-foreground border-r border-border/60 px-2 py-2.5 text-sm">
                 {{ row.request_count.toLocaleString() }}
               </TableCell>
 
               <!-- Total Stock Out -->
-              <TableCell class="align-middle text-right font-semibold text-rose-600 px-4 py-3 text-sm">
+              <TableCell class="align-middle text-right font-semibold text-rose-600 px-2 py-2.5 text-sm">
                 {{ row.stock_out_qty.toLocaleString() }}
               </TableCell>
             </TableRow>

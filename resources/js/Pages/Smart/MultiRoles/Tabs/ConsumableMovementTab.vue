@@ -33,6 +33,8 @@ interface ModelOption {
   number: string;
   name: string;
   type_id: number;
+  brand_name?: string;
+  specification?: string;
 }
 
 interface DepartmentOption {
@@ -298,6 +300,7 @@ const logs = computed(() => props.movementData?.logs || []);
       :logs="logs"
       :title="t('admin.stockMovementAuditTitle')"
       :hide-filters="true"
+      :show-hide-stock-in-filter="true"
     />
   </div>
 </template>

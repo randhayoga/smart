@@ -27,6 +27,8 @@ interface ModelOption {
   number: string;
   name: string;
   type_id: number;
+  brand_name?: string;
+  specification?: string;
 }
 
 interface DepartmentOption {
@@ -129,10 +131,23 @@ const filteredModels = computed(() => {
   return props.models;
 });
 
+const formatModelLabel = (m: ModelOption): string => {
+  if (m.brand_name || m.specification) {
+    const parts = [m.brand_name, m.name, m.specification]
+      .map((s) => (s ?? '').trim())
+      .filter((s) => s !== '' && s !== '-');
+    if (m.brand_name && m.name.includes(m.brand_name)) {
+      return m.name;
+    }
+    return parts.length > 0 ? parts.join(' ') : (m.name || `Model #${m.id}`);
+  }
+  return m.name || `Model #${m.id}`;
+};
+
 const modelComboboxOptions = computed(() => {
   return filteredModels.value.map((m) => ({
     id: m.id,
-    name: `${m.name} (${m.number})`,
+    name: formatModelLabel(m),
   }));
 });
 

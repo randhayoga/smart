@@ -117,6 +117,13 @@ class ConsumableMovementQueryServiceTest extends TestCase
         $this->assertContains($this->modelHvs->id, $modelIds);
         $this->assertContains($this->modelPen->id, $modelIds);
         $this->assertNotContains($this->modelLaptop->id, $modelIds);
+
+        // Verify model formatting includes <brand> <name> <spec>
+        $hvsOption = collect($options['models'])->firstWhere('id', $this->modelHvs->id);
+        $this->assertNotNull($hvsOption);
+        $this->assertStringContainsString('Standard', $hvsOption['name']);
+        $this->assertStringContainsString('HVS A4 Paper', $hvsOption['name']);
+        $this->assertEquals('Standard', $hvsOption['brand_name']);
     }
 
     public function test_get_movement_metrics_with_total_period(): void

@@ -113,6 +113,7 @@ export default {
   last30Days: 'Last 30 days',
   rowsPerPage: 'Rows per page',
   allRows: 'All',
+  hideStockIn: 'Hide Stock In',
   days: 'days',
   months: 'months',
   years: 'years',

@@ -55,12 +55,18 @@ describe('StockMovementRankingCard.vue', () => {
     expect(headers[0].classes()).toContain('h-10');
     expect(headers[0].classes()).toContain('text-sm');
     expect(headers[0].classes()).toContain('font-semibold');
+    expect(headers[0].classes()).toContain('px-2');
     expect(headers[0].text()).toContain('Category');
     expect(headers[1].text()).toContain('Type');
     expect(headers[2].text()).toContain('Model');
     expect(headers[3].text()).toContain('Departements/Projects');
     expect(headers[4].text()).toContain('Request');
     expect(headers[5].text()).toContain('Stock Out');
+
+    // Container should use bg-card to match datatable surface color
+    const tableContainer = wrapper.find('.rounded-lg.border.border-border');
+    expect(tableContainer.classes()).toContain('bg-card');
+    expect(tableContainer.classes()).not.toContain('bg-background');
   });
 
   it('renders row-spanned cells and omits merged cells on secondary rows', () => {
@@ -81,6 +87,8 @@ describe('StockMovementRankingCard.vue', () => {
     expect(firstRowCells).toHaveLength(6);
     expect(firstRowCells[0].attributes('rowspan')).toBe('2');
     expect(firstRowCells[0].text()).toBe('Office Stationery');
+    expect(firstRowCells[0].classes()).toContain('px-2');
+    expect(firstRowCells[0].classes()).toContain('py-2.5');
     expect(firstRowCells[0].classes()).not.toContain('bg-muted/15');
     expect(firstRowCells[1].attributes('rowspan')).toBe('2');
     expect(firstRowCells[1].text()).toBe('A4 Paper');

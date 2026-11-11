@@ -113,6 +113,7 @@ export default {
   last30Days: '30 hari terakhir',
   rowsPerPage: 'Baris per halaman',
   allRows: 'Semua',
+  hideStockIn: 'Sembunyikan Stok Masuk',
   days: 'hari',
   months: 'bulan',
   years: 'tahun',

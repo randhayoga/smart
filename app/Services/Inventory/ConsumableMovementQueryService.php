@@ -49,17 +49,37 @@ class ConsumableMovementQueryService
             ->values()
             ->all();
 
-        $models = InventoryModel::whereHas('type', function ($q) {
-            $q->where('is_consumable', true);
-        })
-            ->orderBy('name')
-            ->get(['id', 'number', 'name', 'type_id'])
-            ->map(fn ($model) => [
-                'id' => $model->id,
-                'number' => $model->number,
-                'name' => $model->name,
-                'type_id' => $model->type_id,
+        $models = DB::table('models')
+            ->join('types', 'models.type_id', '=', 'types.id')
+            ->leftJoin('brands', 'models.brand_id', '=', 'brands.id')
+            ->where('types.is_consumable', true)
+            ->select([
+                'models.id',
+                'models.number',
+                'models.name',
+                'models.type_id',
+                'models.specification',
+                'brands.name as brand_name',
             ])
+            ->orderBy('models.name')
+            ->get()
+            ->map(function ($model) {
+                $brand = trim((string) ($model->brand_name ?? ''));
+                $name = trim((string) ($model->name ?? ''));
+                $spec = trim((string) ($model->specification ?? ''));
+
+                $parts = array_filter([$brand, $name, $spec], fn ($s) => $s !== '' && $s !== '-');
+                $formattedName = !empty($parts) ? implode(' ', $parts) : ($name ?: ('Model #' . $model->id));
+
+                return [
+                    'id' => (int) $model->id,
+                    'number' => (string) $model->number,
+                    'name' => $formattedName,
+                    'type_id' => (int) $model->type_id,
+                    'brand_name' => $brand,
+                    'specification' => $spec,
+                ];
+            })
             ->values()
             ->all();
 

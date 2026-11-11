@@ -16,8 +16,8 @@ vi.mock('../components/ConsumableMovementChart.vue', () => ({
 vi.mock('@/Pages/Smart/Admin/StockManagement/Tabs/components/InventoryAuditCard.vue', () => ({
   default: {
     name: 'InventoryAuditCard',
-    props: ['logs', 'title', 'hideFilters'],
-    template: '<div data-testid="audit-card" :data-hide-filters="hideFilters">{{ title }} ({{ logs?.length || 0 }})</div>',
+    props: ['logs', 'title', 'hideFilters', 'showHideStockInFilter'],
+    template: '<div data-testid="audit-card" :data-hide-filters="hideFilters" :data-show-hide-stock-in="showHideStockInFilter">{{ title }} ({{ logs?.length || 0 }})</div>',
   },
 }));
 
@@ -93,6 +93,7 @@ describe('ConsumableMovementTab.vue', () => {
     const auditCard = wrapper.find('[data-testid="audit-card"]');
     expect(auditCard.exists()).toBe(true);
     expect(auditCard.attributes('data-hide-filters')).toBe('true');
+    expect(auditCard.attributes('data-show-hide-stock-in')).toBe('true');
   });
 
   it('triggers Inertia partial reload with all nulls when filter reset is invoked', async () => {

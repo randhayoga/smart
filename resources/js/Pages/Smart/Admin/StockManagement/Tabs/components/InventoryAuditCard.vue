@@ -16,6 +16,7 @@ import {
 } from '@/Components/ui/dropdown-menu';
 import TableSearch from '@/Components/TableSearch.vue';
 import ResetFilterButton from '@/Components/ResetFilterButton.vue';
+import { Checkbox } from '@/Components/ui/checkbox';
 import type { ColumnDef } from '@tanstack/vue-table';
 import DataTable from '@/Components/DataTable.vue';
 import { getLocalizedAuditAction, renderAuditNote } from '@/lib/auditAction';
@@ -46,13 +47,21 @@ const props = withDefaults(defineProps<{
   title?: string;
   hideBarangColumn?: boolean;
   hideFilters?: boolean;
+  showHideStockInFilter?: boolean;
 }>(), {
   title: undefined,
   hideBarangColumn: false,
   hideFilters: false,
+  showHideStockInFilter: false,
 });
 
 const { t } = useI18n();
+
+const STOCK_IN_ACTIONS = new Set(['stock_in', 'stock in', 'stok masuk']);
+const isStockInAction = (act?: string | null): boolean => {
+  if (!act) return false;
+  return STOCK_IN_ACTIONS.has(act.toLowerCase());
+};
 
 const effectiveTitle = computed(() => props.title ?? t('admin.inventoryAuditTitle'));
 
@@ -69,17 +78,20 @@ const auditSearch = ref('');
 const auditActionFilter = ref('semua');
 const auditTimeFilter = ref('semua');
 const auditRowsPerPage = ref('50');
+const hideStockIn = ref(false);
 
 const isAnyFilterActive = computed(() => {
   return auditSearch.value !== '' || 
     auditActionFilter.value !== 'semua' || 
-    auditTimeFilter.value !== 'semua';
+    auditTimeFilter.value !== 'semua' ||
+    hideStockIn.value;
 });
 
 const resetFilters = () => {
   auditSearch.value = '';
   auditActionFilter.value = 'semua';
   auditTimeFilter.value = 'semua';
+  hideStockIn.value = false;
 };
 
 const formatAction = (act: string) => {
@@ -112,10 +124,17 @@ const computedAuditPageSize = computed(() => {
 
 const filteredLogs = computed(() => {
   if (props.hideFilters) {
-    return props.logs;
+    if (!hideStockIn.value) {
+      return props.logs;
+    }
+    return props.logs.filter((l) => !isStockInAction(l.action_type));
   }
 
-  let list = [...props.logs];
+  let list = props.logs;
+
+  if (hideStockIn.value) {
+    list = list.filter((l) => !isStockInAction(l.action_type));
+  }
 
   if (auditSearch.value.trim() !== '') {
     const q = auditSearch.value.toLowerCase();
@@ -357,23 +376,36 @@ const auditColumns = computed<ColumnDef<InventoryLogItem>[]>(() => {
       <div :class="['flex items-center justify-between', hideFilters ? 'pb-1' : '']">
         <h2 class="text-lg font-bold text-foreground">{{ effectiveTitle }}</h2>
 
-        <!-- Rows Per Page (Shown in header if hideFilters is true) -->
-        <div v-if="hideFilters" class="flex items-center gap-3 text-sm text-muted-foreground ml-auto">
-          <span>{{ t('admin.rowsPerPage') }}</span>
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="outline" :class="['w-[100px] justify-between rounded-[14px] font-normal', (auditRowsPerPage === 'Semua baris' || !auditRowsPerPage) ? 'text-muted-foreground' : 'text-foreground']">
-                {{ auditRowsPerPageLabel }}
-                <ChevronDown class="w-4 h-4 opacity-50 shrink-0" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent class="w-[100px] rounded-[14px] z-[110]" align="start" :side-offset="4">
-              <DropdownMenuItem @select="auditRowsPerPage = 'Semua baris'">{{ t('admin.allRows') }}</DropdownMenuItem>
-              <DropdownMenuItem @select="auditRowsPerPage = '10'">10</DropdownMenuItem>
-              <DropdownMenuItem @select="auditRowsPerPage = '25'">25</DropdownMenuItem>
-              <DropdownMenuItem @select="auditRowsPerPage = '50'">50</DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
+        <!-- Rows Per Page & Optional Hide Stock In (Shown in header if hideFilters is true) -->
+        <div v-if="hideFilters" class="flex flex-wrap items-center gap-3 sm:gap-4 ml-auto">
+          <!-- Hide Stock In Checkbox Pill -->
+          <label
+            v-if="showHideStockInFilter"
+            class="inline-flex items-center gap-2 px-3 py-1.5 rounded-[14px] border border-border bg-background hover:bg-muted/50 cursor-pointer text-xs sm:text-sm font-medium text-foreground transition-all duration-150 select-none shadow-sm active:scale-95"
+            :class="{ 'border-primary/50 bg-primary/5 text-primary': hideStockIn }"
+          >
+            <Checkbox v-model="hideStockIn" class="rounded-[4px]" />
+            <span>{{ t('admin.hideStockIn') }}</span>
+          </label>
+
+          <!-- Rows Per Page -->
+          <div class="flex items-center gap-3 text-sm text-muted-foreground">
+            <span>{{ t('admin.rowsPerPage') }}</span>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" :class="['w-[100px] justify-between rounded-[14px] font-normal', (auditRowsPerPage === 'Semua baris' || !auditRowsPerPage) ? 'text-muted-foreground' : 'text-foreground']">
+                  {{ auditRowsPerPageLabel }}
+                  <ChevronDown class="w-4 h-4 opacity-50 shrink-0" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent class="w-[100px] rounded-[14px] z-[110]" align="start" :side-offset="4">
+                <DropdownMenuItem @select="auditRowsPerPage = 'Semua baris'">{{ t('admin.allRows') }}</DropdownMenuItem>
+                <DropdownMenuItem @select="auditRowsPerPage = '10'">10</DropdownMenuItem>
+                <DropdownMenuItem @select="auditRowsPerPage = '25'">25</DropdownMenuItem>
+                <DropdownMenuItem @select="auditRowsPerPage = '50'">50</DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
         </div>
       </div>
 

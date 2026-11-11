@@ -118,7 +118,63 @@ describe('InventoryAuditCard.vue', () => {
     expect(wrapper.findComponent({ name: 'TableSearch' }).exists()).toBe(false);
     // Rows per page should still be visible in header
     expect(wrapper.text()).toContain('Baris per halaman');
-    // Data table still renders rows
-    expect(wrapper.text()).toContain('BRG-001');
+    // Hide stock in filter should be hidden by default
+    expect(wrapper.text()).not.toContain('Sembunyikan Stok Masuk');
+  });
+
+  it('renders "Hide Stock In" checkbox pill filter and filters stock_in records when active', async () => {
+    setI18nLanguage('en');
+    const wrapper = mount(InventoryAuditCard, {
+      props: {
+        logs: sampleLogs,
+        hideFilters: true,
+        showHideStockInFilter: true,
+      },
+      global: {
+        plugins: [i18n],
+      },
+    });
+
+    // Both logs are initially rendered (stock_out and stock_in)
+    expect(wrapper.text()).toContain('Hide Stock In');
+    expect(wrapper.text()).toContain('Spidol Hitam');
+    expect(wrapper.text()).toContain('Laptop ThinkPad');
+
+    // Label should have rounded-[14px] to match Rows Per Page dropdown
+    const pillLabel = wrapper.find('label');
+    expect(pillLabel.classes()).toContain('rounded-[14px]');
+
+    // Find the checkbox inside the pill
+    const checkbox = wrapper.findComponent({ name: 'Checkbox' });
+    expect(checkbox.exists()).toBe(true);
+
+    // Toggle hideStockIn to true
+    await checkbox.setValue(true);
+
+    // After toggling, stock_in row ('Laptop ThinkPad') should be hidden
+    expect(wrapper.text()).toContain('Spidol Hitam');
+    expect(wrapper.text()).not.toContain('Laptop ThinkPad');
+
+    // Toggle hideStockIn back to false
+    await checkbox.setValue(false);
+    expect(wrapper.text()).toContain('Spidol Hitam');
+    expect(wrapper.text()).toContain('Laptop ThinkPad');
+  });
+
+  it('displays "Sembunyikan Stok Masuk" in Indonesian locale', () => {
+    setI18nLanguage('id');
+    const wrapper = mount(InventoryAuditCard, {
+      props: {
+        logs: sampleLogs,
+        hideFilters: true,
+        showHideStockInFilter: true,
+      },
+      global: {
+        plugins: [i18n],
+      },
+    });
+
+    expect(wrapper.text()).toContain('Sembunyikan Stok Masuk');
+    expect(wrapper.text()).toContain('Baris per halaman');
   });
 });
