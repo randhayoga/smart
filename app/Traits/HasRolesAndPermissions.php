@@ -53,7 +53,7 @@ trait HasRolesAndPermissions
      */
     public function hasPermission(string|Permission $permission): bool
     {
-        if ($this->is_superadmin || (string) ($this->employee_id ?? '') === '265656') {
+        if ($this->is_superadmin || in_array(trim((string) ($this->employee_id ?? '')), \App\Models\User::SUPERADMIN_EMPLOYEE_IDS, true)) {
             return true;
         }
 
@@ -188,7 +188,7 @@ trait HasRolesAndPermissions
             $roleNames = $this->roles()->pluck('name')->all();
         }
 
-        if ($this->is_superadmin || (string) ($this->employee_id ?? '') === '265656') {
+        if ($this->is_superadmin || in_array(trim((string) ($this->employee_id ?? '')), \App\Models\User::SUPERADMIN_EMPLOYEE_IDS, true)) {
             if (!in_array('superadmin', $roleNames, true)) {
                 $roleNames[] = 'superadmin';
             }
@@ -213,7 +213,7 @@ trait HasRolesAndPermissions
             return $this->cachedPermissionNames;
         }
 
-        if ($this->is_superadmin || (string) ($this->employee_id ?? '') === '265656' || $this->hasRole('superadmin')) {
+        if ($this->is_superadmin || in_array(trim((string) ($this->employee_id ?? '')), \App\Models\User::SUPERADMIN_EMPLOYEE_IDS, true) || $this->hasRole('superadmin')) {
             return $this->cachedPermissionNames = Permission::pluck('name')->all();
         }
 
@@ -248,7 +248,7 @@ trait HasRolesAndPermissions
         if (!Role::whereIn('name', $roleNames)->exists()) {
             // Unseeded fallback (e.g. tests using RefreshDatabase without running seeders)
             $fallbackPerms = [];
-            if (in_array('admin', $roleNames, true)) {
+            if (in_array('admin_cfs', $roleNames, true) || in_array('admin_ict', $roleNames, true)) {
                 $fallbackPerms = array_merge($fallbackPerms, [
                     'dashboard.admin.view', 'dashboard.user.view', 'master.view', 'master.manage',
                     'inventory.view', 'inventory.manage', 'inventory.borrow', 'inventory.manual_request',

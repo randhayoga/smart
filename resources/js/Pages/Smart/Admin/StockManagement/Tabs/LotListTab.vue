@@ -87,12 +87,12 @@ interface Props {
 const props = defineProps<Props>();
 
 const { t, locale } = useI18n();
-const { can } = usePermissions();
+const { can, defaultOrganizerName } = usePermissions();
 
 const searchQuery = ref('');
 const entryTypeFilter = ref('');
 const timeFilter = ref('');
-const organizerFilter = ref('');
+const organizerFilter = ref<string>(defaultOrganizerName.value);
 const locationFilter = ref('');
 const rowsPerPage = ref<'all' | '10' | '25' | '50'>('50');
 const dataTableRef = ref<any>(null);
@@ -236,8 +236,9 @@ const filteredLots = computed(() => {
 });
 
 const uniqueOrganizers = computed(() => {
-  const names = (props.lots || []).map((lot) => lot.organizer).filter(Boolean);
-  return [...new Set(names)];
+  const propNames = (props.organizers || []).map((o) => o.name).filter(Boolean);
+  const lotNames = (props.lots || []).map((lot) => lot.organizer).filter((n) => n && n !== '-');
+  return [...new Set([...propNames, ...lotNames])];
 });
 
 const getExportData = () => {
@@ -463,7 +464,7 @@ onUnmounted(() => {
           <div class="flex flex-wrap gap-2">
             <Button
               @click="handleEditTerpilih"
-              :disabled="!dataTableRef || Object.keys(dataTableRef.table.getState().rowSelection).length === 0"
+              :disabled="!dataTableRef?.table || Object.keys(dataTableRef.table.getState().rowSelection).length === 0"
               variant="more-round-warning"
             >
               <Pencil class="w-4 h-4" />
@@ -471,7 +472,7 @@ onUnmounted(() => {
             </Button>
             <Button
               @click="openDeleteLotModal(dataTableRef.table.getFilteredRowModel().rows.filter((r: any) => r.getIsSelected()).map((r: any) => r.original))"
-              :disabled="!dataTableRef || Object.keys(dataTableRef.table.getState().rowSelection).length === 0"
+              :disabled="!dataTableRef?.table || Object.keys(dataTableRef.table.getState().rowSelection).length === 0"
               variant="destructive"
             >
               <Trash2 class="w-4 h-4" />

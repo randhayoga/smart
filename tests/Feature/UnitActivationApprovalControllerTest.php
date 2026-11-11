@@ -51,7 +51,7 @@ class UnitActivationApprovalControllerTest extends TestCase
             'username' => '255578',
         ]);
 
-        $adminRole = Role::firstOrCreate(['name' => 'admin'], ['label' => 'Administrator']);
+        $adminRole = Role::firstOrCreate(['name' => 'admin_cfs'], ['label' => 'Admin CFS']);
         $permissions = [
             'inventory.view',
             'inventory.manage',

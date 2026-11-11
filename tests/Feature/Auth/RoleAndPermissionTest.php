@@ -43,7 +43,7 @@ class RoleAndPermissionTest extends TestCase
     {
         $this->seed(RoleAndPermissionSeeder::class);
 
-        $expectedRoles = ['superadmin', 'admin', 'ifs_manager', 'manager', 'user'];
+        $expectedRoles = ['superadmin', 'admin_cfs', 'admin_ict', 'ifs_manager', 'manager', 'user'];
         foreach ($expectedRoles as $roleName) {
             $this->assertDatabaseHas('roles', ['name' => $roleName], 'SMART');
         }
@@ -54,17 +54,22 @@ class RoleAndPermissionTest extends TestCase
             $this->assertTrue(Permission::where('group', $group)->exists());
         }
 
-        // Verify Superadmin has all permissions, Admin has all permissions except access.manage and inventory.status_approval.decide
+        // Verify Superadmin has all permissions, Admin CFS and Admin ICT have all permissions except access.manage and inventory.status_approval.decide
         $allPermissionsCount = Permission::count();
         $superadmin = Role::where('name', 'superadmin')->firstOrFail();
-        $admin = Role::where('name', 'admin')->firstOrFail();
+        $adminCfs = Role::where('name', 'admin_cfs')->firstOrFail();
+        $adminIct = Role::where('name', 'admin_ict')->firstOrFail();
 
         $this->assertEquals($allPermissionsCount, $superadmin->permissions()->count());
-        $this->assertEquals($allPermissionsCount - 2, $admin->permissions()->count());
+        $this->assertEquals($allPermissionsCount - 2, $adminCfs->permissions()->count());
+        $this->assertEquals($allPermissionsCount - 2, $adminIct->permissions()->count());
         $this->assertTrue($superadmin->hasPermissionTo('access.manage'));
-        $this->assertFalse($admin->hasPermissionTo('access.manage'));
-        $this->assertFalse($admin->hasPermissionTo('inventory.status_approval.decide'));
-        $this->assertTrue($admin->hasPermissionTo('inventory.status_approval.request'));
+        $this->assertFalse($adminCfs->hasPermissionTo('access.manage'));
+        $this->assertFalse($adminIct->hasPermissionTo('access.manage'));
+        $this->assertFalse($adminCfs->hasPermissionTo('inventory.status_approval.decide'));
+        $this->assertFalse($adminIct->hasPermissionTo('inventory.status_approval.decide'));
+        $this->assertTrue($adminCfs->hasPermissionTo('inventory.status_approval.request'));
+        $this->assertTrue($adminIct->hasPermissionTo('inventory.status_approval.request'));
 
         // Verify IFS Manager has unit status decision permissions
         $ifsManager = Role::where('name', 'ifs_manager')->firstOrFail();
@@ -86,18 +91,22 @@ class RoleAndPermissionTest extends TestCase
     public function test_seeder_assigns_hardcoded_admins_to_superadmin_and_admin_roles(): void
     {
         $superadminUser = User::factory()->create(['employee_id' => '265656']);
-        $adminUser = User::factory()->create(['employee_id' => '255578']);
+        $adminCfsUser = User::factory()->create(['employee_id' => '255578']);
+        $adminIctUser = User::factory()->create(['employee_id' => '053573']);
         $regularUser = User::factory()->create(['employee_id' => '999997']);
 
         $this->seed(RoleAndPermissionSeeder::class);
 
         $superadminUser->refresh();
-        $adminUser->refresh();
+        $adminCfsUser->refresh();
+        $adminIctUser->refresh();
         $regularUser->refresh();
 
         $this->assertTrue($superadminUser->hasRole('superadmin'));
-        $this->assertTrue($adminUser->hasRole('admin'));
-        $this->assertFalse($regularUser->hasRole('admin'));
+        $this->assertTrue($adminCfsUser->hasRole('admin_cfs'));
+        $this->assertTrue($adminIctUser->hasRole('admin_ict'));
+        $this->assertFalse($regularUser->hasRole('admin_cfs'));
+        $this->assertFalse($regularUser->hasRole('admin_ict'));
     }
 
     public function test_role_model_relationships_and_permission_helpers(): void
@@ -164,8 +173,8 @@ class RoleAndPermissionTest extends TestCase
         $user = User::factory()->create();
 
         $adminRole = Role::create([
-            'name' => 'admin',
-            'label' => 'Administrator',
+            'name' => 'admin_cfs',
+            'label' => 'Admin CFS',
         ]);
 
         // Prior to DB assignment, regular user role falls back to legacy logic ('user')
@@ -175,7 +184,7 @@ class RoleAndPermissionTest extends TestCase
         $user->assignRole($adminRole);
         $user->refresh();
 
-        $this->assertEquals('admin', $user->role);
+        $this->assertEquals('admin_cfs', $user->role);
         $this->assertTrue($user->is_admin);
     }
 
@@ -198,7 +207,7 @@ class RoleAndPermissionTest extends TestCase
         $admin = User::where('employee_id', '255578')->first();
         if (!$admin) {
             $admin = User::factory()->create(['employee_id' => '255578']);
-            $admin->assignRole('admin');
+            $admin->assignRole('admin_cfs');
         }
 
         $adminPerms = $admin->getAllPermissionNames();

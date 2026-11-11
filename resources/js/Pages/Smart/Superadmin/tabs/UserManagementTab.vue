@@ -24,6 +24,8 @@ interface UserItem {
   employee_id: string;
   employee_name: string;
   display_name: string;
+  department?: string;
+  manager_of?: string[];
   role: string;
   roles?: string[];
 }
@@ -111,7 +113,29 @@ const userColumns = computed<ColumnDef<UserItem>[]>(() => [
     },
   },
   {
+    accessorKey: 'department',
+    header: ({ column }) => {
+      return h(
+        Button,
+        {
+          variant: 'ghost',
+          onClick: () => column.toggleSorting(column.getIsSorted() === 'asc'),
+          class: 'px-2 hover:bg-transparent font-semibold text-foreground justify-start',
+        },
+        () => [
+          t('access.users.departmentColumn'),
+          h(ArrowUpDown, { class: 'ml-2 h-4 w-4 text-muted-foreground' }),
+        ]
+      );
+    },
+    cell: ({ row }) => {
+      return h('div', { class: 'pl-2 text-muted-foreground text-sm' }, row.original.department || '-');
+    },
+  },
+  {
     id: 'role',
+    size: 160,
+    enableGlobalFilter: false,
     header: () => h('div', { class: 'font-semibold text-foreground' }, t('access.users.roleColumn')),
     cell: ({ row }) => {
       return h(UserRoleSelect, {
@@ -120,6 +144,18 @@ const userColumns = computed<ColumnDef<UserItem>[]>(() => [
         disabled: props.updatingUserId === row.original.id,
         onChange: (roleName: string) => emit('change-role', row.original.id, roleName),
       });
+    },
+  },
+  {
+    accessorKey: 'manager_of',
+    accessorFn: (row: UserItem) => (row.manager_of && row.manager_of.length) ? row.manager_of.join('\n') : '',
+    header: () => h('div', { class: 'font-semibold text-foreground' }, t('access.users.managedColumn')),
+    cell: ({ row }) => {
+      const list = row.original.manager_of || [];
+      if (!list.length) {
+        return h('div', { class: 'text-muted-foreground text-sm' }, '-');
+      }
+      return h('div', { class: 'text-foreground text-sm whitespace-pre-line leading-relaxed' }, list.join('\n'));
     },
   },
 ]);
@@ -132,8 +168,8 @@ const userColumns = computed<ColumnDef<UserItem>[]>(() => [
 
       <div class="mt-4 flex flex-col sm:flex-row sm:items-end justify-between gap-3">
         <!-- Search & Filter on Left -->
-        <div class="flex items-end gap-3 w-full max-w-xl">
-          <div class="space-y-1.5 flex-1 max-w-xs">
+        <div class="flex items-end gap-3 w-full max-w-2xl">
+          <div class="space-y-1.5 flex-1 min-w-[280px] max-w-md">
             <label class="text-xs text-muted-foreground font-medium block">{{ $t('access.users.searchLabel') }}</label>
             <TableSearch
               v-model="userSearchQuery"
@@ -142,13 +178,13 @@ const userColumns = computed<ColumnDef<UserItem>[]>(() => [
           </div>
 
           <!-- Filter by Role -->
-          <div class="flex-1 w-[240px] space-y-1.5">
+          <div class="space-y-1.5 w-[150px] shrink-0">
             <label class="text-xs text-muted-foreground font-medium block">{{ $t('access.users.filterRoleLabel') }}</label>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button
                   variant="outline"
-                  class="w-full justify-between rounded-[14px] font-normal"
+                  class="w-[150px] justify-between rounded-[14px] font-normal"
                   :class="selectedRoleFilter === 'all' ? 'text-muted-foreground' : 'text-foreground'"
                 >
                   <span class="truncate capitalize">

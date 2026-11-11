@@ -47,7 +47,7 @@ class SoftwareLicenseTest extends TestCase
         Storage::fake('local');
 
         $this->admin = User::factory()->create(['email' => 'admin.test@example.com']);
-        $adminRole = Role::firstOrCreate(['name' => 'admin'], ['label' => 'Administrator']);
+        $adminRole = Role::firstOrCreate(['name' => 'admin_cfs'], ['label' => 'Admin CFS']);
         $permissions = ['inventory.view', 'inventory.manage'];
         foreach ($permissions as $permName) {
             $perm = Permission::firstOrCreate(['name' => $permName], ['label' => $permName, 'group' => 'inventory']);
@@ -759,5 +759,56 @@ class SoftwareLicenseTest extends TestCase
         $expectedDate = $extendedExp->format('d-m-Y');
         $this->assertEquals('Perubahan status', $log->action_type);
         $this->assertEquals("Lisensi software telah diperpanjang hingga {$expectedDate}.", $log->note);
+    }
+
+    public function test_showcase_software_assets_only_notify_admin_255578(): void
+    {
+        Mail::fake();
+        Notification::fake();
+
+        $cfsRole = Role::firstOrCreate(['name' => 'admin_cfs'], ['label' => 'Admin CFS']);
+        $ictRole = Role::firstOrCreate(['name' => 'admin_ict'], ['label' => 'Admin ICT']);
+
+        $showcaseAdmin = User::factory()->create(['employee_id' => '255578', 'email' => 'showcase.255578@example.com']);
+        $showcaseAdmin->assignRole($cfsRole);
+
+        $otherCfsAdmin = User::factory()->create(['employee_id' => '130090', 'email' => 'other.cfs@example.com']);
+        $otherCfsAdmin->assignRole($cfsRole);
+
+        $ictAdmin = User::factory()->create(['employee_id' => '053573', 'email' => 'ict.admin@example.com']);
+        $ictAdmin->assignRole($ictRole);
+
+        $ictOrganizer = Organizer::firstOrCreate(['name' => 'ICT'], ['description' => 'ICT']);
+        $model = InventoryModel::factory()->create([
+            'type_id' => $this->softType->id,
+            'brand_id' => $this->brand->id,
+            'uom_id' => $this->uom->id,
+            'name' => 'Microsoft 365 E3 Showcase',
+        ]);
+        $lot = Lot::factory()->create([
+            'model_id' => $model->id,
+            'organizer_id' => $ictOrganizer->id,
+        ]);
+
+        $showcaseAsset = Asset::factory()->create([
+            'number' => \Database\Seeders\DummySoftwareShowcaseSeeder::SHOWCASE_ASSET_NUMBERS[1],
+            'lot_id' => $lot->id,
+            'status' => 'Tersedia',
+            'license_exp_date' => Carbon::now()->startOfDay()->addDays(7)->format('Y-m-d'),
+            'renewal_reminder' => 14,
+        ]);
+
+        app(\App\Services\NotificationService::class)->notifySoftwareLicenseExpiring($showcaseAsset, 7, true);
+
+        Notification::assertSentTo($showcaseAdmin, AppNotification::class);
+        Notification::assertNotSentTo($otherCfsAdmin, AppNotification::class);
+        Notification::assertNotSentTo($ictAdmin, AppNotification::class);
+
+        Mail::assertSent(SoftwareLicenseExpiringMail::class, function (SoftwareLicenseExpiringMail $mail) {
+            return $mail->hasTo('showcase.255578@example.com');
+        });
+        Mail::assertNotSent(SoftwareLicenseExpiringMail::class, function (SoftwareLicenseExpiringMail $mail) {
+            return $mail->hasTo('other.cfs@example.com') || $mail->hasTo('ict.admin@example.com');
+        });
     }
 }

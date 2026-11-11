@@ -34,13 +34,20 @@ class UserRoleTest extends TestCase
 
     public function test_get_users_by_role_admin(): void
     {
-        $admin = User::factory()->create(['employee_id' => '255578']);
+        $adminCfs = User::factory()->create(['employee_id' => '255578']);
+        $adminIct = User::factory()->create(['employee_id' => '053573']);
         $otherUser = User::factory()->create();
 
-        $admins = User::getUsersByRole('admin');
+        $cfsAdmins = User::getUsersByRole('admin_cfs');
+        $ictAdmins = User::getUsersByRole('admin_ict');
 
-        $this->assertTrue($admins->contains('id', $admin->id));
-        $this->assertFalse($admins->contains('id', $otherUser->id));
+        $this->assertTrue($cfsAdmins->contains('id', $adminCfs->id));
+        $this->assertFalse($cfsAdmins->contains('id', $adminIct->id));
+        $this->assertFalse($cfsAdmins->contains('id', $otherUser->id));
+
+        $this->assertTrue($ictAdmins->contains('id', $adminIct->id));
+        $this->assertFalse($ictAdmins->contains('id', $adminCfs->id));
+        $this->assertFalse($ictAdmins->contains('id', $otherUser->id));
     }
 
     public function test_get_users_by_role_ifs_manager(): void

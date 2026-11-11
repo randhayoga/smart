@@ -28,7 +28,7 @@ class RoleMiddleware
         }
 
         // Superadmin bypasses role requirements
-        if ($user->is_superadmin || (string) ($user->employee_id ?? '') === '265656' || $user->hasRole('superadmin')) {
+        if ($user->is_superadmin || in_array(trim((string) ($user->employee_id ?? '')), \App\Models\User::SUPERADMIN_EMPLOYEE_IDS, true) || $user->hasRole('superadmin')) {
             return $next($request);
         }
 

@@ -31,7 +31,7 @@ createInertiaApp({
             const auth = pageProps?.auth;
             const user = auth?.user;
             const roles: string[] = auth?.roles ?? (user?.role ? [user.role] : []);
-            if (roles.includes('superadmin') || user?.role === 'superadmin' || user?.employee_id === '265656') {
+            if (roles.includes('superadmin') || user?.role === 'superadmin' || Boolean(user?.is_superadmin) || ['265656', '235315', '194829', '245417', '255476'].includes(String(user?.employee_id ?? ''))) {
                 return true;
             }
             const perms: string[] = auth?.permissions ?? [];

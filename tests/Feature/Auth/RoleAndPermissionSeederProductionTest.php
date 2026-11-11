@@ -32,10 +32,11 @@ class RoleAndPermissionSeederProductionTest extends TestCase
             ])->assertSuccessful();
 
             $this->assertDatabaseHas('roles', ['name' => 'superadmin'], 'SMART');
-            $this->assertDatabaseHas('roles', ['name' => 'admin'], 'SMART');
+            $this->assertDatabaseHas('roles', ['name' => 'admin_cfs'], 'SMART');
+            $this->assertDatabaseHas('roles', ['name' => 'admin_ict'], 'SMART');
             $this->assertDatabaseHas('permissions', ['name' => 'access.manage'], 'SMART');
 
-            $adminRole = Role::where('name', 'admin')->first();
+            $adminRole = Role::where('name', 'admin_cfs')->first();
             $this->assertTrue($adminRole->hasPermissionTo('inventory.view'));
             $this->assertFalse($adminRole->hasPermissionTo('access.manage'));
         } finally {
@@ -56,7 +57,7 @@ class RoleAndPermissionSeederProductionTest extends TestCase
                 '--force' => true,
             ])->assertSuccessful();
 
-            $adminRole = Role::where('name', 'admin')->first();
+            $adminRole = Role::where('name', 'admin_cfs')->first();
             $this->assertTrue($adminRole->hasPermissionTo('inventory.view'));
 
             // Superadmin customizes admin permissions in the UI:
@@ -97,7 +98,7 @@ class RoleAndPermissionSeederProductionTest extends TestCase
                 '--force' => true,
             ])->assertSuccessful();
 
-            $adminRole = Role::where('name', 'admin')->first();
+            $adminRole = Role::where('name', 'admin_cfs')->first();
             $adminRole->revokePermissionTo('inventory.view');
             $this->assertFalse($adminRole->hasPermissionTo('inventory.view'));
 
@@ -128,7 +129,7 @@ class RoleAndPermissionSeederProductionTest extends TestCase
             '--class' => RoleAndPermissionSeeder::class,
         ])->assertSuccessful();
 
-        $adminRole = Role::where('name', 'admin')->first();
+        $adminRole = Role::where('name', 'admin_cfs')->first();
         $adminRole->revokePermissionTo('inventory.view');
 
         // Re-seeding in testing environment should re-sync unconditionally

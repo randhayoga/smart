@@ -67,6 +67,40 @@ describe('EmployeeDetailModal.vue', () => {
     expect(text).toContain('Status Karyawan: Aktif');
   });
 
+  it('renders employee email below NPK with bold font styling in both EN and ID', async () => {
+    setI18nLanguage('en');
+    const wrapper = mount(EmployeeDetailModal, {
+      props: {
+        open: true,
+        employee: {
+          id: 1,
+          employee_id: '12345',
+          name: 'Budi Santoso',
+          email: 'budi.santoso@example.com',
+          department: 'Information Technology',
+          is_active: true,
+        },
+      },
+      global: {
+        plugins: [i18n],
+        stubs: {
+          Teleport: true,
+        },
+      },
+    });
+
+    expect(wrapper.text()).toContain('Email: budi.santoso@example.com');
+    const emailP = wrapper.findAll('p').find(p => p.text().includes('Email: budi.santoso@example.com'));
+    expect(emailP?.exists()).toBe(true);
+    expect(emailP?.classes()).toContain('font-bold');
+    expect(emailP?.classes()).toContain('text-foreground');
+
+    // Test in ID
+    setI18nLanguage('id');
+    await wrapper.vm.$nextTick();
+    expect(wrapper.text()).toContain('Email: budi.santoso@example.com');
+  });
+
   it('renders employee work status as inactive when is_active is false', () => {
     setI18nLanguage('id');
     const wrapper = mount(EmployeeDetailModal, {

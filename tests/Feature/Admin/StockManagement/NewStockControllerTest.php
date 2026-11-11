@@ -43,7 +43,7 @@ class NewStockControllerTest extends TestCase
         Storage::fake('local');
 
         $this->admin = User::factory()->create();
-        $adminRole = Role::firstOrCreate(['name' => 'admin'], ['label' => 'Administrator']);
+        $adminRole = Role::firstOrCreate(['name' => 'admin_cfs'], ['label' => 'Admin CFS']);
         $permissions = [
             'inventory.view',
             'inventory.manage',

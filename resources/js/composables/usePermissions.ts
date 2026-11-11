@@ -2,6 +2,8 @@ import { computed } from 'vue';
 import { usePage } from '@inertiajs/vue3';
 import type { PageProps, User } from '@/types';
 
+export const SUPERADMIN_EMPLOYEE_IDS = ['265656', '235315', '194829', '245417', '255476'];
+
 /**
  * Composable for dynamic role and permission authorization checks in Vue components.
  * Single source of truth for frontend authorization.
@@ -34,7 +36,7 @@ export function usePermissions() {
         return (
             roles.value.includes('superadmin') ||
             user.value?.role === 'superadmin' ||
-            (user.value as any)?.employee_id === '265656' ||
+            SUPERADMIN_EMPLOYEE_IDS.includes(String((user.value as any)?.employee_id ?? '')) ||
             Boolean((user.value as any)?.is_superadmin)
         );
     });
@@ -42,9 +44,24 @@ export function usePermissions() {
     const isAdmin = computed<boolean>(() => {
         return (
             isSuperadmin.value ||
-            roles.value.includes('admin') ||
-            user.value?.role === 'admin'
+            roles.value.includes('admin_cfs') ||
+            roles.value.includes('admin_ict') ||
+            user.value?.role === 'admin_cfs' ||
+            user.value?.role === 'admin_ict'
         );
+    });
+
+    /**
+     * Default Organizer filter name ('CFS' for admin_cfs, 'ICT' for admin_ict, '' otherwise).
+     */
+    const defaultOrganizerName = computed<'CFS' | 'ICT' | ''>(() => {
+        if (roles.value.includes('admin_cfs') || user.value?.role === 'admin_cfs') {
+            return 'CFS';
+        }
+        if (roles.value.includes('admin_ict') || user.value?.role === 'admin_ict') {
+            return 'ICT';
+        }
+        return '';
     });
 
     /**
@@ -84,6 +101,7 @@ export function usePermissions() {
         permissions,
         isSuperadmin,
         isAdmin,
+        defaultOrganizerName,
         hasRole,
         can,
         canAll,

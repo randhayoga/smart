@@ -69,6 +69,32 @@ class User extends Authenticatable
         'active' => 'boolean',
     ];
 
+    public const SUPERADMIN_EMPLOYEE_IDS = [
+        '265656',
+        '235315',
+        '194829',
+        '245417',
+        '255476',
+    ];
+
+    public const ADMIN_CFS_EMPLOYEE_IDS = [
+        '255578',
+        '130090',
+        '140133',
+    ];
+
+    public const ADMIN_ICT_EMPLOYEE_IDS = [
+        '053573',
+        '225164',
+        '215050',
+        '306117',
+    ];
+
+    public const ADMIN_ROLES = [
+        'admin_cfs',
+        'admin_ict',
+    ];
+
     protected static function booted(): void
     {
         static::creating(function ($model) {
@@ -280,7 +306,7 @@ class User extends Authenticatable
             $uid = (int) $user->id;
             if (!empty($rolesByUserId[$uid])) {
                 $roleNames = $rolesByUserId[$uid];
-                foreach (['superadmin', 'admin', 'ifs_manager', 'manager', 'user'] as $priorityRole) {
+                foreach (['superadmin', 'admin_cfs', 'admin_ict', 'ifs_manager', 'manager', 'user'] as $priorityRole) {
                     if (in_array($priorityRole, $roleNames, true)) {
                         $user->cachedRoleName = $priorityRole;
                         break;
@@ -303,13 +329,16 @@ class User extends Authenticatable
     public function resolveDynamicFallbackRole(): string
     {
         $empId = trim((string) ($this->employee_id ?? ''));
-        if ($empId === '265656') {
+        if (in_array($empId, self::SUPERADMIN_EMPLOYEE_IDS, true)) {
             return 'superadmin';
         }
 
-        $admins = ['255578'];
-        if (in_array($empId, $admins, true) || ((app()->runningUnitTests() || app()->environment('testing')) && !config('app.disable_test_admin_bypass'))) {
-            return 'admin';
+        if (in_array($empId, self::ADMIN_ICT_EMPLOYEE_IDS, true)) {
+            return 'admin_ict';
+        }
+
+        if (in_array($empId, self::ADMIN_CFS_EMPLOYEE_IDS, true) || ((app()->runningUnitTests() || app()->environment('testing')) && !config('app.disable_test_admin_bypass'))) {
+            return 'admin_cfs';
         }
 
         static::ensureOrgchartLookupLoaded();
@@ -354,7 +383,7 @@ class User extends Authenticatable
         // 1. Check if roles relation is already eager-loaded
         if ($this->relationLoaded('roles')) {
             $roleNames = $this->roles->pluck('name')->all();
-            foreach (['superadmin', 'admin', 'ifs_manager', 'manager', 'user'] as $priorityRole) {
+            foreach (['superadmin', 'admin_cfs', 'admin_ict', 'ifs_manager', 'manager', 'user'] as $priorityRole) {
                 if (in_array($priorityRole, $roleNames, true)) {
                     return $this->cachedRoleName = $priorityRole;
                 }
@@ -365,14 +394,17 @@ class User extends Authenticatable
         }
 
         // 2. Check hardcoded superadmin and admin list
-        $empId = (string) ($this->employee_id ?? '');
-        if ($empId === '265656') {
+        $empId = trim((string) ($this->employee_id ?? ''));
+        if (in_array($empId, self::SUPERADMIN_EMPLOYEE_IDS, true)) {
             return $this->cachedRoleName = 'superadmin';
         }
 
-        $admins = ['255578'];
-        if (in_array($empId, $admins, true) || ((app()->runningUnitTests() || app()->environment('testing')) && !config('app.disable_test_admin_bypass'))) {
-            return $this->cachedRoleName = 'admin';
+        if (in_array($empId, self::ADMIN_ICT_EMPLOYEE_IDS, true)) {
+            return $this->cachedRoleName = 'admin_ict';
+        }
+
+        if (in_array($empId, self::ADMIN_CFS_EMPLOYEE_IDS, true) || ((app()->runningUnitTests() || app()->environment('testing')) && !config('app.disable_test_admin_bypass'))) {
+            return $this->cachedRoleName = 'admin_cfs';
         }
 
         // 3. Query assigned roles from SMART database if model is persisted and roles were not preloaded
@@ -380,7 +412,7 @@ class User extends Authenticatable
             try {
                 $roleNames = $this->roles()->pluck('name')->all();
                 if (!empty($roleNames)) {
-                    foreach (['superadmin', 'admin', 'ifs_manager', 'manager', 'user'] as $priorityRole) {
+                    foreach (['superadmin', 'admin_cfs', 'admin_ict', 'ifs_manager', 'manager', 'user'] as $priorityRole) {
                         if (in_array($priorityRole, $roleNames, true)) {
                             return $this->cachedRoleName = $priorityRole;
                         }
@@ -401,7 +433,7 @@ class User extends Authenticatable
      */
     public function getIsAdminAttribute(): bool
     {
-        return in_array($this->role, ['superadmin', 'admin', 'ifs_manager'], true);
+        return in_array($this->role, ['superadmin', 'admin_cfs', 'admin_ict', 'ifs_manager'], true);
     }
 
     /**
@@ -409,7 +441,7 @@ class User extends Authenticatable
      */
     public function isSuperadmin(): bool
     {
-        return $this->role === 'superadmin' || (string) ($this->employee_id ?? '') === '265656';
+        return $this->role === 'superadmin' || in_array(trim((string) ($this->employee_id ?? '')), self::SUPERADMIN_EMPLOYEE_IDS, true);
     }
 
     /**
@@ -423,13 +455,12 @@ class User extends Authenticatable
     /**
      * Get users by dynamic role(s) using optimized queries.
      *
-     * @param string|array<string> $roles 'admin' | 'ifs_manager' | 'manager' | 'user'
+     * @param string|array<string> $roles 'superadmin' | 'admin_cfs' | 'admin_ict' | 'ifs_manager' | 'manager' | 'user'
      * @return \Illuminate\Database\Eloquent\Collection<int, User>
      */
     public static function getUsersByRole(string|array $roles)
     {
         $roles = (array) $roles;
-        $adminIds = ['255578'];
         $ifsOrgCode = static::getIfsOrgCode();
 
         $targetEmployeeIds = collect();
@@ -492,8 +523,13 @@ class User extends Authenticatable
         foreach ($roles as $role) {
             switch ($role) {
                 case 'superadmin':
-                case 'admin':
-                    $targetEmployeeIds = $targetEmployeeIds->merge($adminIds);
+                    $targetEmployeeIds = $targetEmployeeIds->merge(self::SUPERADMIN_EMPLOYEE_IDS);
+                    break;
+                case 'admin_cfs':
+                    $targetEmployeeIds = $targetEmployeeIds->merge(self::ADMIN_CFS_EMPLOYEE_IDS);
+                    break;
+                case 'admin_ict':
+                    $targetEmployeeIds = $targetEmployeeIds->merge(self::ADMIN_ICT_EMPLOYEE_IDS);
                     break;
                 case 'ifs_manager':
                     $targetEmployeeIds = $targetEmployeeIds->merge($getIfsEmployeeIds());
@@ -525,7 +561,9 @@ class User extends Authenticatable
 
         if ($includeAllRegularUsers) {
             $excludeIds = array_unique(array_merge(
-                $adminIds,
+                self::SUPERADMIN_EMPLOYEE_IDS,
+                self::ADMIN_CFS_EMPLOYEE_IDS,
+                self::ADMIN_ICT_EMPLOYEE_IDS,
                 $getIfsEmployeeIds(),
                 $getManagerEmployeeIds()
             ));

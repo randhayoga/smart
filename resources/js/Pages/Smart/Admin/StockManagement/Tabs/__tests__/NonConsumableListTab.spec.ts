@@ -20,7 +20,7 @@ import { reactive } from 'vue';
 
 const mockPageProps = reactive({
   flash: {} as { error?: string | null; success?: string | null },
-  auth: { user: { id: 1 } },
+  auth: { user: { id: 1, role: 'superadmin' as string }, roles: [] as string[] },
 });
 
 vi.mock('@inertiajs/vue3', async (importOriginal) => {
@@ -481,6 +481,57 @@ describe('NonConsumableListTab.vue - statusScope Flag', () => {
       // 4. Filter by Building Graha RE 2 (id=37) -> matches only Area Kerja Barat (205)
       vm.locationFilter = '37';
       expect(vm.filteredUnits.map((u: any) => u.id)).toEqual([203]);
+    });
+  });
+
+  describe('Default Organizer Filter by Admin Role (admin_cfs vs admin_ict)', () => {
+    const sampleOrganizers = [
+      { id: 1, name: 'CFS' },
+      { id: 2, name: 'ICT' },
+    ];
+
+    const orgUnits = [
+      { id: 301, number: '00301-CFS-26', status: 'Tersedia', condition: 'Bagus', organizer_id: 1, organizer: 'CFS', location_id: 1 },
+      { id: 302, number: '00302-ICT-26', status: 'Tersedia', condition: 'Bagus', organizer_id: 2, organizer: 'ICT', location_id: 1 },
+    ];
+
+    it('defaults organizerFilter to CFS id when user has admin_cfs role', () => {
+      mockPageProps.auth = { user: { id: 2, role: 'admin_cfs' }, roles: ['admin_cfs'] };
+
+      const wrapper = mountTab({
+        units: orgUnits,
+        organizers: sampleOrganizers,
+      });
+      const vm = wrapper.vm as any;
+
+      expect(vm.organizerFilter).toBe('1');
+      expect(vm.filteredUnits.map((u: any) => u.id)).toEqual([301]);
+    });
+
+    it('defaults organizerFilter to ICT id when user has admin_ict role', () => {
+      mockPageProps.auth = { user: { id: 3, role: 'admin_ict' }, roles: ['admin_ict'] };
+
+      const wrapper = mountTab({
+        units: orgUnits,
+        organizers: sampleOrganizers,
+      });
+      const vm = wrapper.vm as any;
+
+      expect(vm.organizerFilter).toBe('2');
+      expect(vm.filteredUnits.map((u: any) => u.id)).toEqual([302]);
+    });
+
+    it('defaults organizerFilter to empty string when user is superadmin', () => {
+      mockPageProps.auth = { user: { id: 1, role: 'superadmin' }, roles: ['superadmin'] };
+
+      const wrapper = mountTab({
+        units: orgUnits,
+        organizers: sampleOrganizers,
+      });
+      const vm = wrapper.vm as any;
+
+      expect(vm.organizerFilter).toBe('');
+      expect(vm.filteredUnits.map((u: any) => u.id)).toEqual([301, 302]);
     });
   });
 });

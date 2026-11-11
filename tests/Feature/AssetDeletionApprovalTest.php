@@ -80,7 +80,7 @@ class AssetDeletionApprovalTest extends TestCase
             'employee_id' => '255578',
             'username' => '255578',
         ]);
-        $role = Role::firstOrCreate(['name' => 'admin'], ['label' => 'Administrator']);
+        $role = Role::firstOrCreate(['name' => 'admin_cfs'], ['label' => 'Admin CFS']);
         $permission = Permission::firstOrCreate(
             ['name' => 'inventory.status_approval.request'],
             ['label' => 'Submit Unit Status Change Requests', 'group' => 'inventory']

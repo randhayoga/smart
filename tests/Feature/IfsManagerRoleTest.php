@@ -81,7 +81,7 @@ class IfsManagerRoleTest extends TestCase
 
         // Setup an Admin user
         $adminUser = User::factory()->create(['employee_id' => '255578']);
-        $adminRole = \App\Models\Auth\Role::firstOrCreate(['name' => 'admin'], ['label' => 'Administrator']);
+        $adminRole = \App\Models\Auth\Role::firstOrCreate(['name' => 'admin_cfs'], ['label' => 'Admin CFS']);
         $adminUser->assignRole($adminRole);
 
         // Setup a standard user

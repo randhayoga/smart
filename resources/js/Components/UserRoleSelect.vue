@@ -37,7 +37,7 @@ const emit = defineEmits<{
 
 const { t, te } = useI18n();
 
-const ALLOWED_SELECTABLE_ROLES = ['superadmin', 'admin', 'user'];
+const ALLOWED_SELECTABLE_ROLES = ['superadmin', 'admin_cfs', 'admin_ict', 'user'];
 
 const formatRoleLabel = (name: string, label?: string) => {
   const i18nKey = `access.roles.names.${name.toLowerCase()}`;
@@ -54,15 +54,16 @@ const currentLabel = computed(() => {
   return formatRoleLabel(props.user.role || 'user');
 });
 
-// Restrict selectable options to only superadmin, admin, and user
+// Restrict selectable options to only superadmin, admin_cfs, admin_ict, and user
 const selectableRoles = computed(() => {
   const allowed = props.roles.filter(r => ALLOWED_SELECTABLE_ROLES.includes(r.name.toLowerCase()));
   if (allowed.length > 0) return allowed;
 
   // Fallback defaults if roles are not yet populated
   return [
-    { id: 1, name: 'superadmin', label: 'Super Administrator' },
-    { id: 2, name: 'admin', label: 'Administrator' },
+    { id: 1, name: 'superadmin', label: 'Superadmin' },
+    { id: 2, name: 'admin_cfs', label: 'Admin CFS' },
+    { id: 3, name: 'admin_ict', label: 'Admin ICT' },
     { id: 5, name: 'user', label: 'Employee' },
   ];
 });
@@ -75,13 +76,13 @@ const selectableRoles = computed(() => {
         variant="outline"
         size="sm"
         :disabled="props.disabled"
-        class="h-8 justify-between rounded-[10px] text-sm font-medium w-xs bg-background border-border hover:bg-muted/50"
+        class="h-8 justify-between rounded-[10px] text-sm font-medium w-[150px] bg-background border-border hover:bg-muted/50"
       >
         <span class="truncate">{{ currentLabel }}</span>
         <ChevronDown class="ml-2 h-3.5 w-3.5 shrink-0 opacity-50" />
       </Button>
     </DropdownMenuTrigger>
-    <DropdownMenuContent align="start" class="w-[180px] rounded-[12px] z-[1001]">
+    <DropdownMenuContent align="start" class="w-[150px] rounded-[12px] z-[1001]">
       <DropdownMenuItem
         v-for="role in selectableRoles"
         :key="role.id"

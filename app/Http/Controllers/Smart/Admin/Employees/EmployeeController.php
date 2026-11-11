@@ -53,6 +53,7 @@ class EmployeeController extends Controller
                 'e.id',
                 'e.employee_id',
                 'e.employee_name',
+                'e.email',
                 'e.active',
                 'o.org_name',
             ])
@@ -66,6 +67,7 @@ class EmployeeController extends Controller
                     'user_id' => $userId,
                     'employee_id' => $npk,
                     'name' => $emp->employee_name ?? '-',
+                    'email' => $emp->email ?? '-',
                     'department' => $emp->org_name ?? '-',
                     'active_assets_count' => (int) ($activeAssetCounts[$userId] ?? 0),
                     'is_active' => (bool) $emp->active,

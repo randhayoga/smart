@@ -8,12 +8,17 @@ vi.mock('../Modals/EditLotModal.vue', () => ({ default: { template: '<div></div>
 vi.mock('../ConsumableLotDetail.vue', () => ({ default: { template: '<div></div>' } }));
 vi.mock('@/Components/DeleteConfirmationModal.vue', () => ({ default: { template: '<div></div>' } }));
 
+const mockAuth = {
+  user: { id: 1, role: 'superadmin' },
+  roles: ['superadmin'] as string[],
+};
+
 vi.mock('@inertiajs/vue3', async (importOriginal: () => Promise<any>) => {
   const actual: any = await importOriginal();
   return {
     ...actual,
     usePage: () => ({
-      props: { auth: { user: { id: 1 }, roles: ['Admin'] }, flash: {} },
+      props: { auth: mockAuth, flash: {} },
     }),
     router: {
       delete: vi.fn(),
@@ -24,6 +29,8 @@ vi.mock('@inertiajs/vue3', async (importOriginal: () => Promise<any>) => {
 describe('LotListTab.vue - Location Filter for Consumables', () => {
   beforeEach(() => {
     setI18nLanguage('id');
+    mockAuth.user.role = 'superadmin';
+    mockAuth.roles = ['superadmin'];
   });
 
   const sampleConsumableBarang = {
@@ -166,5 +173,44 @@ describe('LotListTab.vue - Location Filter for Consumables', () => {
     });
 
     expect(wrapper.findComponent({ name: 'LocationCombobox' }).exists()).toBe(false);
+  });
+
+  it('defaults organizerFilter to CFS for admin_cfs and ICT for admin_ict', () => {
+    const cfsIctLots = [
+      { ...sampleLots[0], id: 201, number: 'LOT-CFS-01', organizer: 'CFS', organizer_id: 1 },
+      { ...sampleLots[1], id: 202, number: 'LOT-ICT-01', organizer: 'ICT', organizer_id: 2 },
+    ];
+
+    mockAuth.user.role = 'admin_cfs';
+    mockAuth.roles = ['admin_cfs'];
+    const cfsWrapper = mount(LotListTab, {
+      props: {
+        barang: sampleConsumableBarang,
+        lots: cfsIctLots,
+        organizers: [{ id: 1, name: 'CFS' }, { id: 2, name: 'ICT' }],
+        vendors: [],
+        locations: sampleLocations,
+        projects: [],
+      },
+      global: { plugins: [i18n], stubs: { DataTable: true, LocationCombobox: true } },
+    });
+    expect((cfsWrapper.vm as any).organizerFilter).toBe('CFS');
+    expect((cfsWrapper.vm as any).filteredLots.map((l: any) => l.number)).toEqual(['LOT-CFS-01']);
+
+    mockAuth.user.role = 'admin_ict';
+    mockAuth.roles = ['admin_ict'];
+    const ictWrapper = mount(LotListTab, {
+      props: {
+        barang: sampleConsumableBarang,
+        lots: cfsIctLots,
+        organizers: [{ id: 1, name: 'CFS' }, { id: 2, name: 'ICT' }],
+        vendors: [],
+        locations: sampleLocations,
+        projects: [],
+      },
+      global: { plugins: [i18n], stubs: { DataTable: true, LocationCombobox: true } },
+    });
+    expect((ictWrapper.vm as any).organizerFilter).toBe('ICT');
+    expect((ictWrapper.vm as any).filteredLots.map((l: any) => l.number)).toEqual(['LOT-ICT-01']);
   });
 });

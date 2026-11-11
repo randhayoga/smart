@@ -40,7 +40,7 @@ class AccessManagementTest extends TestCase
     public function test_non_superadmin_user_cannot_access_access_management(): void
     {
         $admin = User::factory()->create(['employee_id' => '255578']);
-        $admin->assignRole('admin');
+        $admin->assignRole('admin_cfs');
 
         $response = $this->actingAs($admin)->get(route('smart.access.index'));
         $response->assertStatus(403);
@@ -52,7 +52,15 @@ class AccessManagementTest extends TestCase
 
     public function test_superadmin_can_access_access_management_page(): void
     {
-        $superadmin = User::factory()->create(['employee_id' => '265656']);
+        $org = HrdOrgchart::factory()->create([
+            'org_name' => 'IT Engineering',
+            'employee_id' => '265656',
+        ]);
+
+        $superadmin = User::factory()->create([
+            'employee_id' => '265656',
+            'orgchart_id' => $org->id,
+        ]);
 
         $response = $this->actingAs($superadmin)->get(route('smart.access.index'));
         $response->assertStatus(200);
@@ -61,6 +69,12 @@ class AccessManagementTest extends TestCase
             ->has('users')
             ->has('roles')
             ->has('permissions')
+            ->where('users', function ($users) {
+                $user = collect($users)->firstWhere('employee_id', '265656');
+                return $user !== null
+                    && $user['department'] === 'IT Engineering'
+                    && in_array('IT Engineering', $user['manager_of'], true);
+            })
         );
     }
 
@@ -72,15 +86,15 @@ class AccessManagementTest extends TestCase
         $this->assertEquals('user', $targetUser->role);
 
         $response = $this->actingAs($superadmin)->put(route('smart.access.users.role.update', $targetUser->id), [
-            'role' => 'admin',
+            'role' => 'admin_cfs',
         ]);
 
         $response->assertSessionHasNoErrors();
         $response->assertRedirect();
 
         $targetUser->refresh();
-        $this->assertTrue($targetUser->hasRole('admin'));
-        $this->assertEquals('admin', $targetUser->role);
+        $this->assertTrue($targetUser->hasRole('admin_cfs'));
+        $this->assertEquals('admin_cfs', $targetUser->role);
     }
 
     public function test_superadmin_cannot_assign_manager_or_ifs_manager_manually(): void
@@ -136,7 +150,7 @@ class AccessManagementTest extends TestCase
     public function test_superadmin_cannot_delete_system_protected_role(): void
     {
         $superadmin = User::factory()->create(['employee_id' => '265656']);
-        $adminRole = Role::where('name', 'admin')->firstOrFail();
+        $adminRole = Role::where('name', 'admin_cfs')->firstOrFail();
 
         $response = $this->actingAs($superadmin)->delete(route('smart.access.roles.destroy', $adminRole->id));
         $response->assertSessionHas('error');
@@ -240,13 +254,16 @@ class AccessManagementTest extends TestCase
 
     public function test_admin_role_does_not_have_access_manage_permission(): void
     {
-        $adminRole = Role::where('name', 'admin')->first();
+        $adminCfsRole = Role::where('name', 'admin_cfs')->first();
+        $adminIctRole = Role::where('name', 'admin_ict')->first();
         $superadminRole = Role::where('name', 'superadmin')->first();
 
-        $this->assertNotNull($adminRole);
+        $this->assertNotNull($adminCfsRole);
+        $this->assertNotNull($adminIctRole);
         $this->assertNotNull($superadminRole);
 
         $this->assertTrue($superadminRole->hasPermissionTo('access.manage'));
-        $this->assertFalse($adminRole->hasPermissionTo('access.manage'));
+        $this->assertFalse($adminCfsRole->hasPermissionTo('access.manage'));
+        $this->assertFalse($adminIctRole->hasPermissionTo('access.manage'));
     }
 }

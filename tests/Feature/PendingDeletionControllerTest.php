@@ -36,7 +36,7 @@ class PendingDeletionControllerTest extends TestCase
         parent::setUp();
 
         $this->admin = User::factory()->create(['employee_id' => '255578']);
-        $adminRole = Role::firstOrCreate(['name' => 'admin'], ['label' => 'Administrator']);
+        $adminRole = Role::firstOrCreate(['name' => 'admin_cfs'], ['label' => 'Admin CFS']);
         $permission = Permission::firstOrCreate(
             ['name' => 'inventory.status_approval.request'],
             ['label' => 'Request Inventory Status Approval', 'group' => 'inventory']

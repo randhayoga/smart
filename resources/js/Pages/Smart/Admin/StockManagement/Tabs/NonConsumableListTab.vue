@@ -79,6 +79,21 @@ const props = withDefaults(defineProps<Props>(), {
   hideHeader: false,
 });
 
+const { t, te, locale } = useI18n();
+const page = usePage();
+const { can, defaultOrganizerName } = usePermissions();
+
+const getInitialOrganizerFilter = (): string => {
+  if (props.filterVariant === 'simple' || !defaultOrganizerName.value) {
+    return '';
+  }
+  const target = defaultOrganizerName.value.toUpperCase();
+  const matched = (props.organizers || []).find(
+    (o) => String(o.name || '').trim().toUpperCase() === target
+  );
+  return matched ? String(matched.id) : '';
+};
+
 const searchQuery = ref('');
 const statusFilter = ref('');
 const conditionFilter = ref('');
@@ -87,15 +102,11 @@ const categoryFilter = ref('');
 const subcategoryFilter = ref('');
 const brandFilter = ref('');
 const locationFilter = ref('');
-const organizerFilter = ref('');
+const organizerFilter = ref(getInitialOrganizerFilter());
 const vendorFilter = ref('');
 const showAdvancedFilters = ref(false);
 const rowsPerPage = ref<'all' | '10' | '25' | '50'>('50');
 const dataTableRef = ref<any>(null);
-
-const { t, te, locale } = useI18n();
-const page = usePage();
-const { can } = usePermissions();
 
 // Single-pass hydration + markRaw() + facet/status/search indexing
 const unitsBundle = computed(() => prepareUnitsBundle(props.units, props.unitsCompact));

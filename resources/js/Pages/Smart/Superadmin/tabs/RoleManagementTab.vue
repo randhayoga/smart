@@ -50,7 +50,7 @@ const emit = defineEmits<{
 
 const { t, te } = useI18n();
 
-const PROTECTED_ROLES = ['superadmin', 'admin', 'ifs_manager', 'manager', 'user'];
+const PROTECTED_ROLES = ['superadmin', 'admin_cfs', 'admin_ict', 'ifs_manager', 'manager', 'user'];
 
 const isProtectedRole = (name: string): boolean => {
   return PROTECTED_ROLES.includes((name || '').toLowerCase());

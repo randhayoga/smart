@@ -135,7 +135,7 @@ class PerformanceModelOptimizationTest extends TestCase
 
     public function test_user_role_resolution_memoizes_lookup_sets_and_prevents_n_plus_one(): void
     {
-        Role::firstOrCreate(['name' => 'admin'], ['label' => 'Admin']);
+        Role::firstOrCreate(['name' => 'admin_cfs'], ['label' => 'Admin CFS']);
         Role::firstOrCreate(['name' => 'user'], ['label' => 'User']);
 
         $ifsManager = User::factory()->create(['employee_id' => '800001']);

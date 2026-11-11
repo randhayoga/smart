@@ -17,19 +17,23 @@ class RoleAndPermissionSeeder extends Seeder
         // 1. Roles definition
         $rolesData = [
             'superadmin' => [
-                'label' => 'Super Administrator',
+                'label' => 'Superadmin',
                 'description' => 'System super administrator with full unrestricted access.',
             ],
-            'admin' => [
-                'label' => 'Administrator',
-                'description' => 'Administrative user with full inventory, request, and master data management privileges.',
+            'admin_cfs' => [
+                'label' => 'Admin CFS',
+                'description' => 'CFS administrative user with full inventory, request, and master data management privileges.',
+            ],
+            'admin_ict' => [
+                'label' => 'Admin ICT',
+                'description' => 'ICT administrative user with full inventory, request, and master data management privileges.',
             ],
             'ifs_manager' => [
                 'label' => 'IFS Manager',
                 'description' => 'IFS Department Manager handling inventory audits, asset status approvals, and department approvals.',
             ],
             'manager' => [
-                'label' => 'Department / Project Manager',
+                'label' => 'DM/PM',
                 'description' => 'Managers approving requisitions and managing project allocations.',
             ],
             'user' => [
@@ -40,13 +44,36 @@ class RoleAndPermissionSeeder extends Seeder
 
         $roles = [];
         foreach ($rolesData as $name => $data) {
-            $roles[$name] = Role::firstOrCreate(
+            $roles[$name] = Role::updateOrCreate(
                 ['name' => $name],
                 [
                     'label' => $data['label'],
                     'description' => $data['description'],
                 ]
             );
+        }
+
+        // Remove legacy 'admin' role and migrate any attached users to 'admin_cfs'
+        $legacyAdminRole = Role::where('name', 'admin')->first();
+        if ($legacyAdminRole) {
+            $legacyAdminUserIds = \Illuminate\Support\Facades\DB::connection('SMART')
+                ->table('user_roles')
+                ->where('role_id', $legacyAdminRole->id)
+                ->pluck('user_id')
+                ->all();
+
+            foreach ($legacyAdminUserIds as $uid) {
+                \Illuminate\Support\Facades\DB::connection('SMART')
+                    ->table('user_roles')
+                    ->updateOrInsert(
+                        ['user_id' => $uid, 'role_id' => $roles['admin_cfs']->id],
+                        ['created_at' => now(), 'updated_at' => now()]
+                    );
+            }
+
+            \Illuminate\Support\Facades\DB::connection('SMART')->table('user_roles')->where('role_id', $legacyAdminRole->id)->delete();
+            \Illuminate\Support\Facades\DB::connection('SMART')->table('role_permissions')->where('role_id', $legacyAdminRole->id)->delete();
+            $legacyAdminRole->delete();
         }
 
         // 2. Granular Permissions definition
@@ -122,13 +149,14 @@ class RoleAndPermissionSeeder extends Seeder
             // Superadmin gets all permissions (including access.manage)
             $roles['superadmin']->permissions()->sync($allPermissionIds);
 
-            // Admin gets all permissions EXCEPT access management (exclusive to superadmin)
+            // Admin CFS & Admin ICT get all permissions EXCEPT access management (exclusive to superadmin)
             // and inventory status approval decisions (exclusive to IFS Manager / superadmin)
             $adminPermissionIds = collect($permissions)
                 ->filter(fn($p) => $p->group !== 'access' && $p->name !== 'inventory.status_approval.decide')
                 ->pluck('id')
                 ->all();
-            $roles['admin']->permissions()->sync($adminPermissionIds);
+            $roles['admin_cfs']->permissions()->sync($adminPermissionIds);
+            $roles['admin_ict']->permissions()->sync($adminPermissionIds);
 
             // IFS Manager permissions
             $ifsManagerPermissions = [
@@ -177,15 +205,26 @@ class RoleAndPermissionSeeder extends Seeder
             $this->command?->warn('RoleAndPermissionSeeder: Default permission sync skipped to protect active permissions. (Use FORCE_ROLE_SEED=true to override).');
         }
 
-        // 4. Initial User Assignment for existing hardcoded superadmin & admins
-        $superadminUser = User::where('employee_id', '265656')->first();
-        if ($superadminUser && !$superadminUser->hasRole('superadmin')) {
-            $superadminUser->assignRole('superadmin');
+        // 4. Initial User Assignment for Superadmin, Admin CFS, and Admin ICT rosters
+        $superadminUsers = User::whereIn('employee_id', User::SUPERADMIN_EMPLOYEE_IDS)->get();
+        foreach ($superadminUsers as $superadminUser) {
+            if (!$superadminUser->hasRole('superadmin')) {
+                $superadminUser->syncRoles(['superadmin']);
+            }
         }
 
-        $adminUser = User::where('employee_id', '255578')->first();
-        if ($adminUser && !$adminUser->hasRole('admin')) {
-            $adminUser->assignRole('admin');
+        $adminCfsUsers = User::whereIn('employee_id', User::ADMIN_CFS_EMPLOYEE_IDS)->get();
+        foreach ($adminCfsUsers as $adminCfsUser) {
+            if (!$adminCfsUser->hasRole('admin_cfs')) {
+                $adminCfsUser->syncRoles(['admin_cfs']);
+            }
+        }
+
+        $adminIctUsers = User::whereIn('employee_id', User::ADMIN_ICT_EMPLOYEE_IDS)->get();
+        foreach ($adminIctUsers as $adminIctUser) {
+            if (!$adminIctUser->hasRole('admin_ict')) {
+                $adminIctUser->syncRoles(['admin_ict']);
+            }
         }
     }
 
@@ -195,6 +234,9 @@ class RoleAndPermissionSeeder extends Seeder
     protected function isAlreadySeeded(): bool
     {
         return Role::where('name', 'superadmin')->exists()
+            && Role::where('name', 'admin_cfs')->exists()
+            && Role::where('name', 'admin_ict')->exists()
+            && !Role::where('name', 'admin')->exists()
             && \Illuminate\Support\Facades\DB::connection('SMART')->table('role_permissions')->exists();
     }
 

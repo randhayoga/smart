@@ -15,7 +15,8 @@ class RoleController extends Controller
      */
     protected const PROTECTED_ROLES = [
         'superadmin',
-        'admin',
+        'admin_cfs',
+        'admin_ict',
         'ifs_manager',
         'manager',
         'user',

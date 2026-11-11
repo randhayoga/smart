@@ -532,7 +532,7 @@ class NotificationFrameworkTest extends TestCase
         /** @var User $admin */
         $adminEmployee = HrdEmployee::factory()->create(['employee_id' => '255578']);
         $admin = User::factory()->create(['employee_id' => $adminEmployee->employee_id]);
-        $adminRole = \App\Models\Auth\Role::firstOrCreate(['name' => 'admin'], ['label' => 'Administrator']);
+        $adminRole = \App\Models\Auth\Role::firstOrCreate(['name' => 'admin_cfs'], ['label' => 'Admin CFS']);
         $managePerm = \App\Models\Auth\Permission::firstOrCreate(['name' => 'inventory.manage'], ['label' => 'Manage Inventory', 'group' => 'inventory']);
         $adminRole->permissions()->syncWithoutDetaching([$managePerm->id]);
         $admin->assignRole($adminRole);
@@ -612,7 +612,7 @@ class NotificationFrameworkTest extends TestCase
     public function test_notifications_are_dynamically_localized_on_fetch(): void
     {
         $admin = User::factory()->create(['employee_id' => '255578']);
-        $role = \App\Models\Auth\Role::firstOrCreate(['name' => 'admin'], ['label' => 'Administrator']);
+        $role = \App\Models\Auth\Role::firstOrCreate(['name' => 'admin_cfs'], ['label' => 'Admin CFS']);
         $permission = \App\Models\Auth\Permission::firstOrCreate(
             ['name' => 'notifications.manage'],
             ['label' => 'Manage notifications', 'group' => 'notifications']
@@ -725,7 +725,7 @@ class NotificationFrameworkTest extends TestCase
     public function test_notify_admin_asset_activation_decision_supports_multilingual_localization(): void
     {
         $admin = User::factory()->create(['employee_id' => '255579']);
-        $role = \App\Models\Auth\Role::firstOrCreate(['name' => 'admin'], ['label' => 'Administrator']);
+        $role = \App\Models\Auth\Role::firstOrCreate(['name' => 'admin_cfs'], ['label' => 'Admin CFS']);
         $admin->assignRole($role);
 
         $lot = Lot::factory()->create();
@@ -761,7 +761,7 @@ class NotificationFrameworkTest extends TestCase
     public function test_notify_admin_asset_activation_decision_supports_license_expired_status(): void
     {
         $admin = User::factory()->create(['email' => 'admin_act_exp@example.com']);
-        $adminRole = Role::firstOrCreate(['name' => 'admin'], ['label' => 'Administrator']);
+        $adminRole = Role::firstOrCreate(['name' => 'admin_cfs'], ['label' => 'Admin CFS']);
         $admin->roles()->attach($adminRole);
 
         $asset = Unit::factory()->create(['status' => 'Lisensi Kedaluwarsa']);
@@ -792,5 +792,59 @@ class NotificationFrameworkTest extends TestCase
         $payloadId = NotificationService::formatNotificationPayload($notif->data);
         $this->assertStringContainsString('Disetujui DM IFS', $payloadId['title']);
         $this->assertStringContainsString('telah berubah menjadi Lisensi Kedaluwarsa.', $payloadId['message']);
+    }
+
+    public function test_admin_notifications_are_routed_by_organizer_to_admin_cfs_or_admin_ict(): void
+    {
+        $cfsRole = Role::firstOrCreate(['name' => 'admin_cfs'], ['label' => 'Admin CFS']);
+        $ictRole = Role::firstOrCreate(['name' => 'admin_ict'], ['label' => 'Admin ICT']);
+
+        $adminCfs = User::factory()->create(['employee_id' => '255578', 'email' => 'cfs@example.com']);
+        $adminCfs->assignRole($cfsRole);
+
+        $adminIct = User::factory()->create(['employee_id' => '053573', 'email' => 'ict@example.com']);
+        $adminIct->assignRole($ictRole);
+
+        $cfsOrganizer = \App\Models\Master\Organizer::firstOrCreate(['name' => 'CFS'], ['description' => 'CFS']);
+        $ictOrganizer = \App\Models\Master\Organizer::firstOrCreate(['name' => 'ICT'], ['description' => 'ICT']);
+
+        // 1. ICT asset activation decision notifies ONLY Admin ICT
+        $ictLot = Lot::factory()->create(['organizer_id' => $ictOrganizer->id]);
+        $ictAsset = Unit::factory()->create(['lot_id' => $ictLot->id, 'number' => 'AST-ICT-901']);
+        $ictApproval = \App\Models\Inventory\AssetActivationApproval::create([
+            'asset_id' => $ictAsset->id,
+            'requester_id' => $adminIct->id,
+            'decision' => 'approved',
+            'requested_at' => now(),
+        ]);
+
+        $service = app(NotificationService::class);
+        $service->notifyAdminAssetActivationDecision($ictApproval, 'approved');
+
+        $adminCfs->refresh();
+        $adminIct->refresh();
+        $this->assertCount(0, $adminCfs->notifications);
+        $this->assertCount(1, $adminIct->notifications);
+
+        // 2. CFS consumable low stock notifies ONLY Admin CFS
+        $category = Category::factory()->create();
+        $subcategory = Subcategory::factory()->create(['category_id' => $category->id, 'is_consumable' => true]);
+        $cfsBarang = Barang::factory()->create([
+            'subcategory_id' => $subcategory->id,
+            'name' => 'Tissue CFS',
+            'min_stock_threshold' => 10,
+        ]);
+        Lot::factory()->create([
+            'barang_id' => $cfsBarang->id,
+            'organizer_id' => $cfsOrganizer->id,
+            'current_quantity' => 2,
+        ]);
+
+        $service->checkAndNotifyLowStock($cfsBarang);
+
+        $adminCfs->refresh();
+        $adminIct->refresh();
+        $this->assertCount(1, $adminCfs->notifications);
+        $this->assertCount(1, $adminIct->notifications);
     }
 }

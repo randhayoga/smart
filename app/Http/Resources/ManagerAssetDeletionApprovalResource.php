@@ -41,7 +41,7 @@ class ManagerAssetDeletionApprovalResource extends JsonResource
             $actorName = 'System';
             if ($lc->actor) {
                 $actorName = $lc->actor->name ?? '-';
-                if ($lc->actor->role === 'admin') {
+                if (in_array($lc->actor->role, ['admin_cfs', 'admin_ict'], true)) {
                     $actorRole = 'Admin';
                 } else if (in_array($lc->actor->role, ['manager', 'ifs_manager'])) {
                     $actorRole = 'Manager';

@@ -32,6 +32,7 @@ export interface EmployeeData {
   user_id?: number | null;
   employee_id: string;
   name: string;
+  email?: string;
   department: string;
   active_assets_count?: number;
   is_active?: boolean;
@@ -576,6 +577,7 @@ const historyColumns = computed<ColumnDef<LoanItem>[]>(() => [
                 <div class="space-y-1 text-sm">
                   <p class="font-bold text-foreground"><span class="text-foreground">{{ t('admin.employeeName') }}:</span> {{ props.employee?.name || '-' }}</p>
                   <p class="font-bold text-foreground"><span class="text-foreground">{{ t('admin.employeeId') }}:</span> {{ props.employee?.employee_id || '-' }}</p>
+                  <p class="font-bold text-foreground"><span class="text-foreground">{{ t('admin.employeeEmail') }}:</span> {{ props.employee?.email || '-' }}</p>
                   <p class="text-foreground">{{ t('admin.employeeDepartment') }}: {{ props.employee?.department || '-' }}</p>
                   <p class="text-foreground">{{ t('admin.employeeWorkStatus') }}: {{ props.employee?.is_active ? t('admin.statusActive') : t('status.tidakAktif') }}</p>
                 </div>

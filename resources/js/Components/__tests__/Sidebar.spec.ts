@@ -9,8 +9,8 @@ import { usePage } from '@inertiajs/vue3';
 (global as any).route = vi.fn((name: string) => `/${name}`);
 
 const defaultAdminAuth = {
-  user: { name: 'Admin User', role: 'admin' },
-  roles: ['admin'],
+  user: { name: 'Admin User', role: 'admin_cfs' },
+  roles: ['admin_cfs'],
   permissions: [
     'dashboard.admin.view',
     'inventory.manage',

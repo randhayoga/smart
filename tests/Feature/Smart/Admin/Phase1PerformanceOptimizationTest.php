@@ -43,7 +43,7 @@ class Phase1PerformanceOptimizationTest extends TestCase
         $this->superadmin->assignRole('superadmin');
 
         $this->admin = User::factory()->create(['employee_id' => '255578']);
-        $this->admin->assignRole('admin');
+        $this->admin->assignRole('admin_cfs');
     }
 
     public function test_non_consumable_index_uses_flat_queries_and_eliminates_duplicate_payload(): void

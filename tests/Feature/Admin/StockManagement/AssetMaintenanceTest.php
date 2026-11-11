@@ -38,11 +38,11 @@ class AssetMaintenanceTest extends TestCase
             ['name' => 'inventory.maintenance'],
             ['label' => 'Record and Manage Asset Maintenance History', 'group' => 'inventory']
         );
-        $adminRole = Role::firstOrCreate(['name' => 'admin'], ['label' => 'Administrator']);
+        $adminRole = Role::firstOrCreate(['name' => 'admin_cfs'], ['label' => 'Admin CFS']);
         $adminRole->permissions()->syncWithoutDetaching([$perm->id]);
 
         $this->adminUser = User::factory()->create();
-        $this->adminUser->assignRole('admin');
+        $this->adminUser->assignRole('admin_cfs');
 
         $this->regularUser = User::factory()->create();
 

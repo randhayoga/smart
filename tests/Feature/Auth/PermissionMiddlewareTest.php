@@ -50,7 +50,7 @@ class PermissionMiddlewareTest extends TestCase
     public function test_user_with_assigned_role_and_permission_can_access_route(): void
     {
         $user = User::factory()->create();
-        $user->assignRole('admin');
+        $user->assignRole('admin_cfs');
 
         // Admin role has inventory.manage, master.view, dashboard.admin.view
         $this->actingAs($user)->get(route('smart.inventory'))->assertStatus(200);

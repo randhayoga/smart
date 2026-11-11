@@ -36,7 +36,7 @@ class BulkAssetCreationPerformanceTest extends TestCase
         parent::setUp();
 
         $this->admin = User::factory()->create();
-        $adminRole = Role::firstOrCreate(['name' => 'admin'], ['label' => 'Administrator']);
+        $adminRole = Role::firstOrCreate(['name' => 'admin_cfs'], ['label' => 'Admin CFS']);
         $permissions = ['inventory.view', 'inventory.manage'];
         foreach ($permissions as $permName) {
             $perm = \App\Models\Auth\Permission::firstOrCreate(['name' => $permName], ['label' => $permName, 'group' => 'inventory']);

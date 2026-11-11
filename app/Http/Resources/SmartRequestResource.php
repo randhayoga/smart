@@ -132,7 +132,7 @@ class SmartRequestResource extends JsonResource
             $data['logs'] = $this->statusLogs->map(function ($log) {
                 $actorRole = 'User';
                 $actorName = $log->changer->name ?? '-';
-                if ($log->changer && $log->changer->role === 'admin') {
+                if ($log->changer && in_array($log->changer->role, ['admin_cfs', 'admin_ict'], true)) {
                     $actorRole = 'Admin';
                 } else if ($log->changer && in_array($log->changer->role, ['manager', 'ifs_manager'])) {
                     $actorRole = 'Manager';

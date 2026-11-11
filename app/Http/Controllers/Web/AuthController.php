@@ -31,7 +31,7 @@ class AuthController extends Controller
         if (empty($ciSession)) {
             if (Auth::check()) {
                 $user = Auth::user();
-                $isAuthorizedPhase1 = in_array($user->role, ['admin', 'ifs_manager'], true) || $user->is_admin;
+                $isAuthorizedPhase1 = in_array($user->role, ['admin_cfs', 'admin_ict', 'ifs_manager'], true) || $user->is_admin;
                 if (!$isAuthorizedPhase1) {
                     return response()->view('errors.phase1', [
                         'portalUrl' => config('app.redirect.portal', 'https://portal.ptre.co.id'),
@@ -57,7 +57,7 @@ class AuthController extends Controller
         if ($user) {
             // Phase 1 Access Control:
             // Explicitly allow both Admin and IFS Manager
-            $isAuthorizedPhase1 = in_array($user->role, ['admin', 'ifs_manager'], true) || $user->is_admin;
+            $isAuthorizedPhase1 = in_array($user->role, ['admin_cfs', 'admin_ict', 'ifs_manager'], true) || $user->is_admin;
             if (!$isAuthorizedPhase1) {
                 return response()->view('errors.phase1', [
                     'portalUrl' => config('app.redirect.portal', 'https://portal.ptre.co.id'),

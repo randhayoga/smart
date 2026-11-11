@@ -26,21 +26,26 @@ class SyncUserHrisManagersController extends Controller
         $ifsRoleId = $roles['ifs_manager'] ?? null;
         $managerRoleId = $roles['manager'] ?? null;
         $userRoleId = $roles['user'] ?? null;
-        $adminRoleId = $roles['admin'] ?? null;
+        $adminCfsRoleId = $roles['admin_cfs'] ?? null;
+        $adminIctRoleId = $roles['admin_ict'] ?? null;
         $superadminRoleId = $roles['superadmin'] ?? null;
 
         // 2. Identify Superadmin and Admin users to preserve their privileges
-        $protectedRoles = array_filter([$superadminRoleId, $adminRoleId]);
+        $protectedRoles = array_filter([$superadminRoleId, $adminCfsRoleId, $adminIctRoleId]);
         $existingAdminAndSuperadminIds = DB::connection('SMART')->table('user_roles')
             ->whereIn('role_id', $protectedRoles)
             ->pluck('user_id')
             ->all();
 
-        $hardcodedSuperadminIds = User::whereIn('employee_id', ['265656'])
+        $hardcodedProtectedIds = User::whereIn('employee_id', array_merge(
+            User::SUPERADMIN_EMPLOYEE_IDS,
+            User::ADMIN_CFS_EMPLOYEE_IDS,
+            User::ADMIN_ICT_EMPLOYEE_IDS
+        ))
             ->pluck('id')
             ->all();
 
-        $protectedUserIds = array_unique(array_merge($existingAdminAndSuperadminIds, $hardcodedSuperadminIds));
+        $protectedUserIds = array_unique(array_merge($existingAdminAndSuperadminIds, $hardcodedProtectedIds));
 
         // 3. Collect active IFS Managers
         $ifsUserIds = [];

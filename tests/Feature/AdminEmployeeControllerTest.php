@@ -133,6 +133,7 @@ class AdminEmployeeControllerTest extends TestCase
             ->has('departments')
             ->where('employees.0.employee_id', fn ($val) => !empty($val))
             ->has('employees.0.is_active')
+            ->has('employees.0.email')
         );
     }
 

@@ -176,7 +176,8 @@ class ExternalDatabaseSeederTest extends TestCase
 
             // Core roles must be seeded into SMART
             $this->assertDatabaseHas('roles', ['name' => 'superadmin'], 'SMART');
-            $this->assertDatabaseHas('roles', ['name' => 'admin'], 'SMART');
+            $this->assertDatabaseHas('roles', ['name' => 'admin_cfs'], 'SMART');
+            $this->assertDatabaseHas('roles', ['name' => 'admin_ict'], 'SMART');
         } finally {
             app()['env'] = $originalEnv;
         }
