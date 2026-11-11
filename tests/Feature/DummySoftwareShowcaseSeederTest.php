@@ -70,11 +70,18 @@ class DummySoftwareShowcaseSeederTest extends TestCase
         $this->assertEquals(30, $jbAsset->renewal_reminder);
         $this->assertEquals(7, (int) now()->startOfDay()->diffInDays($jbAsset->license_exp_date->startOfDay(), false));
 
-        $jbLifecycles = \App\Models\Inventory\AssetLifecycle::where('asset_id', $jbAsset->id)->get();
-        $this->assertCount(1, $jbLifecycles);
-        $this->assertEquals('Aktivasi', $jbLifecycles[0]->action_type);
-        $this->assertNull($jbLifecycles[0]->location_id);
-        $this->assertNull($jbLifecycles[0]->condition);
+        $jbLifecycles = \App\Models\Inventory\AssetLifecycle::where('asset_id', $jbAsset->id)->orderBy('id')->get();
+        $this->assertCount(2, $jbLifecycles);
+        $this->assertEquals('Registrasi', $jbLifecycles[0]->action_type);
+        $this->assertEquals('Belum Diverifikasi', $jbLifecycles[0]->status);
+        $this->assertEquals('Aset berhasil diregistrasi ke dalam sistem.', $jbLifecycles[0]->note);
+        $this->assertEquals('Approval', $jbLifecycles[1]->action_type);
+        $this->assertEquals('Tersedia', $jbLifecycles[1]->status);
+        $this->assertEquals('Aktivasi aset disetujui oleh DM IFS.', $jbLifecycles[1]->note);
+
+        $jbApproval = \App\Models\Inventory\AssetActivationApproval::where('asset_id', $jbAsset->id)->first();
+        $this->assertNotNull($jbApproval);
+        $this->assertEquals('approved', $jbApproval->decision);
 
         // Check Asset 3: Figma Enterprise Organization (Expired - Lisensi Kedaluwarsa)
         $figmaAsset = $assets->firstWhere('number', '00093-SOFT-GEN-ICT-PTRE-26');
@@ -84,10 +91,11 @@ class DummySoftwareShowcaseSeederTest extends TestCase
         $this->assertEquals(30, $figmaAsset->renewal_reminder);
 
         $figmaLifecycles = \App\Models\Inventory\AssetLifecycle::where('asset_id', $figmaAsset->id)->orderBy('id')->get();
-        $this->assertCount(2, $figmaLifecycles);
-        $this->assertEquals('Aktivasi', $figmaLifecycles[0]->action_type);
-        $this->assertEquals('Perubahan status', $figmaLifecycles[1]->action_type);
-        $this->assertEquals('Lisensi Kedaluwarsa', $figmaLifecycles[1]->status);
+        $this->assertCount(3, $figmaLifecycles);
+        $this->assertEquals('Registrasi', $figmaLifecycles[0]->action_type);
+        $this->assertEquals('Approval', $figmaLifecycles[1]->action_type);
+        $this->assertEquals('Perubahan status', $figmaLifecycles[2]->action_type);
+        $this->assertEquals('Lisensi Kedaluwarsa', $figmaLifecycles[2]->status);
 
         // Check Asset 5: AutoCAD 2026 Civil 3D (Perpetual - null exp date)
         $cadAsset = $assets->firstWhere('number', '00095-SOFT-ENG-ICT-PTRE-26');
@@ -96,18 +104,28 @@ class DummySoftwareShowcaseSeederTest extends TestCase
         $this->assertNull($cadAsset->license_exp_date);
         $this->assertNull($cadAsset->renewal_reminder);
 
-        // Check Asset 6: SketchUp Pro 2026 (Dipinjam / LT)
+        // Check Asset 6: SketchUp Pro 2026 (Di-assign (LT))
         $suAsset = $assets->firstWhere('number', '00096-SOFT-ENG-ICT-PTRE-26');
         $this->assertNotNull($suAsset);
-        $this->assertEquals('Dipinjam', $suAsset->status);
+        $this->assertEquals('Di-assign (LT)', $suAsset->status);
         $this->assertEquals('LT', $suAsset->borrowing_type);
         $this->assertEquals(30, $suAsset->renewal_reminder);
 
         $suLifecycles = \App\Models\Inventory\AssetLifecycle::where('asset_id', $suAsset->id)->orderBy('id')->get();
-        $this->assertCount(2, $suLifecycles);
-        $this->assertEquals('Aktivasi', $suLifecycles[0]->action_type);
-        $this->assertEquals('Peminjaman', $suLifecycles[1]->action_type);
-        $this->assertEquals('Dipinjam', $suLifecycles[1]->status);
+        $this->assertCount(3, $suLifecycles);
+        $this->assertEquals('Registrasi', $suLifecycles[0]->action_type);
+        $this->assertEquals('Approval', $suLifecycles[1]->action_type);
+        $this->assertEquals('Assignment', $suLifecycles[2]->action_type);
+        $this->assertEquals('Di-assign (LT)', $suLifecycles[2]->status);
+        $this->assertNotNull($suLifecycles[2]->request_id);
+        $this->assertNotNull($suLifecycles[2]->fulfillment_id);
+
+        // Verify active_borrowing attribute on asset allows clicking through to the request
+        $suAsset->refresh();
+        $activeBorrowing = $suAsset->active_borrowing;
+        $this->assertNotNull($activeBorrowing);
+        $this->assertEquals(DummySoftwareShowcaseSeeder::SHOWCASE_REQ_NUMBER, $activeBorrowing['request_number']);
+        $this->assertEquals($suLifecycles[2]->request_id, $activeBorrowing['request_id']);
     }
 
     public function test_software_showcase_seeder_sends_email_strictly_to_target_admin(): void

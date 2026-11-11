@@ -7,7 +7,7 @@ import { useI18n } from 'vue-i18n';
 import { useModalLock } from '@/composables/useModalLock';
 import { X, AlertTriangle, Loader2, ThumbsUp, Ban } from 'lucide-vue-next';
 import { Button } from "@/Components/ui/button";
-import { formatDate } from '@/lib/utils';
+import { formatDate, formatRupiah } from '@/lib/utils';
 import { formatQcStatus, getQcColorClass } from '@/lib/qualityControl';
 import { getConditionColorClass } from '@/lib/assetStatus';
 import StatusBadge from '@/Components/StatusBadge.vue';
@@ -64,14 +64,6 @@ useModalLock(computed(() => props.isOpen));
 const handleConfirm = () => {
   if (props.processing) return;
   emit('confirm');
-};
-
-const formatRupiah = (val: number | string | null | undefined) => {
-  if (val === null || val === undefined || val === '') return '-';
-  const num = typeof val === 'string' ? parseFloat(val) : val;
-  if (isNaN(num)) return '-';
-  const formatted = Math.floor(num).toLocaleString('id-ID');
-  return `Rp${formatted}`;
 };
 
 const getAge = (item: any) => {

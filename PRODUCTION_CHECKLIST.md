@@ -113,6 +113,10 @@ Modify it to include the Laravel-specific proxy headers and SSE flushing directi
 
     ProxyPreserveHost On
 
+    # Prevent 502 Bad Gateway from proxy buffer overflows on large response headers / cookies
+    ProxyIOBufferSize 65536
+    LimitRequestFieldSize 65536
+
     # CRITICAL: Tells Laravel the original request was HTTPS
     RequestHeader set X-Forwarded-Proto "https"
     RequestHeader set X-Forwarded-Port "443"

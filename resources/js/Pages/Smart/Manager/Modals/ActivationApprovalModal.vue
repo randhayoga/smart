@@ -9,7 +9,7 @@ import { useI18n } from 'vue-i18n';
 import { useModalLock } from '@/composables/useModalLock';
 import { X, ThumbsUp, Ban, FileText, ChevronDown } from 'lucide-vue-next';
 import { Button } from '@/Components/ui/button';
-import { formatDate, formatLocation, isLocationActive } from '@/lib/utils';
+import { formatDate, formatLocation, isLocationActive, formatRupiah } from '@/lib/utils';
 import { usePage } from '@inertiajs/vue3';
 import Tabs from '@/Components/Tabs.vue';
 import StatusBadge from '@/Components/StatusBadge.vue';
@@ -74,21 +74,6 @@ const isSoft = (item: any) => {
 };
 
 const hasCondition = (cond?: string | null) => Boolean(cond && cond !== '-' && cond.trim() !== '');
-
-const formatRupiah = (val: number | string | null | undefined) => {
-  if (val === null || val === undefined || val === '') return '-';
-  let num: number;
-  if (typeof val === 'string') {
-    const cleanStr = val.replace(/[^0-9,-]/g, '');
-    if (!cleanStr) return '-';
-    num = parseFloat(cleanStr.replace(/,/g, '.'));
-  } else {
-    num = val;
-  }
-  if (isNaN(num)) return '-';
-  const formatted = Math.floor(num).toLocaleString('id-ID');
-  return `Rp${formatted}`;
-};
 
 const openMemoFile = (path?: string | null) => {
   if (!path) return;

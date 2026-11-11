@@ -207,6 +207,54 @@ export function isLocationActive(
   return true;
 }
 
+/**
+ * Formats a number or numeric/currency string into standard Indonesian Rupiah format (e.g. 'Rp5.000.000').
+ * Robustly parses numbers, raw database decimals ('5000000.00'), Indonesian formatted strings ('5.000.000'),
+ * and strings with currency symbols ('Rp 5.000.000').
+ */
+export function formatRupiah(val: number | string | null | undefined): string {
+  if (val === null || val === undefined || val === '') return '-';
+
+  let num: number;
+  if (typeof val === 'number') {
+    num = val;
+  } else {
+    const raw = String(val).trim();
+    if (raw === '' || raw === '-') return '-';
+
+    // Strip "Rp", "IDR", spaces
+    let clean = raw.replace(/^(?:Rp|IDR)\.?\s*/i, '').trim();
+
+    if (clean.includes('.') && clean.includes(',')) {
+      if (clean.indexOf('.') < clean.indexOf(',')) {
+        // "5.000.000,50" -> Indonesian: remove dot, replace comma with dot
+        clean = clean.replace(/\./g, '').replace(',', '.');
+      } else {
+        // "5,000,000.50" -> English: remove commas
+        clean = clean.replace(/,/g, '');
+      }
+    } else if (clean.includes('.')) {
+      const dotCount = (clean.match(/\./g) || []).length;
+      if (dotCount > 1 || /\.\d{3}$/.test(clean)) {
+        clean = clean.replace(/\./g, '');
+      }
+    } else if (clean.includes(',')) {
+      const commaCount = (clean.match(/,/g) || []).length;
+      if (commaCount > 1 || /,\d{3}$/.test(clean)) {
+        clean = clean.replace(/,/g, '');
+      } else {
+        clean = clean.replace(',', '.');
+      }
+    }
+
+    num = parseFloat(clean);
+  }
+
+  if (isNaN(num)) return '-';
+  const formatted = Math.floor(num).toLocaleString('id-ID');
+  return `Rp${formatted}`;
+}
+
 export * from './requestStatus';
 
 

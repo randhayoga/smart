@@ -4,6 +4,7 @@ namespace Database\Seeders;
 
 use App\Mail\SoftwareLicenseExpiringMail;
 use App\Models\Inventory\Asset;
+use App\Models\Inventory\AssetActivationApproval;
 use App\Models\Inventory\AssetLifecycle;
 use App\Models\Inventory\InventoryLog;
 use App\Models\Inventory\Lot;
@@ -13,6 +14,12 @@ use App\Models\Master\Category;
 use App\Models\Master\Organizer;
 use App\Models\Master\Type;
 use App\Models\Master\Uom;
+use App\Models\Request\Request as SmartRequest;
+use App\Models\Request\RequestAdminConfirmation;
+use App\Models\Request\RequestFulfillment;
+use App\Models\Request\RequestHandover;
+use App\Models\Request\RequestItem;
+use App\Models\Request\RequestStatusLog;
 use App\Models\User;
 use App\Notifications\AppNotification;
 use App\Services\InventoryLogService;
@@ -21,6 +28,7 @@ use Carbon\Carbon;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\Storage;
 
 /**
  * Software Assets Showcase Seeder
@@ -32,6 +40,8 @@ use Illuminate\Support\Facades\Mail;
 class DummySoftwareShowcaseSeeder extends Seeder
 {
     public const TARGET_ADMIN_EMPLOYEE_ID = '255578';
+
+    public const SHOWCASE_REQ_NUMBER = '082026-0003';
 
     public const SHOWCASE_MODEL_NUMBERS = [
         'SOFT-GEN-0091',
@@ -57,7 +67,7 @@ class DummySoftwareShowcaseSeeder extends Seeder
         '00093-SOFT-GEN-ICT-PTRE-26', // Figma Enterprise Organization (Expired 5 days ago, Lisensi Kedaluwarsa)
         '00094-SOFT-ENG-ICT-PTRE-26', // Autodesk AEC Collection 2026 (Expiring in 14 days, In-App Warning)
         '00095-SOFT-ENG-ICT-PTRE-26', // AutoCAD 2026 Civil 3D (Perpetual, null expiry)
-        '00096-SOFT-ENG-ICT-PTRE-26', // SketchUp Pro 2026 (Dipinjam / LT, Expiring in 30 days)
+        '00096-SOFT-ENG-ICT-PTRE-26', // SketchUp Pro 2026 (Di-assign (LT), Expiring in 30 days)
     ];
 
     /**
@@ -65,10 +75,19 @@ class DummySoftwareShowcaseSeeder extends Seeder
      */
     public function run(): void
     {
-        // 1. Identify Target Admin User strictly limited to Muhamad Radifa Azizi (255578)
+        // 1. Identify Target Users
         $adminUser = User::where('employee_id', self::TARGET_ADMIN_EMPLOYEE_ID)->first()
             ?? User::where('name', 'Muhamad Radifa Azizi')->first()
             ?? User::where('email', 'muhamad.radifa@re.rekayasa.co.id')->first();
+
+        $ifsDm = User::where('employee_id', '033340')->first()
+            ?? User::find(5092)
+            ?? User::role('Department Manager')->first()
+            ?? $adminUser;
+
+        $assigneeUser = User::where('employee_id', '184697')->first()
+            ?? User::where('employee_id', '265656')->first()
+            ?? $adminUser;
 
         if (!$adminUser) {
             $this->command?->warn('Target Admin user (255578) not found. Seeder will create assets without user-specific dispatch.');
@@ -121,6 +140,7 @@ class DummySoftwareShowcaseSeeder extends Seeder
             organizer: $organizer,
             uom: $uom,
             adminUser: $adminUser,
+            ifsDm: $ifsDm,
             inventoryLogService: $inventoryLogService
         );
 
@@ -141,6 +161,7 @@ class DummySoftwareShowcaseSeeder extends Seeder
             organizer: $organizer,
             uom: $uom,
             adminUser: $adminUser,
+            ifsDm: $ifsDm,
             inventoryLogService: $inventoryLogService
         );
 
@@ -161,6 +182,7 @@ class DummySoftwareShowcaseSeeder extends Seeder
             organizer: $organizer,
             uom: $uom,
             adminUser: $adminUser,
+            ifsDm: $ifsDm,
             inventoryLogService: $inventoryLogService
         );
 
@@ -181,6 +203,7 @@ class DummySoftwareShowcaseSeeder extends Seeder
             organizer: $organizer,
             uom: $uom,
             adminUser: $adminUser,
+            ifsDm: $ifsDm,
             inventoryLogService: $inventoryLogService
         );
 
@@ -201,10 +224,11 @@ class DummySoftwareShowcaseSeeder extends Seeder
             organizer: $organizer,
             uom: $uom,
             adminUser: $adminUser,
+            ifsDm: $ifsDm,
             inventoryLogService: $inventoryLogService
         );
 
-        // 9. Seed Showcase Asset 6: SketchUp Pro 2026 (Dipinjam / LT - Expiring in 30 Days)
+        // 9. Seed Showcase Asset 6: SketchUp Pro 2026 (Di-assign (LT) - Expiring in 30 Days)
         $assetSketchUp = $this->seedSoftwareAsset(
             modelNumber: 'SOFT-ENG-0093',
             modelName: 'SketchUp Pro 2026',
@@ -213,7 +237,7 @@ class DummySoftwareShowcaseSeeder extends Seeder
             lotNumber: 'LOT-0001-26-SOFT-ENG-0093',
             assetNumber: '00096-SOFT-ENG-ICT-PTRE-26',
             price: 12500000,
-            status: 'Dipinjam',
+            status: 'Di-assign (LT)',
             borrowingType: 'LT',
             specification: 'Assigned to Senior Civil Engineer | Serial: SU-2026-PRO-IND',
             licenseExpDate: $today->copy()->addDays(30),
@@ -221,7 +245,9 @@ class DummySoftwareShowcaseSeeder extends Seeder
             organizer: $organizer,
             uom: $uom,
             adminUser: $adminUser,
-            inventoryLogService: $inventoryLogService
+            ifsDm: $ifsDm,
+            inventoryLogService: $inventoryLogService,
+            assigneeUser: $assigneeUser
         );
 
         // 10. Dispatch Showcase In-App Notifications and Email strictly to Admin Muhamad Radifa Azizi (255578)
@@ -249,7 +275,9 @@ class DummySoftwareShowcaseSeeder extends Seeder
         Organizer $organizer,
         Uom $uom,
         ?User $adminUser,
-        InventoryLogService $inventoryLogService
+        ?User $ifsDm,
+        InventoryLogService $inventoryLogService,
+        ?User $assigneeUser = null
     ): Asset {
         $model = InventoryModel::create([
             'number' => $modelNumber,
@@ -301,21 +329,57 @@ class DummySoftwareShowcaseSeeder extends Seeder
         ]));
 
         $createdAt = Carbon::now()->subMonths(6);
-        if ($status === 'Lisensi Kedaluwarsa' && $licenseExpDate) {
-            // Initial deployment lifecycle
-            AssetLifecycle::create([
-                'asset_id' => $asset->id,
-                'actor_id' => $adminUser?->id,
-                'action_type' => 'Aktivasi',
-                'status' => 'Tersedia',
-                'condition' => null,
-                'location_id' => null,
-                'start_date' => $createdAt,
-                'end_date' => $licenseExpDate,
-                'note' => "Showcase Software Deployment: {$brand->name} {$modelName}",
-            ]);
+        $approvalDate = $createdAt->copy()->addHours(4);
 
-            // Expired lifecycle
+        // Step 1: Registration by Admin
+        AssetLifecycle::create([
+            'asset_id' => $asset->id,
+            'action_type' => 'Registrasi',
+            'status' => 'Belum Diverifikasi',
+            'condition' => null,
+            'location_id' => null,
+            'start_date' => $createdAt,
+            'end_date' => $approvalDate,
+            'actor_id' => $adminUser?->id,
+            'note' => 'Aset berhasil diregistrasi ke dalam sistem.',
+        ]);
+
+        // Activation Approval Record by IFS Manager
+        AssetActivationApproval::create([
+            'asset_id' => $asset->id,
+            'requester_id' => $adminUser?->id,
+            'approver_id' => $ifsDm?->id,
+            'decision' => 'approved',
+            'note' => null,
+            'requested_at' => $createdAt,
+            'decided_at' => $approvalDate,
+            'created_at' => $createdAt,
+            'updated_at' => $approvalDate,
+        ]);
+
+        // Step 2: Approval by IFS Manager
+        $approvalEndDate = match ($status) {
+            'Lisensi Kedaluwarsa' => $licenseExpDate,
+            'Di-assign (LT)' => Carbon::now()->subMonths(3),
+            default => null,
+        };
+
+        AssetLifecycle::create([
+            'asset_id' => $asset->id,
+            'action_type' => 'Approval',
+            'status' => 'Tersedia',
+            'condition' => null,
+            'location_id' => null,
+            'start_date' => $approvalDate,
+            'end_date' => $approvalEndDate,
+            'actor_id' => $ifsDm?->id,
+            'note' => 'Aktivasi aset disetujui oleh DM IFS.',
+            'previous_state' => ['status' => 'Belum Diverifikasi'],
+            'new_state' => ['status' => 'Tersedia'],
+        ]);
+
+        // Step 3: Subsequent Lifecycle states (Expiration / Assignment)
+        if ($status === 'Lisensi Kedaluwarsa' && $licenseExpDate) {
             AssetLifecycle::create([
                 'asset_id' => $asset->id,
                 'actor_id' => null,
@@ -326,49 +390,131 @@ class DummySoftwareShowcaseSeeder extends Seeder
                 'start_date' => $licenseExpDate,
                 'end_date' => null,
                 'note' => "Lisensi software telah kedaluwarsa pada {$licenseExpDate->format('d-m-Y')}.",
+                'previous_state' => ['status' => 'Tersedia'],
+                'new_state' => ['status' => 'Lisensi Kedaluwarsa'],
             ]);
-        } elseif ($status === 'Dipinjam') {
+        } elseif ($status === 'Di-assign (LT)') {
             $assignedAt = Carbon::now()->subMonths(3);
-            // Initial deployment lifecycle
-            AssetLifecycle::create([
-                'asset_id' => $asset->id,
-                'actor_id' => $adminUser?->id,
-                'action_type' => 'Aktivasi',
-                'status' => 'Tersedia',
-                'condition' => null,
-                'location_id' => null,
-                'start_date' => $createdAt,
-                'end_date' => $assignedAt,
-                'note' => "Showcase Software Deployment: {$brand->name} {$modelName}",
-            ]);
-
-            // Borrowing lifecycle
-            AssetLifecycle::create([
-                'asset_id' => $asset->id,
-                'actor_id' => $adminUser?->id,
-                'action_type' => 'Peminjaman',
-                'status' => 'Dipinjam',
-                'condition' => null,
-                'location_id' => null,
-                'start_date' => $assignedAt,
-                'end_date' => null,
-                'note' => "Peminjaman jangka panjang (LT) lisensi software untuk Senior Civil Engineer.",
-            ]);
-        } else {
-            AssetLifecycle::create([
-                'asset_id' => $asset->id,
-                'actor_id' => $adminUser?->id,
-                'action_type' => 'Aktivasi',
-                'status' => $status,
-                'condition' => null,
-                'location_id' => null,
-                'start_date' => $createdAt,
-                'end_date' => null,
-                'note' => "Showcase Software Deployment: {$brand->name} {$modelName}",
-            ]);
+            $this->seedSoftwareAssignment(
+                asset: $asset,
+                model: $model,
+                adminUser: $adminUser,
+                ifsDm: $ifsDm,
+                assigneeUser: $assigneeUser ?? $adminUser,
+                assignedAt: $assignedAt
+            );
         }
 
         return $asset;
+    }
+
+    /**
+     * Seed manual long-term software assignment request and fulfillments.
+     */
+    protected function seedSoftwareAssignment(
+        Asset $asset,
+        InventoryModel $model,
+        ?User $adminUser,
+        ?User $ifsDm,
+        User $assigneeUser,
+        Carbon $assignedAt
+    ): void {
+        $dummyFormSource = database_path('seeders/requests/dummy_form.jpg');
+        $dummyHandoverSource = database_path('seeders/requests/dummy_handover.jpg');
+
+        if (file_exists($dummyFormSource) && !Storage::disk('local')->exists('request_forms/dummy_form.jpg')) {
+            Storage::disk('local')->put('request_forms/dummy_form.jpg', file_get_contents($dummyFormSource));
+        }
+        if (file_exists($dummyHandoverSource) && !Storage::disk('local')->exists('handovers/dummy_handover.jpg')) {
+            Storage::disk('local')->put('handovers/dummy_handover.jpg', file_get_contents($dummyHandoverSource));
+        }
+
+        $reasoning = 'Penugasan jangka panjang (LT) lisensi software untuk Senior Civil Engineer';
+
+        $req = SmartRequest::create([
+            'request_number' => self::SHOWCASE_REQ_NUMBER,
+            'user_id' => $assigneeUser->id,
+            'approver_id' => $ifsDm?->id,
+            'utilization' => 'corporate',
+            'org_id' => 93,
+            'project_id' => null,
+            'reasoning' => $reasoning,
+            'form_url' => 'request_forms/dummy_form.jpg',
+            'status' => 'borrow',
+            'created_at' => $assignedAt,
+            'updated_at' => $assignedAt,
+        ]);
+
+        $handover = RequestHandover::create([
+            'request_id' => $req->id,
+            'method' => 'pickup',
+            'scheduled_date' => $assignedAt,
+            'location' => 'Gedung Grha Rekayasa Lt. 1',
+            'proof_url' => 'handovers/dummy_handover.jpg',
+            'user_confirmed_at' => $assignedAt,
+            'auto_confirmed' => true,
+        ]);
+
+        $item = RequestItem::create([
+            'request_id' => $req->id,
+            'type_id' => $model->type_id,
+            'model_id' => $model->id,
+            'quantity_requested' => 1,
+            'start_date' => $assignedAt,
+            'end_date' => null,
+            'reasoning' => $reasoning,
+            'status' => 'fulfilled',
+        ]);
+
+        $fulfillment = RequestFulfillment::create([
+            'request_item_id' => $item->id,
+            'asset_id' => $asset->id,
+            'lot_id' => null,
+            'handover_id' => $handover->id,
+            'quantity_fulfilled' => 1,
+            'assigned_at' => $assignedAt,
+        ]);
+
+        $lifecycleNote = "Assignment (LT) " . self::SHOWCASE_REQ_NUMBER . " untuk {$assigneeUser->name} ({$assigneeUser->employee_id}). Catatan: {$reasoning}.";
+
+        AssetLifecycle::create([
+            'asset_id' => $asset->id,
+            'request_id' => $req->id,
+            'fulfillment_id' => $fulfillment->id,
+            'action_type' => 'Assignment',
+            'status' => 'Di-assign (LT)',
+            'condition' => null,
+            'location_id' => null,
+            'start_date' => $assignedAt,
+            'end_date' => null,
+            'actor_id' => $assigneeUser->id,
+            'note' => $lifecycleNote,
+            'previous_state' => ['status' => 'Tersedia'],
+            'new_state' => [
+                'status' => 'Di-assign (LT)',
+                'borrower_id' => $assigneeUser->id,
+                'request_number' => self::SHOWCASE_REQ_NUMBER,
+            ],
+        ]);
+
+        if ($adminUser) {
+            RequestAdminConfirmation::create([
+                'request_id' => $req->id,
+                'admin_id' => $adminUser->id,
+                'action' => 'confirm',
+                'note' => "Permintaan " . self::SHOWCASE_REQ_NUMBER . " disetujui dan diserahkan secara manual oleh Admin",
+                'decided_at' => $assignedAt,
+            ]);
+
+            RequestStatusLog::create([
+                'request_id' => $req->id,
+                'status_from' => 'draft',
+                'status_to' => 'borrow',
+                'changed_by' => $adminUser->id,
+                'note' => "Permintaan " . self::SHOWCASE_REQ_NUMBER . " dikonfirmasi oleh Admin",
+                'created_at' => $assignedAt,
+            ]);
+        }
     }
 
     /**
@@ -498,15 +644,34 @@ class DummySoftwareShowcaseSeeder extends Seeder
     }
 
     /**
-     * Clean up prior showcase models, lots, assets, and notifications.
+     * Clean up prior showcase models, lots, assets, requests, and notifications.
      */
     protected function cleanupPriorRecords(): void
     {
         $assets = Asset::whereIn('number', self::SHOWCASE_ASSET_NUMBERS)->get();
         $assetIds = $assets->pluck('id')->toArray();
 
+        // 1. Clean up lifecycles & activation approvals referencing showcase assets
         if (!empty($assetIds)) {
             AssetLifecycle::whereIn('asset_id', $assetIds)->delete();
+            AssetActivationApproval::whereIn('asset_id', $assetIds)->delete();
+        }
+
+        // 2. Clean up showcase software request and its fulfillments
+        $oldReq = SmartRequest::where('request_number', self::SHOWCASE_REQ_NUMBER)->first();
+        if ($oldReq) {
+            $fulfillments = RequestFulfillment::whereHas('requestItem', fn ($q) => $q->where('request_id', $oldReq->id))->get();
+            AssetLifecycle::whereIn('fulfillment_id', $fulfillments->pluck('id'))->delete();
+            RequestFulfillment::whereIn('id', $fulfillments->pluck('id'))->delete();
+            RequestHandover::where('request_id', $oldReq->id)->delete();
+            RequestAdminConfirmation::where('request_id', $oldReq->id)->delete();
+            RequestStatusLog::where('request_id', $oldReq->id)->delete();
+            RequestItem::where('request_id', $oldReq->id)->delete();
+            $oldReq->delete();
+        }
+
+        if (!empty($assetIds)) {
+            RequestFulfillment::whereIn('asset_id', $assetIds)->delete();
 
             // Clean up showcase notifications
             \Illuminate\Support\Facades\DB::table('notifications')

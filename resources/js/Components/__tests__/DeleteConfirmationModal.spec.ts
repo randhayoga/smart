@@ -294,6 +294,45 @@ describe('DeleteConfirmationModal.vue', () => {
       expect(bulkReject.text()).toContain('Are you sure you want to reject 2 selected assets deletion?');
     });
 
+    it('correctly formats value (price) in Confirm Approval and Confirm Rejection modals without omitting zeros', () => {
+      setI18nLanguage('en');
+      const itemWithStringPrice = {
+        ...statusApprovalItem,
+        unit_details: {
+          price: '5.000.000',
+        },
+      };
+
+      const wrapperString = mountModal({
+        itemCount: 1,
+        itemName: 'Perubahan Status Aset',
+        actionType: 'approved',
+        itemData: [itemWithStringPrice],
+      });
+
+      expect(wrapperString.text()).toContain('Confirm Approval');
+      expect(wrapperString.text()).toContain('Value');
+      expect(wrapperString.text()).toContain('Rp5.000.000');
+
+      const itemWithNumericPrice = {
+        ...statusApprovalItem,
+        unit_details: {
+          price: 5000000,
+        },
+      };
+
+      const wrapperNum = mountModal({
+        itemCount: 1,
+        itemName: 'Perubahan Status Aset',
+        actionType: 'rejected',
+        itemData: [itemWithNumericPrice],
+      });
+
+      expect(wrapperNum.text()).toContain('Confirm Rejection');
+      expect(wrapperNum.text()).toContain('Value');
+      expect(wrapperNum.text()).toContain('Rp5.000.000');
+    });
+
     it('hides condition and storage location for software assets in status change approval', () => {
       setI18nLanguage('en');
       const softwareStatusItem = {

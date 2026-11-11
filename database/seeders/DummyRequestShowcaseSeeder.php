@@ -108,6 +108,12 @@ class DummyRequestShowcaseSeeder extends Seeder
             $oldReq->delete();
         }
 
+        // Ensure baseline showcase asset 01621-ACC-AM-CFS-PTRE-26 (ID 1) retains its original LT borrowing type
+        Asset::where('id', 1)->where('number', '01621-ACC-AM-CFS-PTRE-26')->update([
+            'borrowing_type' => 'LT',
+            'status' => 'Tersedia',
+        ]);
+
         // 3. Locate available Non-Consumable Assets for Assignment & Borrowing
         $ltAssets = Asset::where('borrowing_type', 'LT')
             ->where('status', 'Tersedia')
@@ -115,25 +121,33 @@ class DummyRequestShowcaseSeeder extends Seeder
             ->take(2)
             ->get();
 
+        $ltIds = $ltAssets->pluck('id')->toArray();
+
         $stAssets = Asset::where('borrowing_type', 'ST')
             ->where('status', 'Tersedia')
             ->whereNull('approval_status')
+            ->whereNotIn('id', $ltIds)
             ->take(4)
             ->get();
 
         if ($stAssets->count() < 4) {
             $needed = 4 - $stAssets->count();
+            $excludeIds = array_merge($ltIds, $stAssets->pluck('id')->toArray());
             $additional = Asset::where('borrowing_type', 'LT')
                 ->where('status', 'Tersedia')
                 ->whereNull('approval_status')
+                ->whereNotIn('id', $excludeIds)
                 ->take($needed)
                 ->get();
             foreach ($additional as $add) {
-                $add->update(['borrowing_type' => 'ST']);
+                Asset::withoutLifecycleLogging(function () use ($add) {
+                    $add->update(['borrowing_type' => 'ST']);
+                });
             }
             $stAssets = Asset::where('borrowing_type', 'ST')
                 ->where('status', 'Tersedia')
                 ->whereNull('approval_status')
+                ->whereNotIn('id', $ltIds)
                 ->take(4)
                 ->get();
         }
@@ -380,6 +394,10 @@ class DummyRequestShowcaseSeeder extends Seeder
         $catatanPart = !empty($reasoning) ? ' Catatan: ' . rtrim($reasoning, '.') . '.' : '';
         $lifecycleNote = "{$actionTypeLabel} {$requestNumber} untuk {$user->name} ({$user->employee_id}).{$catatanPart}";
 
+        AssetLifecycle::where('asset_id', $asset->id)
+            ->whereNull('end_date')
+            ->update(['end_date' => $startDate]);
+
         AssetLifecycle::create([
             'asset_id' => $asset->id,
             'request_id' => $req->id,
@@ -400,7 +418,9 @@ class DummyRequestShowcaseSeeder extends Seeder
             ],
         ]);
 
-        $asset->update(['status' => $newAssetStatus]);
+        Asset::withoutLifecycleLogging(function () use ($asset, $newAssetStatus) {
+            $asset->update(['status' => $newAssetStatus]);
+        });
 
         RequestAdminConfirmation::create([
             'request_id' => $req->id,
@@ -487,7 +507,9 @@ class DummyRequestShowcaseSeeder extends Seeder
             'new_state' => ['status' => 'Tersedia'],
         ]);
 
-        $asset->update(['status' => 'Tersedia']);
+        Asset::withoutLifecycleLogging(function () use ($asset) {
+            $asset->update(['status' => 'Tersedia']);
+        });
         $req->update(['status' => 'success']);
 
         RequestStatusLog::create([

@@ -95,7 +95,7 @@ class ManagerAssetActivationApprovalResource extends JsonResource
             'updated_at' => $asset?->updated_at ? $asset->updated_at->format('d M Y, H:i') : null,
             'floor' => $asset?->floor,
             'room' => $asset?->room,
-            'price' => $asset?->price ? number_format($asset->price, 0, ',', '.') : '-',
+            'price' => $asset?->price !== null ? (float) $asset->price : null,
             'image_url' => $asset?->image_url ? '/media/' . $asset->image_url : ($lot?->image_url ? '/media/' . $lot->image_url : null),
             'vehicle_registration' => $asset?->vehicle_registration ?? '-',
             'location' => $asset?->location ? $asset->location->full_name : '-',
