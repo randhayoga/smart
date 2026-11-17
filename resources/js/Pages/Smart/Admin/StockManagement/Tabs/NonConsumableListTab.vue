@@ -466,7 +466,7 @@ const availableStatuses = computed(() => {
   return ['Aktif', 'Belum Aktif', 'Tersedia', 'Dipinjam (ST)', 'Di-assign (LT)', 'Dihapus', 'Verifikasi Ditolak'];
 });
 
-const availableConditions = ['Bagus', 'Rusak', 'Rusak Total', 'Hilang'];
+const availableConditions = ['Bagus', 'Rusak', 'Ditandai Rusak Total', 'Rusak Total', 'Hilang'];
 
 const { columns, getStatusLabel, getConditionLabel } = useNonConsumableColumns({
   props,

@@ -431,6 +431,7 @@ defineExpose({
                   'Tidak Berubah': t('inventory.conditionUnchanged'),
                   'Bagus': t('inventory.conditionGood'),
                   'Rusak': t('inventory.conditionDamaged'),
+                  'Ditandai Rusak Total': t('inventory.conditionMarkedTotalDamage'),
                 } as Record<string, string>)[form.condition] ?? form.condition }}
                 <ChevronDown class="w-4 h-4 opacity-50" />
               </Button>
@@ -439,6 +440,7 @@ defineExpose({
               <DropdownMenuItem @select="form.condition = 'Tidak Berubah'">{{ t('inventory.conditionUnchanged') }}</DropdownMenuItem>
               <DropdownMenuItem @select="form.condition = 'Bagus'">{{ t('inventory.conditionGood') }}</DropdownMenuItem>
               <DropdownMenuItem @select="form.condition = 'Rusak'">{{ t('inventory.conditionDamaged') }}</DropdownMenuItem>
+              <DropdownMenuItem @select="form.condition = 'Ditandai Rusak Total'">{{ t('inventory.conditionMarkedTotalDamage') }}</DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
         </FieldContent>

@@ -231,19 +231,25 @@ class AssetMaintenanceTest extends TestCase
         $response->assertStatus(201);
         $this->assertEquals('Bagus', $this->asset->fresh()->condition);
 
-        // Condition changed from 'Rusak' to 'Bagus', so condition change log was recorded
-        $this->assertDatabaseHas('asset_lifecycles', [
+        // Separate 'Perubahan kondisi' log for 'Bagus' is suppressed; consolidated into 'Pemeliharaan' note
+        $this->assertDatabaseMissing('asset_lifecycles', [
             'asset_id' => $this->asset->id,
             'action_type' => 'Perubahan kondisi',
             'condition' => 'Bagus',
         ]);
 
-        // Pemeliharaan lifecycle was also recorded
+        // Pemeliharaan lifecycle was recorded with consolidated condition change note
         $this->assertDatabaseHas('asset_lifecycles', [
             'asset_id' => $this->asset->id,
             'action_type' => 'Pemeliharaan',
             'condition' => 'Bagus',
         ]);
+
+        $lifecycle = AssetLifecycle::where('asset_id', $this->asset->id)
+            ->where('action_type', 'Pemeliharaan')
+            ->latest('id')
+            ->first();
+        $this->assertStringContainsString('Kondisi setelah perawatan berubah dari Rusak menjadi Bagus.', $lifecycle->note);
     }
 
     public function test_reference_is_required_when_source_is_tisu(): void
@@ -374,5 +380,130 @@ class AssetMaintenanceTest extends TestCase
             'Lisensi Kedaluwarsa' => ['Lisensi Kedaluwarsa'],
             'Comma-separated with disallowed status' => ['Dihapus, Pending:DM'],
         ];
+    }
+
+    public function test_admin_can_mark_total_damage_after_maintenance_without_triggering_deletion_approval(): void
+    {
+        $response = $this->actingAs($this->adminUser)->postJson(
+            route('smart.inventory.assets.maintenances.store', $this->asset->id),
+            [
+                'source' => 'SMART',
+                'type' => 'Corrective',
+                'user_id' => $this->adminUser->id,
+                'date' => '2026-11-17',
+                'cost' => 150000,
+                'problem' => 'Motherboard mati total',
+                'solution' => 'Tidak dapat diperbaiki ekonomis',
+                'condition' => 'Ditandai Rusak Total',
+            ]
+        );
+
+        $response->assertStatus(201);
+        $this->assertEquals('Ditandai Rusak Total', $this->asset->fresh()->condition);
+        $this->assertNull($this->asset->fresh()->approval_status);
+        $this->assertDatabaseMissing('asset_deletion_approvals', ['asset_id' => $this->asset->id]);
+        $this->assertSame(0, $this->adminUser->notifications()->count());
+    }
+
+    public function test_organizer_marking_total_damage_notifies_all_admins_of_that_organizer(): void
+    {
+        $perm = Permission::firstOrCreate(['name' => 'inventory.maintenance'], ['label' => 'Maintain', 'group' => 'inventory']);
+        $orgRole = Role::firstOrCreate(['name' => 'organizer_cfs'], ['label' => 'Organizer CFS']);
+        $orgRole->permissions()->syncWithoutDetaching([$perm->id]);
+
+        $organizerUser = User::factory()->create(['employee_name' => 'Budi Organizer']);
+        $organizerUser->assignRole($orgRole);
+
+        $adminIctRole = Role::firstOrCreate(['name' => 'admin_ict'], ['label' => 'Admin ICT']);
+        $adminIct = User::factory()->create();
+        $adminIct->assignRole($adminIctRole);
+
+        $cfsOrganizer = Organizer::firstOrCreate(['name' => 'CFS'], ['code' => 'CFS']);
+        $lot = Lot::create([
+            'number' => 'LOT-2026-CFS',
+            'model_id' => $this->asset->lot->model_id,
+            'organizer_id' => $cfsOrganizer->id,
+            'condition' => 'Bagus',
+            'classification' => 'Aset',
+            'borrowing_type' => 'LT',
+            'burden' => 'Corporate',
+            'purchase_grant_date' => now(),
+        ]);
+
+        $cfsAsset = Asset::create([
+            'number' => 'AST-CFS-99999',
+            'lot_id' => $lot->id,
+            'location_id' => $this->asset->location_id,
+            'active_status' => 'Aktif',
+            'status' => 'Tersedia',
+            'condition' => 'Rusak',
+            'classification' => 'Aset',
+            'borrowing_type' => 'LT',
+            'burden' => 'Corporate',
+        ]);
+
+        $response = $this->actingAs($organizerUser)->postJson(
+            route('smart.inventory.assets.maintenances.store', $cfsAsset->id),
+            [
+                'source' => 'SMART',
+                'type' => 'Corrective',
+                'user_id' => $organizerUser->id,
+                'date' => '2026-11-17',
+                'cost' => 0,
+                'problem' => 'Unit rusak berat',
+                'solution' => 'Tandai untuk penghapusan',
+                'condition' => 'Ditandai Rusak Total',
+            ]
+        );
+
+        $response->assertStatus(201);
+        $this->assertEquals('Ditandai Rusak Total', $cfsAsset->fresh()->condition);
+
+        $this->adminUser->refresh();
+        $notif = $this->adminUser->notifications()->first();
+        $this->assertNotNull($notif);
+        $this->assertEquals('/smart/stock-management/non-consumables?search=' . urlencode('AST-CFS-99999'), $notif->data['url']);
+        $this->assertEquals('inventory.notification_marked_total_damage_title', $notif->data['title_key']);
+        $this->assertEquals('inventory.notification_marked_total_damage_message', $notif->data['message_key']);
+        $this->assertStringContainsString('AST-CFS-99999', $notif->data['message']);
+        $this->assertStringContainsString('Budi Organizer', $notif->data['message']);
+
+        // admin_ict should not receive CFS notification
+        $this->assertSame(0, $adminIct->notifications()->count());
+    }
+
+    public function test_manual_edit_cannot_select_ditandai_rusak_total_but_preserves_it_if_already_set(): void
+    {
+        $managePerm = Permission::firstOrCreate(['name' => 'inventory.manage'], ['label' => 'Manage Inventory', 'group' => 'inventory']);
+        $this->adminUser->roles()->first()->permissions()->syncWithoutDetaching([$managePerm->id]);
+
+        $response = $this->actingAs($this->adminUser)->put(route('smart.inventory.assets.update', $this->asset), [
+            'number' => $this->asset->number,
+            'lot_id' => $this->asset->lot_id,
+            'location_id' => $this->asset->location_id,
+            'status' => $this->asset->status,
+            'condition' => 'Ditandai Rusak Total',
+            'borrowing_type' => $this->asset->borrowing_type,
+            'classification' => $this->asset->classification,
+        ]);
+
+        $response->assertSessionHasErrors(['condition']);
+        $this->assertEquals('Bagus', $this->asset->fresh()->condition);
+
+        // Once set via maintenance, editing other fields preserves it
+        $this->asset->update(['condition' => 'Ditandai Rusak Total']);
+        $updateOther = $this->actingAs($this->adminUser)->put(route('smart.inventory.assets.update', $this->asset), [
+            'number' => $this->asset->number,
+            'lot_id' => $this->asset->lot_id,
+            'location_id' => $this->asset->location_id,
+            'status' => $this->asset->status,
+            'condition' => 'Ditandai Rusak Total',
+            'borrowing_type' => $this->asset->borrowing_type,
+            'classification' => 'Inventaris',
+        ]);
+
+        $updateOther->assertSessionHasNoErrors();
+        $this->assertEquals('Inventaris', $this->asset->fresh()->classification);
+        $this->assertEquals('Ditandai Rusak Total', $this->asset->fresh()->condition);
     }
 }

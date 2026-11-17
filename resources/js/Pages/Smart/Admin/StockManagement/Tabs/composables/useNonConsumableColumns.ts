@@ -38,6 +38,7 @@ export function getSoftwareRowClass(row: any): string {
 const CONDITION_KEY_MAP: Record<string, string> = {
   'bagus': 'inventory.conditionGood',
   'rusak': 'inventory.conditionDamaged',
+  'ditandai rusak total': 'inventory.conditionMarkedTotalDamage',
   'rusak total': 'inventory.conditionTotalDamage',
   'hilang': 'inventory.conditionLost',
 };
@@ -357,7 +358,7 @@ export function useNonConsumableColumns(options: {
           const cond = (row.getValue('condition') as string) || '';
           let textClass = 'text-foreground';
           if (cond === 'Bagus') textClass = 'text-emerald-600 font-semibold';
-          else if (cond === 'Rusak' || cond === 'Rusak Total' || cond === 'Hilang') textClass = 'text-rose-600 font-semibold';
+          else if (cond === 'Rusak' || cond === 'Ditandai Rusak Total' || cond === 'Rusak Total' || cond === 'Hilang') textClass = 'text-rose-600 font-semibold';
 
           return h('span', { class: textClass }, getConditionLabel(cond));
         },

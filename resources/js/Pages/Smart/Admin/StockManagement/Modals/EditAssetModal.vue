@@ -95,6 +95,7 @@ const getConditionLabel = (c: string) => {
   const map: Record<string, string> = {
     'Bagus': t('inventory.conditionGood'),
     'Rusak': t('inventory.conditionDamaged'),
+    'Ditandai Rusak Total': t('inventory.conditionMarkedTotalDamage'),
     'Rusak Total': t('inventory.conditionTotalDamage'),
     'Hilang': t('inventory.conditionLost'),
   };

@@ -86,7 +86,7 @@ const formatStatus = (st: string) => {
 
 const formatCondition = (cond: string) => {
   if (!cond || cond === 'semua') return t('admin.allConditions');
-  const key = 'inventory.condition' + (cond === 'Bagus' ? 'Good' : cond === 'Rusak' ? 'Damaged' : cond === 'Rusak Total' ? 'TotalDamage' : cond === 'Hilang' ? 'Lost' : '');
+  const key = 'inventory.condition' + (cond === 'Bagus' ? 'Good' : cond === 'Rusak' ? 'Damaged' : cond === 'Ditandai Rusak Total' ? 'MarkedTotalDamage' : cond === 'Rusak Total' ? 'TotalDamage' : cond === 'Hilang' ? 'Lost' : '');
   return te(key) ? t(key) : cond;
 };
 
@@ -175,7 +175,7 @@ const auditStatusOptions = computed(() => {
   return Array.from(stats);
 });
 
-const auditConditionOptions = ['Bagus', 'Rusak', 'Rusak Total', 'Hilang'];
+const auditConditionOptions = ['Bagus', 'Rusak', 'Ditandai Rusak Total', 'Rusak Total', 'Hilang'];
 
 const auditActionOptions = computed(() => {
   const actions = new Set<string>();
@@ -305,8 +305,8 @@ const auditColumns = computed<ColumnDef<AuditTrail>[]>(() => {
         if (!cond || cond === '-') return h('span', { class: 'text-muted-foreground' }, '-');
         let textClass = 'text-foreground';
         if (cond === 'Bagus') textClass = 'text-emerald-600 font-semibold';
-        else if (cond === 'Rusak' || cond === 'Rusak Total' || cond === 'Hilang') textClass = 'text-rose-600 font-semibold';
-        const key = 'inventory.condition' + (cond === 'Bagus' ? 'Good' : cond === 'Rusak' ? 'Damaged' : cond === 'Rusak Total' ? 'TotalDamage' : 'Lost');
+        else if (cond === 'Rusak' || cond === 'Ditandai Rusak Total' || cond === 'Rusak Total' || cond === 'Hilang') textClass = 'text-rose-600 font-semibold';
+        const key = 'inventory.condition' + (cond === 'Bagus' ? 'Good' : cond === 'Rusak' ? 'Damaged' : cond === 'Ditandai Rusak Total' ? 'MarkedTotalDamage' : cond === 'Rusak Total' ? 'TotalDamage' : 'Lost');
         const label = te(key) ? t(key) : cond;
         return h('span', { class: textClass }, label);
       }

@@ -31,7 +31,7 @@ class StoreAssetMaintenanceRequest extends FormRequest
             'cost' => 'required|numeric|min:0|max:999999999999',
             'problem' => 'required|string',
             'solution' => 'required|string',
-            'condition' => 'required|string|in:Tidak Berubah,Bagus,Rusak',
+            'condition' => 'required|string|in:Tidak Berubah,Bagus,Rusak,Ditandai Rusak Total',
             'proof_file' => 'nullable|file|mimes:jpeg,jpg,png,webp,pdf|max:2048',
         ];
     }

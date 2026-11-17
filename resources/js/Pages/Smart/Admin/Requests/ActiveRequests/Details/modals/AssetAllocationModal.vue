@@ -669,7 +669,7 @@ const columns = computed<ColumnDef<any>[]>(() => {
         const cond = row.getValue('condition') as string || '';
         let textClass = 'text-foreground text-sm';
         if (cond === 'Bagus') textClass = 'text-emerald-600 font-semibold text-sm';
-        else if (cond === 'Rusak' || cond === 'Rusak Total' || cond === 'Hilang') textClass = 'text-rose-600 font-semibold text-sm';
+        else if (cond === 'Rusak' || cond === 'Ditandai Rusak Total' || cond === 'Rusak Total' || cond === 'Hilang') textClass = 'text-rose-600 font-semibold text-sm';
         return h('div', {
           class: 'select-none',
           onClick: () => toggleUnitSelection(row.original)

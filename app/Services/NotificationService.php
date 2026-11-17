@@ -283,6 +283,45 @@ class NotificationService
     }
 
     /**
+     * Notify all admin_<organizer> users when an organizer_* user marks an asset as 'Ditandai Rusak Total'.
+     */
+    public function notifyAdminAssetMarkedTotalDamage(Asset $asset, User $actor): void
+    {
+        $asset->loadMissing(['lot.model.brand', 'lot.organizer']);
+
+        $targetRoles = $this->resolveAdminRolesForAsset($asset);
+        $model = $asset->lot?->model;
+        $brandName = $model?->brand?->name ?? '';
+        $modelName = $model?->name ?? '';
+        $actorName = $actor->name ?? $actor->employee_name ?? $actor->username ?? 'User';
+
+        $titleKey = 'inventory.notification_marked_total_damage_title';
+        $messageKey = 'inventory.notification_marked_total_damage_message';
+        $messageParams = [
+            'number' => $asset->number,
+            'brand' => $brandName,
+            'name' => $modelName,
+            'actor' => $actorName,
+        ];
+
+        $this->sendToMultipleRoles(
+            $targetRoles,
+            __($titleKey),
+            __($messageKey, $messageParams),
+            'warning',
+            '/smart/stock-management/non-consumables?search=' . urlencode((string) $asset->number),
+            [
+                'asset_id' => $asset->id,
+                'asset_number' => $asset->number,
+                'title_key' => $titleKey,
+                'title_params' => [],
+                'message_key' => $messageKey,
+                'message_params' => $messageParams,
+            ]
+        );
+    }
+
+    /**
      * Check all consumable models and send notifications for any that are at or below minimum stock threshold.
      *
      * @return int Number of models that triggered low stock notifications

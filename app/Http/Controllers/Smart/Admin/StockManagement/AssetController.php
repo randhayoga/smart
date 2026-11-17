@@ -86,6 +86,9 @@ class AssetController extends Controller
  
         $arrNeedApproval = ['Rusak Total', 'Hilang'];
         $proposedCondition = $request->input('condition');
+        if ($proposedCondition === 'Ditandai Rusak Total') {
+            return redirect()->back()->withErrors(['condition' => 'Kondisi Ditandai Rusak Total hanya dapat dipilih melalui menu Perawatan.']);
+        }
         $needApproval = in_array($proposedCondition, $arrNeedApproval);
 
         if ($needApproval) {
@@ -362,7 +365,7 @@ class AssetController extends Controller
                     'Lisensi Kedaluwarsa',
                 ]),
             ],
-            'condition' => ['required', 'string', 'in:Bagus,Rusak,Rusak Total,Hilang'],
+            'condition' => ['required', 'string', 'in:Bagus,Rusak,Ditandai Rusak Total,Rusak Total,Hilang'],
             'borrowing_type' => ['required', 'string', 'in:LT,ST'],
             'classification' => ['required', 'string', 'in:Aset,Inventaris'],
             'comp_specification' => 'nullable|string|max:255',
@@ -416,6 +419,9 @@ class AssetController extends Controller
         }
 
         $proposedCondition = $request->input('condition');
+        if ($proposedCondition === 'Ditandai Rusak Total' && $asset->condition !== 'Ditandai Rusak Total') {
+            return redirect()->back()->withErrors(['condition' => 'Kondisi Ditandai Rusak Total hanya dapat dipilih melalui menu Perawatan.']);
+        }
         $needApproval = in_array($proposedCondition, $arrNeedApproval);
 
         $isBorrowedOrAssigned = in_array($currentStatusLower, ['dipinjam (st)', 'dipinjam (sewa)', 'di-assign (lt)'], true);

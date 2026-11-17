@@ -260,6 +260,7 @@ export default {
   // Conditions
   conditionGood: 'Bagus',
   conditionDamaged: 'Rusak',
+  conditionMarkedTotalDamage: 'Tandai Rusak Total',
   conditionTotalDamage: 'Rusak Total',
   conditionLost: 'Hilang',
   qualityControl: 'Quality Control',

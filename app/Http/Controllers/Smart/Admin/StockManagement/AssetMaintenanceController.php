@@ -113,9 +113,11 @@ class AssetMaintenanceController extends Controller
             $isConditionChanged = ($conditionInput !== 'Tidak Berubah' && $conditionInput !== $previousCondition);
 
             if ($isConditionChanged) {
-                // Update asset condition (observer will automatically create condition change lifecycle)
-                $asset->condition = $conditionInput;
-                $asset->save();
+                // Suppress separate 'Perubahan kondisi' log; condition change is consolidated into the 'Pemeliharaan' note below
+                Asset::withoutLifecycleLogging(function () use ($asset, $conditionInput) {
+                    $asset->condition = $conditionInput;
+                    $asset->save();
+                });
             }
 
             // 3. Log the Maintenance event in AssetLifecycle
@@ -125,6 +127,10 @@ class AssetMaintenanceController extends Controller
                 : $validated['source'];
 
             $logNote = "Perawatan {$validated['type']} [{$sourceRef}]. Masalah: {$validated['problem']}. Solusi: {$validated['solution']}. Biaya: Rp {$costFormatted}. User: {$targetUserName}.";
+            if ($isConditionChanged) {
+                $prevCondLabel = $previousCondition ?? '-';
+                $logNote .= " Kondisi setelah perawatan berubah dari {$prevCondLabel} menjadi {$conditionInput}.";
+            }
 
             AssetLifecycle::where('asset_id', $asset->id)
                 ->whereNull('end_date')
@@ -156,6 +162,20 @@ class AssetMaintenanceController extends Controller
 
         // Load relations for response
         $newMaintenance->load(['maintainer:id,employee_name,employee_id', 'user:id,employee_name,employee_id']);
+
+        $conditionInput = $validated['condition'];
+        $isMarkedTotalDamage = $conditionInput === 'Ditandai Rusak Total';
+        $isOrganizerActor = $actor && (
+            str_starts_with(strtolower((string) $actor->role), 'organizer_')
+            || $actor->hasRole('organizer_cfs')
+            || $actor->hasRole('organizer_ict')
+        );
+
+        if ($isMarkedTotalDamage && $isOrganizerActor) {
+            dispatch(function () use ($asset, $actor) {
+                app(\App\Services\NotificationService::class)->notifyAdminAssetMarkedTotalDamage($asset, $actor);
+            })->afterResponse();
+        }
 
         if (! $request->wantsJson()) {
             return back()->with('success', 'Riwayat perawatan berhasil disimpan.');

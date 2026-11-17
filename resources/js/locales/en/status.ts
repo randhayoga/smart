@@ -16,6 +16,7 @@ export default {
   pendingBodBoc: 'Pending: BoD/BoC',
   bagus: 'Good',
   rusak: 'Damaged',
+  ditandaiRusakTotal: 'Mark as Total Damage',
   rusakTotal: 'Beyond Repair',
   hilang: 'Lost',
   dihapus: 'Deleted',

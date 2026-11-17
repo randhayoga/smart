@@ -73,6 +73,8 @@ describe('assetStatus utility', () => {
     expect(getAssetStatusBadgeClass('Dipinjam (sewa)')).toContain('bg-indigo-100');
     expect(getAssetStatusBadgeClass('borrowed (rent)')).toContain('bg-indigo-100');
     expect(getAssetStatusBadgeClass('Pending:DM')).toContain('bg-purple-100');
+    expect(getAssetStatusBadgeClass('Ditandai Rusak Total')).toContain('bg-red-50');
+    expect(getAssetStatusBadgeClass('Ditandai Rusak Total')).toContain('text-red-700');
     expect(getAssetStatusBadgeClass('Belum Aktif')).toContain('bg-amber-50');
     expect(getAssetStatusBadgeClass('Aktif')).toContain('bg-emerald-100');
     expect(getAssetStatusBadgeClass('Tidak Aktif')).toContain('bg-gray-200');

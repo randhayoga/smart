@@ -16,6 +16,10 @@ import Combobox from '@/Components/Combobox.vue';
 import LocationCombobox from '@/Components/LocationCombobox.vue';
 import { Field, FieldLabel, FieldContent, FieldError } from '@/Components/ui/field';
 import StatusBadge from '@/Components/StatusBadge.vue';
+import { getConditionLabel } from '@/lib/assetStatus';
+import { usePermissions } from '@/composables/usePermissions';
+
+const { can } = usePermissions();
 import { compressImageIfNeeded } from '@/utils/imageCompressor';
 import { hasAssetStatus, isRestrictedAssetStatus } from '@/lib/assetStatus';
 import { getQcEditTitle } from '@/lib/qualityControl';
@@ -476,20 +480,20 @@ const handleSubmit = () => {
           </FieldLabel>
           <FieldContent>
             <div v-if="isKondisiDisabled" class="w-full flex items-center justify-between px-4 py-2 text-sm border border-input rounded-xl bg-muted/30 text-muted-foreground cursor-not-allowed h-10 select-none">
-              <span>{{ form.condition || t('scanner.selectCondition') }}</span>
+              <span>{{ (form.condition ? getConditionLabel(form.condition, t) : '') || t('scanner.selectCondition') }}</span>
               <ChevronDown class="w-4 h-4 opacity-50" />
             </div>
             <DropdownMenu v-else>
               <DropdownMenuTrigger asChild>
                 <Button variant="outline" :class="['w-full justify-between rounded-xl font-normal h-10 px-4', !form.condition ? 'text-muted-foreground' : 'text-foreground']">
-                  {{ form.condition || t('scanner.selectCondition') }}
+                  {{ (form.condition ? getConditionLabel(form.condition, t) : '') || t('scanner.selectCondition') }}
                   <ChevronDown class="w-4 h-4 opacity-50" />
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="start" class="w-(--reka-dropdown-menu-trigger-width) min-w-(--reka-dropdown-menu-trigger-width) rounded-xl z-[1001]">
                 <DropdownMenuItem @select="form.condition = 'Bagus'">{{ t('inventory.conditionGood') }}</DropdownMenuItem>
                 <DropdownMenuItem @select="form.condition = 'Rusak'">{{ t('inventory.conditionDamaged') }}</DropdownMenuItem>
-                <template v-if="!isBorrowedUnit">
+                <template v-if="!isBorrowedUnit && can('inventory.status_approval.request')">
                   <DropdownMenuItem @select="form.condition = 'Rusak Total'">{{ t('inventory.conditionTotalDamage') }}</DropdownMenuItem>
                   <DropdownMenuItem @select="form.condition = 'Hilang'">{{ t('inventory.conditionLost') }}</DropdownMenuItem>
                 </template>

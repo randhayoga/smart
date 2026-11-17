@@ -80,6 +80,10 @@ return [
     'notification_low_stock_title' => 'Minimum Stock Alert: :name',
     'notification_low_stock_message' => 'Stock for model :number is currently :current :uom, which has reached or fallen below the minimum threshold (:threshold :uom).',
 
+    // Marked as Total Damage Notification
+    'notification_marked_total_damage_title' => 'Asset Marked as Total Damage',
+    'notification_marked_total_damage_message' => '[:number] :brand :name was marked as total damage by :actor. Review and update the status to Total Damage if appropriate.',
+
     // Deactivation Notifications
     'notification_deactivation_title' => 'Asset Deletion :name: Requires Your Attention',
     'notification_deactivation_message' => 'Asset deletion request for :number has been submitted and requires your approval',

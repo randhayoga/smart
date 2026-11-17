@@ -260,6 +260,7 @@ export default {
   // Conditions
   conditionGood: 'Good',
   conditionDamaged: 'Damaged',
+  conditionMarkedTotalDamage: 'Mark as Total Damage',
   conditionTotalDamage: 'Total Damage',
   conditionLost: 'Lost',
   qualityControl: 'Quality Control',

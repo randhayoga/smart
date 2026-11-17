@@ -120,7 +120,7 @@ const renderConditionBadge = (condition: string) => {
   const cond = condition || '';
   let textClass = 'text-foreground text-sm';
   if (cond === 'Bagus') textClass = 'text-emerald-600 font-semibold text-sm';
-  else if (cond === 'Rusak' || cond === 'Rusak Total' || cond === 'Hilang') textClass = 'text-rose-600 font-semibold text-sm';
+  else if (cond === 'Rusak' || cond === 'Ditandai Rusak Total' || cond === 'Rusak Total' || cond === 'Hilang') textClass = 'text-rose-600 font-semibold text-sm';
 
   return h('span', { class: textClass }, cond || '-');
 };

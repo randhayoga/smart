@@ -292,7 +292,7 @@ class BulkAssetController extends Controller
                     'Lisensi Kedaluwarsa',
                 ]),
             ],
-            'condition' => ['nullable', 'string', 'in:Bagus,Rusak,Rusak Total,Hilang'],
+            'condition' => ['nullable', 'string', 'in:Bagus,Rusak,Ditandai Rusak Total,Rusak Total,Hilang'],
             'borrowing_type' => ['nullable', 'string', 'in:LT,ST'],
             'type' => ['nullable', 'string', 'in:LT,ST'],
             'classification' => ['nullable', 'string', 'in:Aset,Inventaris'],
@@ -491,6 +491,9 @@ class BulkAssetController extends Controller
 
         $arrNeedApproval = ['Rusak Total', 'Hilang'];
         $proposedCondition = $request->input('condition');
+        if ($proposedCondition === 'Ditandai Rusak Total' && $assets->contains(fn (Asset $u) => $u->condition !== 'Ditandai Rusak Total')) {
+            return redirect()->back()->withErrors(['condition' => 'Kondisi Ditandai Rusak Total hanya dapat dipilih melalui menu Perawatan.']);
+        }
         $needApproval = $request->filled('condition') && in_array($proposedCondition, $arrNeedApproval);
 
         if ($needApproval && !$hasRestrictedAssets) {

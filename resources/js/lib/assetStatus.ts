@@ -25,6 +25,8 @@ export const STATUS_KEY_MAP: Record<string, string> = {
   'pending: bod/boc': 'status.pendingBodBoc',
   'bagus': 'status.bagus',
   'rusak': 'status.rusak',
+  'ditandai rusak total': 'status.ditandaiRusakTotal',
+  'mark as total damage': 'status.ditandaiRusakTotal',
   'rusak total': 'status.rusakTotal',
   'hilang': 'status.hilang',
   'dihapus': 'status.dihapus',
@@ -204,6 +206,9 @@ export function getAssetStatusBadgeClass(status?: string | null): string {
   if (s === 'Pending' || lower === 'pending' || lower.startsWith('pending')) return 'bg-purple-100 text-purple-800';
   if (s === 'Bagus' || lower === 'bagus') return 'bg-emerald-100 text-emerald-800';
   if (s === 'Rusak' || lower === 'rusak') return 'bg-rose-100 text-rose-800';
+  if (s === 'Ditandai Rusak Total' || lower === 'ditandai rusak total' || lower === 'mark as total damage') {
+    return 'bg-red-50 text-red-700 border border-red-300 dark:bg-red-950/40 dark:text-red-300 dark:border-red-700';
+  }
   if (s === 'Rusak Total' || lower === 'rusak total') return 'bg-red-100 text-red-800';
   if (s === 'Hilang' || lower === 'hilang') return 'bg-rose-100 text-rose-800';
   if (lower === 'dihapus' || lower === 'lisensi kedaluwarsa' || lower === 'license expired' || lower === 'ditolak' || lower === 'rejected' || lower === 'cancel' || lower === 'dibatalkan') return 'bg-rose-100 text-rose-800';
@@ -249,6 +254,8 @@ export const CONDITION_KEY_MAP: Record<string, string> = {
   'good': 'inventory.conditionGood',
   'rusak': 'inventory.conditionDamaged',
   'damaged': 'inventory.conditionDamaged',
+  'ditandai rusak total': 'inventory.conditionMarkedTotalDamage',
+  'mark as total damage': 'inventory.conditionMarkedTotalDamage',
   'rusak total': 'inventory.conditionTotalDamage',
   'total damage': 'inventory.conditionTotalDamage',
   'hilang': 'inventory.conditionLost',
@@ -277,7 +284,7 @@ export function getConditionColorClass(cond?: string | null): string {
   const c = cond.trim().toLowerCase();
   if (c === 'bagus' || c === 'good') return 'text-emerald-600 dark:text-emerald-500 font-semibold';
   if (c === 'lelang/hibah') return 'text-purple-600 dark:text-purple-500 font-semibold';
-  if (c === 'rusak' || c === 'rusak total' || c === 'hilang' || c === 'damaged' || c === 'total damage' || c === 'lost') {
+  if (c === 'rusak' || c === 'rusak total' || c === 'ditandai rusak total' || c === 'mark as total damage' || c === 'hilang' || c === 'damaged' || c === 'total damage' || c === 'lost') {
     return 'text-rose-600 dark:text-rose-500 font-semibold';
   }
   return 'text-foreground';

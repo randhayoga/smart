@@ -80,6 +80,10 @@ return [
     'notification_low_stock_title' => 'Peringatan Stok Minimum: :name',
     'notification_low_stock_message' => 'Stok model :number saat ini :current :uom, telah mencapai atau di bawah batas minimum (:threshold :uom).',
 
+    // Marked as Total Damage Notification
+    'notification_marked_total_damage_title' => 'Asset Ditandai Rusak Total',
+    'notification_marked_total_damage_message' => '[:number] :brand :name ditandai rusak total oleh :actor. Tinjau dan lakukan pergantian status menjadi Rusak Total jika sesuai.',
+
     // Deactivation Notifications
     'notification_deactivation_title' => 'Penghapusan Aset :name: Perlu Perhatian Anda',
     'notification_deactivation_message' => 'Pengajuan penghapusan aset :number telah diajukan dan memerlukan approval Anda',
