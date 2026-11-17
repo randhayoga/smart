@@ -381,7 +381,7 @@ const auditColumns = computed<ColumnDef<InventoryLogItem>[]>(() => {
           <!-- Hide Stock In Checkbox Pill -->
           <label
             v-if="showHideStockInFilter"
-            class="inline-flex items-center gap-2 px-3 py-1.5 rounded-[14px] border border-border bg-background hover:bg-muted/50 cursor-pointer text-xs sm:text-sm font-medium text-foreground transition-all duration-150 select-none shadow-sm active:scale-95"
+            class="inline-flex items-center gap-2 h-9 px-3 py-2 rounded-[14px] border border-border bg-background hover:bg-muted/50 cursor-pointer text-sm font-normal text-foreground transition-all duration-150 select-none shadow-sm active:scale-95"
             :class="{ 'border-primary/50 bg-primary/5 text-primary': hideStockIn }"
           >
             <Checkbox v-model="hideStockIn" class="rounded-[4px]" />

@@ -316,6 +316,7 @@ class DummySoftwareShowcaseSeeder extends Seeder
             'location_id' => null,
             'number' => $assetNumber,
             'legacy_number' => $assetNumber,
+            'active_status' => $status === 'Belum Diverifikasi' ? 'Belum Aktif' : (in_array($status, ['Verifikasi Ditolak', 'Dihapus'], true) ? 'Tidak Aktif' : 'Aktif'),
             'status' => $status,
             'approval_status' => null,
             'condition' => null,

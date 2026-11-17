@@ -270,6 +270,7 @@ export default {
   qcPassWithDate: 'QC Pass (pada: {date})',
   qcFailWithDate: 'QC Fail (pada: {date})',
   statusAndCondition: 'Status & Kondisi',
+  showInactiveAssets: 'Lihat Aset Tidak Aktif',
   statusCannotBeChangedManually: 'Status tidak dapat diubah secara manual',
   borrowingTypeCannotBeChanged: 'Tipe peminjaman tidak dapat diubah saat aset sedang dipinjam atau di-assign',
 

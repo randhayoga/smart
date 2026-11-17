@@ -34,7 +34,7 @@ const activeTab = ref<'detail' | 'edit' | 'maintain'>('detail');
 
 const isMaintenanceAllowed = computed(() => {
   if (!props.asset?.status) return true;
-  return !hasAssetStatus(props.asset.status, 'Tidak Aktif', props.asset.approval_status) &&
+  return props.asset.active_status !== 'Tidak Aktif' &&
          !hasAssetStatus(props.asset.status, 'Dihapus', props.asset.approval_status);
 });
 

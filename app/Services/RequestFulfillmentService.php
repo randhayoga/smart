@@ -27,7 +27,9 @@ class RequestFulfillmentService
     {
         $query = Asset::query()
             ->with(['lot.model.brand', 'location.parent'])
-            ->whereRaw("LOWER(assets.status) = 'tersedia'");
+            ->where('assets.active_status', 'Aktif')
+            ->whereRaw("LOWER(assets.status) = 'tersedia'")
+            ->whereNull('assets.approval_status');
 
         // Filter by item model or type
         $query->whereHas('lot', function ($lq) use ($item) {

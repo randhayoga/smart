@@ -228,6 +228,7 @@ class StockInventoryQueryService
             'a.legacy_number',
             'a.lot_id',
             'a.location_id',
+            'a.active_status',
             'a.status',
             'a.approval_status',
             'a.condition',
@@ -340,6 +341,7 @@ class StockInventoryQueryService
                 'id' => $aid,
                 'number' => $row->number,
                 'legacy_number' => $row->legacy_number,
+                'active_status' => $row->active_status,
                 'status' => $row->status,
                 'approval_status' => $row->approval_status,
                 'condition' => $row->condition,
@@ -596,6 +598,7 @@ class StockInventoryQueryService
             'a.updated_at',             // 20
             'a.qc_pass',                // 21
             'a.last_qc',                // 22
+            'a.active_status',          // 23
         ]);
 
         if (!empty($filters['exclude_unverified'])) {
@@ -689,6 +692,9 @@ class StockInventoryQueryService
             }
             if ($r[22] !== null) {
                 $sparse['lq'] = substr((string) $r[22], 0, 10);
+            }
+            if ($r[23] !== null && $r[23] !== '' && $r[23] !== 'Aktif') {
+                $sparse['act'] = $r[23];
             }
 
             $tuple = [

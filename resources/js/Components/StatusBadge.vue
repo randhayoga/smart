@@ -13,6 +13,7 @@ import {
 } from '@/lib/assetStatus';
 
 const props = defineProps<{
+  activeStatus?: string | null;
   status?: string | null;
   approvalStatus?: string | null;
   proposedStatus?: string | null;
@@ -22,7 +23,7 @@ const props = defineProps<{
 const { t, te } = useI18n();
 
 const statusTokens = computed(() => {
-  const tokens = parseAssetStatuses(props.status, props.approvalStatus);
+  const tokens = parseAssetStatuses(props.status, props.approvalStatus, props.activeStatus);
   return tokens.length > 0 ? tokens : [''];
 });
 

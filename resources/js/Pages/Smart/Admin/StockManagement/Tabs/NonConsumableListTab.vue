@@ -105,6 +105,7 @@ const locationFilter = ref('');
 const organizerFilter = ref(getInitialOrganizerFilter());
 const vendorFilter = ref('');
 const showAdvancedFilters = ref(false);
+const showInactiveAssets = ref(false);
 const rowsPerPage = ref<'all' | '10' | '25' | '50'>('50');
 const dataTableRef = ref<any>(null);
 
@@ -270,7 +271,7 @@ const scopedUnits = computed(() => {
       return units;
     case 'standard':
     default:
-      return unitsBundle.value.standardUnits;
+      return showInactiveAssets.value ? unitsBundle.value.standardUnits : unitsBundle.value.activeStandardUnits;
   }
 });
 
@@ -305,7 +306,7 @@ const filteredUnits = computed(() => {
       const status = (u.status || '').toLowerCase();
       const proposed = (u.proposed_status || '').toLowerCase();
       return (
-        hasAssetStatus(u.status, filterVal, u.approval_status) ||
+        hasAssetStatus(u.status, filterVal, u.approval_status, u.active_status) ||
         status === filterVal ||
         ((status === 'pending' || status === 'dihapus') && proposed === filterVal)
       );
@@ -403,7 +404,8 @@ const hasActiveFilters = computed(() => {
     brandFilter.value ||
     locationFilter.value ||
     organizerFilter.value ||
-    vendorFilter.value
+    vendorFilter.value ||
+    showInactiveAssets.value
   );
 });
 
@@ -418,6 +420,7 @@ const clearFilters = () => {
   locationFilter.value = '';
   organizerFilter.value = '';
   vendorFilter.value = '';
+  showInactiveAssets.value = false;
 };
 
 // Single-pass facet computation over units (already precomputed in prepareUnitsBundle)
@@ -435,22 +438,32 @@ watch(categoryFilter, () => {
   subcategoryFilter.value = '';
 });
 
+watch(showInactiveAssets, (val) => {
+  if (!val && statusFilter.value.toLowerCase() === 'tidak aktif') {
+    statusFilter.value = '';
+  }
+});
+
 const availableStatuses = computed(() => {
   if (!props.statusScope || props.statusScope === 'standard') {
-    const std = unitsBundle.value.facets.standardStatuses;
+    const std = showInactiveAssets.value
+      ? unitsBundle.value.facets.standardStatuses
+      : unitsBundle.value.facets.activeStandardStatuses;
     if (std.length > 0) return std;
-    return ['Tersedia', 'Dipinjam (ST)', 'Di-assign (LT)', 'Tidak Aktif', 'Dihapus', 'Verifikasi Ditolak'];
+    return showInactiveAssets.value
+      ? ['Aktif', 'Tidak Aktif', 'Tersedia', 'Dipinjam (ST)', 'Di-assign (LT)', 'Dihapus', 'Verifikasi Ditolak']
+      : ['Aktif', 'Tersedia', 'Dipinjam (ST)', 'Di-assign (LT)', 'Dihapus', 'Verifikasi Ditolak'];
   }
   const statusSet = new Set<string>();
   const list = scopedUnits.value;
   for (let i = 0; i < list.length; i++) {
-    const tokens = list[i]._statusTokens || parseAssetStatuses(list[i].status, list[i].approval_status);
+    const tokens = list[i]._statusTokens || parseAssetStatuses(list[i].status, list[i].approval_status, list[i].active_status);
     for (let j = 0; j < tokens.length; j++) {
       if (tokens[j]) statusSet.add(tokens[j]);
     }
   }
   if (statusSet.size > 0) return Array.from(statusSet);
-  return ['Tersedia', 'Dipinjam (ST)', 'Di-assign (LT)', 'Tidak Aktif', 'Dihapus', 'Verifikasi Ditolak'];
+  return ['Aktif', 'Belum Aktif', 'Tersedia', 'Dipinjam (ST)', 'Di-assign (LT)', 'Dihapus', 'Verifikasi Ditolak'];
 });
 
 const availableConditions = ['Bagus', 'Rusak', 'Rusak Total', 'Hilang'];
@@ -560,6 +573,8 @@ const totalAsetTerpilihCount = computed(() => {
             v-model:organizer-filter="organizerFilter"
             v-model:vendor-filter="vendorFilter"
             v-model:show-advanced-filters="showAdvancedFilters"
+            v-model:show-inactive-assets="showInactiveAssets"
+            :show-inactive-toggle="!props.statusScope || props.statusScope === 'standard'"
             :has-active-filters="hasActiveFilters"
             :available-categories="availableCategories"
             :available-subcategories="availableSubcategories"

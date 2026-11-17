@@ -111,9 +111,11 @@ class AssetController extends Controller
         unset($validated['specification']);
 
         if ($needApproval) {
+            $validated['active_status'] = 'Aktif';
             $validated['status'] = 'Tersedia';
             $validated['approval_status'] = 'Pending:DM';
         } else {
+            $validated['active_status'] = 'Belum Aktif';
             $validated['status'] = 'Belum Diverifikasi';
             $validated['approval_status'] = null;
         }
@@ -296,6 +298,7 @@ class AssetController extends Controller
                     ]);
                 } else {
                     Asset::withoutEvents(fn () => $asset->update([
+                        'active_status' => 'Tidak Aktif',
                         'status' => 'Dihapus',
                         'approval_status' => null,
                     ]));
@@ -329,7 +332,9 @@ class AssetController extends Controller
         $arrNeedApproval = ['Rusak Total', 'Hilang'];
 
         $currentStatusLower = strtolower(trim($asset->status ?? ''));
-        $isRestricted = collect($asset->statuses)->contains(fn ($s) => in_array(strtolower($s), ['tidak aktif', 'dihapus', 'pending', 'pending:dm', 'pending:bod/boc', 'belum diverifikasi', 'verifikasi ditolak']) || str_starts_with(strtolower($s), 'pending')) || in_array($asset->condition, $arrInactiveConditions);
+        $isRestricted = in_array($asset->active_status, ['Tidak Aktif', 'Belum Aktif'], true)
+            || collect($asset->statuses)->contains(fn ($s) => in_array(strtolower($s), ['dihapus', 'pending', 'pending:dm', 'pending:bod/boc', 'belum diverifikasi', 'verifikasi ditolak']) || str_starts_with(strtolower($s), 'pending'))
+            || in_array($asset->condition, $arrInactiveConditions);
 
         $borrowingType = $request->input('borrowing_type', $request->input('type'));
         if ($borrowingType !== null) {
@@ -347,7 +352,6 @@ class AssetController extends Controller
                     'Tersedia',
                     'Dipinjam (ST)',
                     'Dipinjam (sewa)',
-                    'Tidak Aktif',
                     'Dihapus',
                     'Pending',
                     'Pending:DM',
@@ -444,10 +448,6 @@ class AssetController extends Controller
                 if ($currentStatusLower !== 'tersedia' && $currentStatusLower !== 'di-assign (lt)' && $currentStatusLower !== 'lisensi kedaluwarsa') {
                     return redirect()->back()->withErrors(['status' => 'Status hanya dapat diubah jika aset berstatus Tersedia.']);
                 }
-            }
-            $inputStatusLower = strtolower(trim($request->input('status', '')));
-            if ($inputStatusLower === 'tidak aktif' && !in_array($proposedCondition, $arrInactiveConditions)) {
-                return redirect()->back()->withErrors(['status' => 'Status Tidak Aktif tidak dapat dipilih secara manual.']);
             }
         }
 
@@ -686,7 +686,7 @@ class AssetController extends Controller
         ]);
 
         $pendingApproval = $asset->deletionApprovals->firstWhere('decision', 'pending');
-        $approvedApproval = ($asset->hasStatus('Tidak Aktif') || $asset->hasStatus('Pending:BoD/BoC') || $asset->hasStatus('Dihapus'))
+        $approvedApproval = ($asset->active_status === 'Tidak Aktif' || $asset->hasStatus('Pending:BoD/BoC') || $asset->hasStatus('Dihapus'))
             ? $asset->deletionApprovals->where('decision', 'approved')->sortByDesc('id')->first()
             : null;
         $rejectedApproval = (!$pendingApproval && !$approvedApproval)
@@ -703,6 +703,7 @@ class AssetController extends Controller
             'id' => $asset->id,
             'number' => $asset->number,
             'legacy_number' => $asset->legacy_number,
+            'active_status' => $asset->active_status,
             'status' => $asset->status,
             'approval_status' => $asset->approval_status,
             'proposed_status' => $pendingApproval 

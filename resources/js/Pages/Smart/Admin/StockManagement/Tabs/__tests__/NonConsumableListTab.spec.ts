@@ -66,7 +66,8 @@ describe('NonConsumableListTab.vue - statusScope Flag', () => {
     {
       id: 2,
       number: '00002-LP-PTRE-26',
-      status: 'Tidak Aktif,Pending:BoD/BoC',
+      active_status: 'Aktif',
+      status: 'Tersedia,Pending:BoD/BoC',
       condition: 'Rusak Total',
       price: 2000000,
       image_url: '',
@@ -82,6 +83,7 @@ describe('NonConsumableListTab.vue - statusScope Flag', () => {
     {
       id: 3,
       number: '00003-LP-PTRE-26',
+      active_status: 'Aktif',
       status: 'Tersedia,Pending:DM',
       condition: 'Rusak',
       price: 3000000,
@@ -98,6 +100,7 @@ describe('NonConsumableListTab.vue - statusScope Flag', () => {
     {
       id: 4,
       number: '00004-LP-PTRE-26',
+      active_status: 'Aktif',
       status: 'Tersedia',
       condition: 'Bagus',
       price: 4000000,
@@ -114,7 +117,8 @@ describe('NonConsumableListTab.vue - statusScope Flag', () => {
     {
       id: 5,
       number: '00005-LP-PTRE-26',
-      status: 'Tidak Aktif',
+      active_status: 'Tidak Aktif',
+      status: 'Dihapus',
       condition: 'Lelang/Hibah',
       price: 5000000,
       image_url: '',
@@ -175,17 +179,23 @@ describe('NonConsumableListTab.vue - statusScope Flag', () => {
     });
   };
 
-  it('defaults to statusScope="standard" which excludes unverified units while keeping dual-status units visible', () => {
+  it('defaults to statusScope="standard" which excludes unverified and inactive units until showInactiveAssets is checked', () => {
     const wrapper = mountTab();
     const vm = wrapper.vm as any;
 
     const numbers = vm.filteredUnits.map((u: any) => u.number);
-    expect(numbers).toContain('00002-LP-PTRE-26'); // Tidak Aktif,Pending:BoD/BoC
+    expect(numbers).toContain('00002-LP-PTRE-26'); // Tersedia,Pending:BoD/BoC
     expect(numbers).toContain('00003-LP-PTRE-26'); // Tersedia,Pending:DM
     expect(numbers).toContain('00004-LP-PTRE-26'); // Tersedia
-    expect(numbers).toContain('00005-LP-PTRE-26'); // Tidak Aktif
     expect(numbers).toContain('00006-LP-PTRE-26'); // Standby
+    expect(numbers).not.toContain('00005-LP-PTRE-26'); // active_status: Tidak Aktif (hidden by default)
     expect(numbers).not.toContain('00001-LP-PTRE-26'); // Belum Diverifikasi
+    expect(vm.availableStatuses).not.toContain('Tidak Aktif');
+
+    vm.showInactiveAssets = true;
+    const expandedNumbers = vm.filteredUnits.map((u: any) => u.number);
+    expect(expandedNumbers).toContain('00005-LP-PTRE-26');
+    expect(vm.availableStatuses).toContain('Tidak Aktif');
   });
 
   it('filters to only unverified units when statusScope="unverified"', () => {

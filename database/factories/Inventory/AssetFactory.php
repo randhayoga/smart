@@ -29,6 +29,7 @@ class AssetFactory extends Factory
             'number' => 'AST-' . fake()->unique()->numerify('#####'),
             'lot_id' => Lot::factory(),
             'location_id' => \App\Models\Master\Location::factory(),
+            'active_status' => 'Belum Aktif',
             'status' => 'Belum Diverifikasi',
             'condition' => 'Bagus',
             'borrowing_type' => 'LT',
@@ -50,6 +51,7 @@ class AssetFactory extends Factory
     public function available(): static
     {
         return $this->state(fn (array $attributes) => [
+            'active_status' => 'Aktif',
             'status' => 'Tersedia',
             'condition' => 'Bagus',
         ]);

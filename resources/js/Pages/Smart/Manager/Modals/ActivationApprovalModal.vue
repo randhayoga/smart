@@ -270,6 +270,7 @@ const isApprovalLocationActive = computed(() => {
                   <div v-if="mode === 'pending'" class="flex items-center gap-1.5 flex-wrap">
                     <span>{{ hasCondition(approval.unit_details?.condition ?? approval.condition) && !isSoft(approval) ? t('inventory.statusAndCondition') : t('inventory.status') }}:</span>
                     <StatusBadge 
+                      :active-status="approval.unit_details?.active_status ?? approval.active_status"
                       :status="approval.unit_details?.status ?? approval.status" 
                       :approval-status="approval.unit_details?.approval_status ?? approval.approval_status ?? 'Pending:DM'" 
                     />
@@ -295,6 +296,7 @@ const isApprovalLocationActive = computed(() => {
                     <div class="flex items-center gap-1.5 flex-wrap">
                       <span>{{ hasCondition(approval.unit_details?.condition ?? approval.condition) && !isSoft(approval) ? t('inventory.statusAndCondition') : t('inventory.status') }}:</span>
                       <StatusBadge 
+                        :active-status="approval.unit_details?.active_status ?? approval.active_status"
                         :status="approval.unit_details?.status ?? approval.status" 
                         :approval-status="approval.unit_details?.approval_status ?? approval.approval_status" 
                       />

@@ -270,6 +270,7 @@ export default {
   qcPassWithDate: 'QC Pass (at: {date})',
   qcFailWithDate: 'QC Fail (at: {date})',
   statusAndCondition: 'Status & Condition',
+  showInactiveAssets: 'Show Inactive Asset',
   statusCannotBeChangedManually: "Status cannot be changed manually",
   borrowingTypeCannotBeChanged: 'Borrowing type cannot be changed while asset is borrowed or assigned',
 

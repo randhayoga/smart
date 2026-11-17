@@ -325,7 +325,7 @@ class NotificationFrameworkTest extends TestCase
         $brand = Brand::factory()->create(['name' => 'Dell']);
         $barang = Barang::factory()->create(['brand_id' => $brand->id, 'name' => 'Laptop Inspiron']);
         $lot = Lot::factory()->create(['barang_id' => $barang->id]);
-        $unit = Unit::factory()->create(['lot_id' => $lot->id, 'number' => 'AST-DEL-001', 'status' => 'Tersedia', 'condition' => 'Bagus']);
+        $unit = Unit::factory()->create(['lot_id' => $lot->id, 'number' => 'AST-DEL-001', 'active_status' => 'Aktif', 'status' => 'Tersedia', 'condition' => 'Bagus']);
 
         /** @var User $admin */
         $adminEmployee = HrdEmployee::factory()->create(['employee_id' => '255578']);
@@ -541,9 +541,9 @@ class NotificationFrameworkTest extends TestCase
         $brand = Brand::factory()->create(['name' => 'Apple']);
         $barang = Barang::factory()->create(['brand_id' => $brand->id, 'name' => 'MacBook Pro']);
         $lot = Lot::factory()->create(['barang_id' => $barang->id]);
-        $unit1 = Unit::factory()->create(['lot_id' => $lot->id, 'number' => 'AST-MBP-001', 'status' => 'Tersedia', 'condition' => 'Bagus']);
-        $unit2 = Unit::factory()->create(['lot_id' => $lot->id, 'number' => 'AST-MBP-002', 'status' => 'Tersedia', 'condition' => 'Bagus']);
-        $unit3 = Unit::factory()->create(['lot_id' => $lot->id, 'number' => 'AST-MBP-003', 'status' => 'Tersedia', 'condition' => 'Bagus']);
+        $unit1 = Unit::factory()->create(['lot_id' => $lot->id, 'number' => 'AST-MBP-001', 'active_status' => 'Aktif', 'status' => 'Tersedia', 'condition' => 'Bagus']);
+        $unit2 = Unit::factory()->create(['lot_id' => $lot->id, 'number' => 'AST-MBP-002', 'active_status' => 'Aktif', 'status' => 'Tersedia', 'condition' => 'Bagus']);
+        $unit3 = Unit::factory()->create(['lot_id' => $lot->id, 'number' => 'AST-MBP-003', 'active_status' => 'Aktif', 'status' => 'Tersedia', 'condition' => 'Bagus']);
 
         $memoFile = UploadedFile::fake()->create('bulk_memo.pdf', 100, 'application/pdf');
 

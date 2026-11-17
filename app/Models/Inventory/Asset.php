@@ -86,7 +86,7 @@ class Asset extends Model
             }
 
             $dirty = $asset->getDirty();
-            $tracked = ['status', 'approval_status', 'condition', 'location_id', 'is_assigned_to_location', 'license_exp_date', 'last_qc', 'qc_pass'];
+            $tracked = ['active_status', 'status', 'approval_status', 'condition', 'location_id', 'is_assigned_to_location', 'license_exp_date', 'last_qc', 'qc_pass'];
             $changed = array_intersect(array_keys($dirty), $tracked);
 
             if (!empty($changed)) {
@@ -283,10 +283,10 @@ class Asset extends Model
     }
 
     public const DISALLOWED_MAINTENANCE_STATUSES = [
-        'Tidak Aktif',
         'Belum Diverifikasi',
         'Verifikasi Ditolak',
         'Lisensi Kedaluwarsa',
+        'Dihapus',
     ];
 
     /**
@@ -294,6 +294,10 @@ class Asset extends Model
      */
     public function allowsMaintenance(): bool
     {
+        if (in_array($this->active_status, ['Tidak Aktif', 'Belum Aktif'], true)) {
+            return false;
+        }
+
         $statuses = array_map('trim', explode(',', (string) $this->status));
         if ($this->approval_status) {
             $statuses[] = trim($this->approval_status);
@@ -309,6 +313,7 @@ class Asset extends Model
     }
 
     protected $attributes = [
+        'active_status' => 'Belum Aktif',
         'status' => 'Belum Diverifikasi',
         'borrowing_type' => 'LT',
         'classification' => 'Aset',
@@ -321,6 +326,7 @@ class Asset extends Model
         'legacy_number',
         'lot_id',
         'location_id',
+        'active_status',
         'status',
         'approval_status',
         'condition',

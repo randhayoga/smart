@@ -7,6 +7,7 @@ export interface PrintFilterInfo {
 
 export interface PrintableAssetItem {
   id?: number | string;
+  active_status?: string | null;
   number?: string | null;
   code?: string | null;
   barang_code?: string | null;
@@ -99,8 +100,9 @@ export function printManajemenStok(
     const l = getStringVal(item.location || item.location_name || item.lokasi);
     const lowestLoc = r ? r : (f ? f : (l ? l : '-'));
 
+    const activeSt = getStringVal(item.active_status);
     const st = getStringVal(item.status);
-    const statusText = (st === 'Tidak Aktif') ? 'Tidak Aktif' : 'Aktif';
+    const statusText = activeSt || (st === 'Dihapus' || st === 'Verifikasi Ditolak' ? 'Tidak Aktif' : 'Aktif');
 
     return `
       <tr>

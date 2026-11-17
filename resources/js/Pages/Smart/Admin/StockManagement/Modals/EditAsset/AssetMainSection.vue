@@ -207,6 +207,7 @@ const qcLabel = computed(() => {
           >
             <div v-if="form.status" class="flex items-center gap-1.5 overflow-hidden">
               <StatusBadge
+                :active-status="form.active_status"
                 :status="form.status"
                 :approval-status="form.approval_status"
                 class="rounded-sm"

@@ -102,9 +102,11 @@ class BulkAssetController extends Controller
         $finalCompSpec = $isComp ? $compSpec : null;
 
         if ($needApproval) {
+            $validated['active_status'] = 'Aktif';
             $validated['status'] = 'Tersedia';
             $validated['approval_status'] = 'Pending:DM';
         } else {
+            $validated['active_status'] = 'Belum Aktif';
             $validated['status'] = 'Belum Diverifikasi';
             $validated['approval_status'] = null;
         }
@@ -179,6 +181,7 @@ class BulkAssetController extends Controller
                     'number' => $num,
                     'lot_id' => $validated['lot_id'],
                     'location_id' => $isSoft ? null : ($validated['location_id'] ?? null),
+                    'active_status' => $validated['active_status'],
                     'status' => $validated['status'],
                     'approval_status' => $validated['approval_status'],
                     'condition' => $isSoft ? null : ($validated['condition'] ?? null),
@@ -281,7 +284,6 @@ class BulkAssetController extends Controller
                     'Tersedia',
                     'Dipinjam (ST)',
                     'Dipinjam (sewa)',
-                    'Tidak Aktif',
                     'Dihapus',
                     'Pending',
                     'Pending:DM',
@@ -425,6 +427,7 @@ class BulkAssetController extends Controller
                     }
                 } else {
                     Asset::whereIn('id', $ids)->update([
+                        'active_status' => 'Tidak Aktif',
                         'status' => 'Dihapus',
                         'approval_status' => null,
                     ]);
@@ -465,7 +468,8 @@ class BulkAssetController extends Controller
 
         $arrInactiveConditions = ['Rusak Total', 'Hilang'];
         $hasRestrictedAssets = $assets->contains(function (Asset $u) use ($arrInactiveConditions) {
-            return collect($u->statuses)->contains(fn ($s) => in_array(strtolower($s), ['tidak aktif', 'dihapus', 'pending', 'pending:dm', 'pending:bod/boc']) || str_starts_with(strtolower($s), 'pending'))
+            return in_array($u->active_status, ['Tidak Aktif', 'Belum Aktif'], true)
+                || collect($u->statuses)->contains(fn ($s) => in_array(strtolower($s), ['dihapus', 'pending', 'pending:dm', 'pending:bod/boc']) || str_starts_with(strtolower($s), 'pending'))
                 || in_array($u->condition, $arrInactiveConditions);
         });
 
@@ -482,11 +486,6 @@ class BulkAssetController extends Controller
                 if ($hasDisallowedStatusAssets) {
                     return redirect()->back()->withErrors(['status' => 'Status hanya dapat diubah jika semua aset yang dipilih berstatus Tersedia.']);
                 }
-            }
-            $inputStatusLower = strtolower(trim($request->input('status', '')));
-            $proposedCondition = $request->input('condition');
-            if ($inputStatusLower === 'tidak aktif' && !in_array($proposedCondition, $arrInactiveConditions)) {
-                return redirect()->back()->withErrors(['status' => 'Status Tidak Aktif tidak dapat dipilih secara manual.']);
             }
         }
 

@@ -131,6 +131,7 @@ class AssetDeletionApprovalTest extends TestCase
             'number' => $unitNumber,
             'lot_id' => $lot->id,
             'location_id' => $location->id,
+            'active_status' => 'Aktif',
             'status' => 'Tersedia',
             'condition' => 'Bagus',
             'type' => 'LT',
@@ -230,11 +231,13 @@ class AssetDeletionApprovalTest extends TestCase
         $this->assertEquals('Bulk approval works', $app1->dm_note);
         $this->assertEquals('Bulk approval works', $app2->dm_note);
         
-        $this->assertEquals('Tidak Aktif', $unit1->status);
+        $this->assertEquals('Tersedia', $unit1->status);
+        $this->assertEquals('Aktif', $unit1->active_status);
         $this->assertEquals('Pending:BoD/BoC', $unit1->approval_status);
         $this->assertEquals('Hilang', $unit1->condition);
 
-        $this->assertEquals('Tidak Aktif', $unit2->status);
+        $this->assertEquals('Tersedia', $unit2->status);
+        $this->assertEquals('Aktif', $unit2->active_status);
         $this->assertEquals('Pending:BoD/BoC', $unit2->approval_status);
         $this->assertEquals('Rusak Total', $unit2->condition);
 
@@ -246,7 +249,7 @@ class AssetDeletionApprovalTest extends TestCase
 
         $this->assertDatabaseHas('asset_lifecycles', [
             'asset_id' => $unit1->id,
-            'status' => 'Tidak Aktif',
+            'status' => 'Tersedia',
             'actor_id' => $ifsManager->id,
         ]);
 
@@ -258,7 +261,7 @@ class AssetDeletionApprovalTest extends TestCase
 
         $this->assertDatabaseHas('asset_lifecycles', [
             'asset_id' => $unit2->id,
-            'status' => 'Tidak Aktif',
+            'status' => 'Tersedia',
             'actor_id' => $ifsManager->id,
         ]);
     }
@@ -342,7 +345,7 @@ class AssetDeletionApprovalTest extends TestCase
             'memo_url' => 'memos/placeholder.pdf',
         ]);
 
-        // Step 1: DM IFS approves -> status becomes Tidak Aktif,Pending:BoD/BoC, condition stays Rusak Total
+        // Step 1: DM IFS approves -> status stays Tersedia, active_status stays Aktif, approval_status becomes Pending:BoD/BoC
         $this->actingAs($ifsManager)->post(route('smart.approve-deletion.bulk-store'), [
             'ids' => [$approval->id],
             'decision' => 'approved',
@@ -350,11 +353,12 @@ class AssetDeletionApprovalTest extends TestCase
         ])->assertRedirect();
 
         $unit->refresh();
-        $this->assertEquals('Tidak Aktif', $unit->status);
+        $this->assertEquals('Tersedia', $unit->status);
+        $this->assertEquals('Aktif', $unit->active_status);
         $this->assertEquals('Pending:BoD/BoC', $unit->approval_status);
         $this->assertEquals('Rusak Total', $unit->condition);
 
-        // Step 2: Admin uploads BoD/BoC approval form -> status becomes Dihapus, condition stays Rusak Total
+        // Step 2: Admin uploads BoD/BoC approval form -> status becomes Dihapus, active_status becomes Tidak Aktif, condition stays Rusak Total
         $adminEmployee = HrdEmployee::factory()->create(['employee_id' => '255578']);
         $admin = User::factory()->create(['employee_id' => $adminEmployee->employee_id]);
         $file = \Illuminate\Http\UploadedFile::fake()->create('bod_boc.pdf', 100, 'application/pdf');
@@ -370,6 +374,8 @@ class AssetDeletionApprovalTest extends TestCase
         $approval->refresh();
 
         $this->assertEquals('Dihapus', $unit->status);
+        $this->assertEquals('Tidak Aktif', $unit->active_status);
+        $this->assertNull($unit->approval_status);
         $this->assertEquals('Rusak Total', $unit->condition);
         $this->assertNotNull($approval->bod_boc_approval_url);
 
@@ -400,7 +406,7 @@ class AssetDeletionApprovalTest extends TestCase
             'memo_url' => 'memos/placeholder.pdf',
         ]);
 
-        // Step 1: DM IFS approves -> status becomes Tidak Aktif,Pending:BoD/BoC, condition stays Hilang
+        // Step 1: DM IFS approves -> status stays Tersedia, active_status stays Aktif, approval_status becomes Pending:BoD/BoC
         $this->actingAs($ifsManager)->post(route('smart.approve-deletion.bulk-store'), [
             'ids' => [$approval->id],
             'decision' => 'approved',
@@ -408,7 +414,8 @@ class AssetDeletionApprovalTest extends TestCase
         ])->assertRedirect();
 
         $unit->refresh();
-        $this->assertEquals('Tidak Aktif', $unit->status);
+        $this->assertEquals('Tersedia', $unit->status);
+        $this->assertEquals('Aktif', $unit->active_status);
         $this->assertEquals('Pending:BoD/BoC', $unit->approval_status);
 
         // Step 2: Admin uploads BoD/BoC disapproval form -> status reverts to Tersedia, condition to Bagus
@@ -608,9 +615,10 @@ class AssetDeletionApprovalTest extends TestCase
         $prevApproval->refresh();
         $this->assertNull($prevApproval->bod_boc_disapproval_url);
 
-        // 6. Verify unit status updated to Tidak Aktif,Pending:BoD/BoC
+        // 6. Verify unit status stays Tersedia with Pending:BoD/BoC and active_status Aktif
         $unit->refresh();
-        $this->assertEquals('Tidak Aktif', $unit->status);
+        $this->assertEquals('Tersedia', $unit->status);
+        $this->assertEquals('Aktif', $unit->active_status);
         $this->assertEquals('Pending:BoD/BoC', $unit->approval_status);
     }
 

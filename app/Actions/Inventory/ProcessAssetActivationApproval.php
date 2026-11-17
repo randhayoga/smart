@@ -45,6 +45,7 @@ class ProcessAssetActivationApproval
                 ->update(['end_date' => now()]);
 
             $previousStatus = $asset->status;
+            $previousActiveStatus = $asset->active_status;
             $isLicenseExpired = $asset->isLicenseExpired();
 
             // Suppress duplicate "Perubahan status" lifecycle created by Asset::updating hook
@@ -52,10 +53,14 @@ class ProcessAssetActivationApproval
                 if ($decision === 'approved') {
                     $asset->update([
                         'status' => $isLicenseExpired ? 'Lisensi Kedaluwarsa' : 'Tersedia',
+                        'active_status' => 'Aktif',
+                        'approval_status' => null,
                     ]);
                 } else {
                     $asset->update([
                         'status' => 'Verifikasi Ditolak',
+                        'active_status' => 'Tidak Aktif',
+                        'approval_status' => null,
                     ]);
                 }
             });
@@ -80,8 +85,14 @@ class ProcessAssetActivationApproval
                 'end_date' => null,
                 'actor_id' => $approverId,
                 'note' => $lifecycleNote,
-                'previous_state' => ['status' => $previousStatus],
-                'new_state' => ['status' => $asset->status],
+                'previous_state' => [
+                    'active_status' => $previousActiveStatus,
+                    'status' => $previousStatus,
+                ],
+                'new_state' => [
+                    'active_status' => $asset->active_status,
+                    'status' => $asset->status,
+                ],
             ]);
 
             app(NotificationService::class)->notifyAdminAssetActivationDecision($approval, $decision);

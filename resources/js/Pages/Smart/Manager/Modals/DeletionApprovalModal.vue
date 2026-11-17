@@ -301,6 +301,7 @@ const isApprovalLocationActive = computed(() => {
                   <div class="flex items-center gap-1.5 flex-wrap">
                     <span>{{ hasCondition(approval.previous_condition || approval.asset_details?.condition) && !isSoft(approval) ? t('approvals.prevStatusConditionLabel') : t('inventory.status') + ':' }}</span>
                     <StatusBadge 
+                      :active-status="approval.asset_details?.active_status ?? approval.active_status"
                       :status="approval.previous_status ?? approval.asset_details?.status ?? approval.status" 
                       :approval-status="mode === 'pending' ? (approval.approval_status ?? approval.asset_details?.approval_status ?? 'Pending:DM') : undefined" 
                     />
@@ -313,13 +314,18 @@ const isApprovalLocationActive = computed(() => {
                   <div v-if="mode === 'decided'" class="flex items-center gap-1.5 flex-wrap">
                     <span>{{ hasCondition(approval.previous_condition || approval.asset_details?.condition) && !isSoft(approval) ? t('approvals.postApprovalStatusConditionLabel') : t('inventory.status') + ':' }}</span>
                     <template v-if="approval.decision === 'approved'">
-                      <StatusBadge status="Tidak Aktif" approval-status="Pending:BoD/BoC" />
+                      <StatusBadge
+                        active-status="Aktif"
+                        :status="approval.previous_status ?? approval.asset_details?.status ?? approval.status"
+                        approval-status="Pending:BoD/BoC"
+                      />
                       <span v-if="hasCondition(approval.proposed_condition || approval.proposed_status) && !isSoft(approval)" :class="getConditionClass(approval.proposed_condition || approval.proposed_status)">
                         {{ getConditionLabel(approval.proposed_condition || approval.proposed_status) }}
                       </span>
                     </template>
                     <template v-else>
                       <StatusBadge 
+                        :active-status="approval.asset_details?.active_status ?? approval.active_status"
                         :status="approval.previous_status ?? approval.asset_details?.status ?? approval.status" 
                         :approval-status="approval.asset_details?.approval_status" 
                       />

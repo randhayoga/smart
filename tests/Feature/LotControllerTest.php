@@ -433,6 +433,7 @@ class LotControllerTest extends TestCase
                 'number' => substr($lot->number, 0, 20) . '-U0' . ($i + 1),
                 'lot_id' => $lot->id,
                 'location_id' => $location->id,
+                'active_status' => 'Aktif',
                 'status' => 'Tersedia',
                 'condition' => 'Bagus',
                 'type' => 'LT',

@@ -49,6 +49,7 @@ export interface CompactDeletionApprovalEntry {
 }
 
 export interface CompactUnitSparse {
+  act?: string;
   as?: string;
   bt?: string;
   cl?: string;
@@ -97,11 +98,13 @@ export interface UnitsFacets {
   brands: string[];
   hasComp: boolean;
   standardStatuses: string[];
+  activeStandardStatuses: string[];
 }
 
 export interface PreparedUnitsBundle {
   units: any[];
   standardUnits: any[];
+  activeStandardUnits: any[];
   facets: UnitsFacets;
 }
 
@@ -112,10 +115,15 @@ function indexUnitAndAccumulateFacets(
   subByCat: Map<string, Set<string>>,
   brandSet: Set<string>,
   standardStatusSet: Set<string>,
-  standardUnits: any[]
+  activeStandardStatusSet: Set<string>,
+  standardUnits: any[],
+  activeStandardUnits: any[]
 ): boolean {
-  const tokens = parseAssetStatuses(u.status, u.approval_status);
+  const tokens = parseAssetStatuses(u.status, u.approval_status, u.active_status);
   u._statusTokens = tokens;
+
+  const isInactive = String(u.active_status || '').trim().toLowerCase() === 'tidak aktif';
+  u._isInactive = isInactive;
 
   let isStandard = true;
   if (tokens.length > 0) {
@@ -126,7 +134,7 @@ function indexUnitAndAccumulateFacets(
         isStandard = false;
         break;
       }
-      if (!lower.startsWith('pending')) {
+      if (lower !== 'belum aktif' && lower !== 'aktif' && lower !== 'tidak aktif' && !lower.startsWith('pending')) {
         hasNonPending = true;
       }
     }
@@ -140,6 +148,14 @@ function indexUnitAndAccumulateFacets(
     standardUnits.push(u);
     for (let i = 0; i < tokens.length; i++) {
       if (tokens[i]) standardStatusSet.add(tokens[i]);
+    }
+    if (!isInactive) {
+      activeStandardUnits.push(u);
+      for (let i = 0; i < tokens.length; i++) {
+        if (tokens[i] && tokens[i].toLowerCase() !== 'tidak aktif') {
+          activeStandardStatusSet.add(tokens[i]);
+        }
+      }
     }
   }
 
@@ -183,7 +199,9 @@ export function prepareUnitsBundle(
   const subByCat = new Map<string, Set<string>>();
   const brandSet = new Set<string>();
   const standardStatusSet = new Set<string>();
+  const activeStandardStatusSet = new Set<string>();
   const standardUnits: any[] = [];
+  const activeStandardUnits: any[] = [];
   let hasComp = false;
 
   if (compactProp && Array.isArray(compactProp.rows)) {
@@ -243,6 +261,7 @@ export function prepareUnitsBundle(
         id,
         number,
         legacy_number: legacyNumber,
+        active_status: sparse?.act ?? 'Aktif',
         status,
         approval_status: sparse?.as ?? null,
         condition,
@@ -325,7 +344,9 @@ export function prepareUnitsBundle(
           subByCat,
           brandSet,
           standardStatusSet,
-          standardUnits
+          activeStandardStatusSet,
+          standardUnits,
+          activeStandardUnits
         )
       ) {
         hasComp = true;
@@ -337,6 +358,7 @@ export function prepareUnitsBundle(
     return {
       units,
       standardUnits,
+      activeStandardUnits,
       facets: {
         categories: Array.from(catSet).sort(),
         allSubcategories: Array.from(allSubSet).sort(),
@@ -344,6 +366,7 @@ export function prepareUnitsBundle(
         brands: Array.from(brandSet).sort(),
         hasComp,
         standardStatuses: Array.from(standardStatusSet),
+        activeStandardStatuses: Array.from(activeStandardStatusSet),
       },
     };
   }
@@ -362,7 +385,9 @@ export function prepareUnitsBundle(
         subByCat,
         brandSet,
         standardStatusSet,
-        standardUnits
+        activeStandardStatusSet,
+        standardUnits,
+        activeStandardUnits
       )
     ) {
       hasComp = true;
@@ -373,6 +398,7 @@ export function prepareUnitsBundle(
   return {
     units,
     standardUnits,
+    activeStandardUnits,
     facets: {
       categories: Array.from(catSet).sort(),
       allSubcategories: Array.from(allSubSet).sort(),
@@ -380,6 +406,7 @@ export function prepareUnitsBundle(
       brands: Array.from(brandSet).sort(),
       hasComp,
       standardStatuses: Array.from(standardStatusSet),
+      activeStandardStatuses: Array.from(activeStandardStatusSet),
     },
   };
 }

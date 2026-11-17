@@ -127,7 +127,7 @@ const tabs = computed(() => {
     { id: 'Detail Aset', label: t('inventory.assetDetail') },
   ];
 
-  if (can('inventory.maintenance') && isMaintenanceAllowed(props.asset?.status, props.asset?.approval_status)) {
+  if (can('inventory.maintenance') && isMaintenanceAllowed(props.asset?.status, props.asset?.approval_status, props.asset?.active_status)) {
     list.push({ id: 'Perawatan', label: t('inventory.maintenanceTab') });
   }
 
@@ -533,6 +533,7 @@ const isAssetLocationActive = computed(() => {
                     <div class="text-foreground flex items-center gap-1.5 flex-wrap">
                       <span class="text-foreground">{{ t('inventory.status') }}:</span> 
                       <StatusBadge 
+                        :active-status="asset.active_status"
                         :status="asset.status" 
                         :approval-status="asset.approval_status"
                         :proposed-status="asset.proposed_status" 

@@ -53,6 +53,7 @@ return new class extends Migration {
             $table->foreignId('lot_id')->constrained('lots')->cascadeOnDelete();
             $table->foreignId('legacy_vendor_id')->nullable()->constrained('vendors')->nullOnDelete()->comment('Refers to local vendors table (legacy migration only)');
             $table->foreignId('location_id')->nullable()->constrained('locations')->nullOnDelete()->comment('current location');
+            $table->string('active_status', 50)->default('Belum Aktif')->comment('Belum Aktif | Aktif | Tidak Aktif');
             $table->string('status', 50)->default('Belum Diverifikasi');
             $table->string('approval_status', 50)->nullable()->comment('Pending:DM | Pending:BoD/BoC');
             $table->string('condition')->nullable();
@@ -71,10 +72,12 @@ return new class extends Migration {
             $table->integer('renewal_reminder')->nullable();
             $table->timestamps();
 
+            $table->index('active_status');
             $table->index('status');
             $table->index('approval_status');
             $table->index('condition');
             $table->index('qc_pass');
+            $table->index(['active_status', 'status', 'approval_status'], 'assets_active_status_idx');
             $table->index(['borrowing_type', 'status', 'approval_status'], 'assets_borrow_type_status_approval_idx');
         });
 

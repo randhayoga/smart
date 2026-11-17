@@ -173,6 +173,7 @@ const form = useForm({
   number: '',
   legacy_number: '',
   location_id: '' as string | number,
+  active_status: '',
   status: '',
   approval_status: '',
   is_assigned_to_location: null as boolean | null,
@@ -336,6 +337,7 @@ const resetModalState = () => {
   form.number = '';
   form.legacy_number = '';
   form.location_id = '';
+  form.active_status = '';
   form.status = '';
   form.approval_status = '';
   form.is_assigned_to_location = null;
@@ -390,6 +392,7 @@ watch(() => props.open, (val) => {
     form.number = item.number || '';
     form.legacy_number = item.legacy_number || '';
     form.location_id = item.location_id || '';
+    form.active_status = item.active_status || '';
     form.status = item.status || 'Tersedia';
     form.approval_status = item.approval_status || '';
     form.is_assigned_to_location = Boolean(item.is_assigned_to_location);
@@ -426,6 +429,7 @@ watch(() => props.open, (val) => {
     form.number = '';
     form.legacy_number = '';
     form.location_id = '';
+    form.active_status = '';
     form.status = '';
     form.approval_status = '';
     form.is_assigned_to_location = null;

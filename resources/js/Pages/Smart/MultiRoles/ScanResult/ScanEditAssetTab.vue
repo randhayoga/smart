@@ -112,6 +112,7 @@ const form = useForm({
   number: props.asset?.number || '',
   lot_id: props.lot?.id || props.asset?.lot_id || '',
   location_id: props.asset?.location_id || '',
+  active_status: props.asset?.active_status || '',
   status: props.asset?.status || '',
   approval_status: props.asset?.approval_status || '',
   condition: props.asset?.condition || '',
@@ -139,6 +140,7 @@ watch(() => props.asset, (newAsset) => {
   if (!newAsset) return;
   form.number = newAsset.number || '';
   form.location_id = newAsset.location_id || '';
+  form.active_status = newAsset.active_status || '';
   form.status = newAsset.status || '';
   form.approval_status = newAsset.approval_status || '';
   form.condition = newAsset.condition || '';
@@ -597,7 +599,7 @@ const handleSubmit = () => {
           </FieldLabel>
           <FieldContent>
             <div v-if="isStatusDisabled" class="w-full flex items-center justify-between px-4 py-2 text-sm border border-input rounded-xl bg-muted/30 text-muted-foreground cursor-not-allowed h-10 select-none">
-              <StatusBadge v-if="form.status" :status="form.status" :approval-status="form.approval_status" class="rounded-sm" />
+              <StatusBadge v-if="form.status" :active-status="form.active_status" :status="form.status" :approval-status="form.approval_status" class="rounded-sm" />
               <span v-else>{{ t('scanner.selectStatus') }}</span>
               <ChevronDown class="w-4 h-4 opacity-50 ml-auto shrink-0" />
             </div>

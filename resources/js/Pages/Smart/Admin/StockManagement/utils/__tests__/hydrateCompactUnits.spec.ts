@@ -40,7 +40,7 @@ describe('hydrateCompactUnits / prepareUnitsBundle & formatLocation', () => {
     locs: {
       30: 'HQ Building, Floor 3, IT Room',
     },
-    statuses: ['Tersedia', 'Tidak Aktif,Pending:BoD/BoC'],
+    statuses: ['Tersedia', 'Tersedia,Pending:BoD/BoC'],
     conditions: ['Bagus', 'Rusak Total'],
     uats: ['04-11-2026 10:30'],
     vendors: {

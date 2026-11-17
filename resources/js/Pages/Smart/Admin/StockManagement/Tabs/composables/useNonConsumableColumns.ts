@@ -277,10 +277,12 @@ export function useNonConsumableColumns(options: {
           ]
         ),
       cell: ({ row }) => {
+        const activeStatus = row.original.active_status;
         const status = (row.getValue('status') as string) || '';
         const approvalStatus = row.original.approval_status;
         const proposedStatus = row.original.proposed_status;
         return h(StatusBadge, {
+          activeStatus,
           status,
           approvalStatus,
           proposedStatus,

@@ -149,6 +149,7 @@ class NewStockController extends Controller
                             'number' => $assetNumber,
                             'lot_id' => $lot->id,
                             'location_id' => $isSoft ? null : ($validated['location_id'] ?? null),
+                            'active_status' => 'Belum Aktif',
                             'status' => 'Belum Diverifikasi',
                             'condition' => $isSoft ? null : $condition,
                             'borrowing_type' => $validated['borrowing_type'],

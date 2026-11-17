@@ -480,7 +480,9 @@ class UnitActivationApprovalControllerTest extends TestCase
         $this->assertNotNull($approval->decided_at);
 
         $unit->refresh();
+        $this->assertEquals('Aktif', $unit->active_status);
         $this->assertEquals('Tersedia', $unit->status);
+        $this->assertNull($unit->approval_status);
         $this->assertEquals('Bagus', $unit->condition);
 
         $this->assertDatabaseHas('asset_lifecycles', [
@@ -536,8 +538,19 @@ class UnitActivationApprovalControllerTest extends TestCase
         $this->assertNotNull($approval->decided_at);
 
         $unit->refresh();
+        $this->assertEquals('Tidak Aktif', $unit->active_status);
         $this->assertEquals('Verifikasi Ditolak', $unit->status);
+        $this->assertNull($unit->approval_status);
         $this->assertEquals('Rusak', $unit->condition);
+
+        // Verify ManagerAssetActivationApprovalResource does not emit lingering 'Pending:DM' on rejected history
+        $historyResponse = $this->actingAs($ifsManager)->get(route('smart.approve-activation', ['history' => 1]));
+        $historyResponse->assertOk();
+        $historyResponse->assertInertia(fn ($page) => $page
+            ->where('approvals.0.unit_details.active_status', 'Tidak Aktif')
+            ->where('approvals.0.unit_details.status', 'Verifikasi Ditolak')
+            ->where('approvals.0.unit_details.approval_status', null)
+        );
 
         $this->assertDatabaseHas('asset_lifecycles', [
             'asset_id' => $unit->id,

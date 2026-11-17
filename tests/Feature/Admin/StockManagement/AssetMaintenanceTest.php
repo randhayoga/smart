@@ -78,6 +78,7 @@ class AssetMaintenanceTest extends TestCase
             'number' => 'AST-TEST-00001',
             'lot_id' => $lot->id,
             'location_id' => $location->id,
+            'active_status' => 'Aktif',
             'status' => 'Tersedia',
             'condition' => 'Bagus',
             'classification' => 'Aset',
@@ -367,11 +368,11 @@ class AssetMaintenanceTest extends TestCase
     public static function disallowedStatusesProvider(): array
     {
         return [
-            'Tidak Aktif' => ['Tidak Aktif'],
+            'Dihapus' => ['Dihapus'],
             'Belum Diverifikasi' => ['Belum Diverifikasi'],
             'Verifikasi Ditolak' => ['Verifikasi Ditolak'],
             'Lisensi Kedaluwarsa' => ['Lisensi Kedaluwarsa'],
-            'Comma-separated with disallowed status' => ['Tidak Aktif, Pending:DM'],
+            'Comma-separated with disallowed status' => ['Dihapus, Pending:DM'],
         ];
     }
 }

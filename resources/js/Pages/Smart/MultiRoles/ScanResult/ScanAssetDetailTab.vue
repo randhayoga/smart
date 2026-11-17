@@ -179,7 +179,7 @@ const qcFormattedDate = computed(() => {
         <!-- 2. Status (+ Software/Vehicle details) -->
         <div class="flex justify-between items-start gap-4">
           <span class="text-muted-foreground font-medium shrink-0">{{ t('scanner.status') }}</span>
-          <StatusBadge :status="props.asset.status" :proposed-status="props.asset.proposed_status" :approval-status="props.asset.approval_status" />
+          <StatusBadge :active-status="props.asset.active_status" :status="props.asset.status" :proposed-status="props.asset.proposed_status" :approval-status="props.asset.approval_status" />
         </div>
 
         <!-- Software License Information if Software -->

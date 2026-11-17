@@ -71,7 +71,7 @@ class EmployeeLoanController extends Controller
             $location = $asset?->location?->full_name ?? '-';
 
             $pendingApproval = $asset?->deletionApprovals?->firstWhere('decision', 'pending');
-            $approvedApproval = ($asset && ($asset->hasStatus('Tidak Aktif') || $asset->hasStatus('Pending:BoD/BoC') || $asset->hasStatus('Dihapus')))
+            $approvedApproval = ($asset && ($asset->active_status === 'Tidak Aktif' || $asset->hasStatus('Pending:BoD/BoC') || $asset->hasStatus('Dihapus')))
                 ? $asset->deletionApprovals?->where('decision', 'approved')->sortByDesc('id')->first()
                 : null;
             $rejectedApproval = (!$pendingApproval && !$approvedApproval)
@@ -83,7 +83,9 @@ class EmployeeLoanController extends Controller
                 'id' => $asset->id,
                 'number' => $asset->number,
                 'legacy_number' => $asset->legacy_number,
+                'active_status' => $asset->active_status,
                 'status' => $asset->status,
+                'approval_status' => $asset->approval_status,
                 'proposed_status' => $pendingApproval 
                     ? $pendingApproval->proposed_condition 
                     : ($approvedApproval ? $approvedApproval->proposed_condition : null),

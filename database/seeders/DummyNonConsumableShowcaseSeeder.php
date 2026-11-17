@@ -192,6 +192,7 @@ class DummyNonConsumableShowcaseSeeder extends Seeder
             'number' => self::SHOWCASE_ASSET_NUMBERS[0],
             'lot_id' => $dgxLot->id,
             'location_id' => $locationId,
+            'active_status' => 'Aktif',
             'status' => 'Tersedia',
             'condition' => 'Bagus',
             'borrowing_type' => 'LT',
@@ -246,6 +247,7 @@ class DummyNonConsumableShowcaseSeeder extends Seeder
             'number' => self::SHOWCASE_ASSET_NUMBERS[1],
             'lot_id' => $dgxLot->id,
             'location_id' => $locationId,
+            'active_status' => 'Belum Aktif',
             'status' => 'Belum Diverifikasi',
             'condition' => 'Bagus',
             'borrowing_type' => 'LT',
@@ -335,6 +337,7 @@ class DummyNonConsumableShowcaseSeeder extends Seeder
             'number' => self::SHOWCASE_ASSET_NUMBERS[2],
             'lot_id' => $chairLot->id,
             'location_id' => $locationId,
+            'active_status' => 'Aktif',
             'status' => 'Tersedia',
             'condition' => 'Bagus',
             'borrowing_type' => 'LT',
@@ -376,6 +379,7 @@ class DummyNonConsumableShowcaseSeeder extends Seeder
             'number' => self::SHOWCASE_ASSET_NUMBERS[3],
             'lot_id' => $chairLot->id,
             'location_id' => $locationId,
+            'active_status' => 'Aktif',
             'status' => 'Tersedia',
             'condition' => 'Rusak Total',
             'approval_status' => 'Pending:DM',
@@ -418,14 +422,15 @@ class DummyNonConsumableShowcaseSeeder extends Seeder
             'note' => 'Pengajuan deaktivasi kursi kerja rusak hidrolik dan patah kaki',
         ]);
 
-        // 4. Unit 3: Pending BoD/BoC Deactivation (Tidak Aktif, approval_status: Pending:BoD/BoC)
+        // 4. Unit 3: Pending BoD/BoC Deactivation (Tersedia, approval_status: Pending:BoD/BoC, active_status: Aktif)
         $chair3ReqDate = Carbon::create(2026, 3, 12, 11, 0, 0);
         $chair3AppDate = Carbon::create(2026, 3, 13, 14, 0, 0);
         $chair3 = Asset::withoutEvents(fn () => Asset::create([
             'number' => self::SHOWCASE_ASSET_NUMBERS[4],
             'lot_id' => $chairLot->id,
             'location_id' => $locationId,
-            'status' => 'Tidak Aktif',
+            'active_status' => 'Aktif',
+            'status' => 'Tersedia',
             'condition' => 'Hilang',
             'approval_status' => 'Pending:BoD/BoC',
             'borrowing_type' => 'LT',
@@ -470,7 +475,7 @@ class DummyNonConsumableShowcaseSeeder extends Seeder
         AssetLifecycle::create([
             'asset_id' => $chair3->id,
             'action_type' => 'Persetujuan',
-            'status' => 'Tidak Aktif',
+            'status' => 'Tersedia',
             'condition' => 'Hilang',
             'location_id' => $locationId,
             'start_date' => $chair3AppDate,
@@ -486,6 +491,7 @@ class DummyNonConsumableShowcaseSeeder extends Seeder
             'number' => self::SHOWCASE_ASSET_NUMBERS[5],
             'lot_id' => $chairLot->id,
             'location_id' => $locationId,
+            'active_status' => 'Tidak Aktif',
             'status' => 'Dihapus',
             'condition' => 'Rusak Total',
             'approval_status' => null,
@@ -535,6 +541,7 @@ class DummyNonConsumableShowcaseSeeder extends Seeder
             'number' => self::SHOWCASE_ASSET_NUMBERS[6],
             'lot_id' => $chairLot->id,
             'location_id' => $locationId,
+            'active_status' => 'Aktif',
             'status' => 'Tersedia',
             'condition' => 'Bagus',
             'approval_status' => null,

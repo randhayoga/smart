@@ -75,4 +75,38 @@ describe('StatusBadge.vue localization', () => {
     expect(pills[0].text()).toBe('Inactive');
     expect(pills[1].text()).toBe('Pending: BoD/BoC');
   });
+
+  it('stacks activeStatus first before status and approvalStatus', () => {
+    setI18nLanguage('en');
+    const wrapper = mount(StatusBadge, {
+      props: {
+        activeStatus: 'Aktif',
+        status: 'Tersedia',
+        approvalStatus: 'Pending:BoD/BoC',
+      },
+      global: {
+        plugins: [i18n],
+      },
+    });
+
+    const pills = wrapper.findAll('span > span');
+    expect(pills.length).toBe(3);
+    expect(pills[0].text()).toBe('Active');
+    expect(pills[1].text()).toBe('Available');
+    expect(pills[2].text()).toBe('Pending: BoD/BoC');
+
+    setI18nLanguage('id');
+    const wrapperId = mount(StatusBadge, {
+      props: {
+        activeStatus: 'Belum Aktif',
+        status: 'Belum Diverifikasi',
+      },
+      global: {
+        plugins: [i18n],
+      },
+    });
+    const pillsId = wrapperId.findAll('span > span');
+    expect(pillsId[0].text()).toBe('Belum Aktif');
+    expect(pillsId[1].text()).toBe('Belum Diverifikasi');
+  });
 });

@@ -203,6 +203,7 @@ class LotController extends Controller
                         'number' => $assetNumber,
                         'lot_id' => $createdLot->id,
                         'location_id' => $isSoft ? null : $request->input('location_id'),
+                        'active_status' => 'Belum Aktif',
                         'status' => 'Belum Diverifikasi',
                         'condition' => $isSoft ? null : $condition,
                         'borrowing_type' => $request->input('borrowing_type'),

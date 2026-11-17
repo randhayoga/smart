@@ -3,6 +3,8 @@
  */
 export default {
   // Asset & Unit statuses
+  belumAktif: 'Belum Aktif',
+  aktif: 'Aktif',
   tersedia: 'Tersedia',
   diAssignLt: 'Di-assign (LT)',
   dipinjamSt: 'Dipinjam (ST)',

@@ -5,6 +5,7 @@
 import { useI18n } from 'vue-i18n';
 import { ChevronDown, SlidersHorizontal } from 'lucide-vue-next';
 import { Button } from '@/Components/ui/button';
+import { Checkbox } from '@/Components/ui/checkbox';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -28,6 +29,8 @@ const props = defineProps<{
   organizerFilter: string;
   vendorFilter: string;
   showAdvancedFilters: boolean;
+  showInactiveAssets?: boolean;
+  showInactiveToggle?: boolean;
   hasActiveFilters: boolean;
   availableCategories: string[];
   availableSubcategories: string[];
@@ -58,6 +61,7 @@ const emit = defineEmits<{
   (e: 'update:organizerFilter', val: string): void;
   (e: 'update:vendorFilter', val: string): void;
   (e: 'update:showAdvancedFilters', val: boolean): void;
+  (e: 'update:showInactiveAssets', val: boolean): void;
   (e: 'clear'): void;
 }>();
 
@@ -167,6 +171,20 @@ const { t } = useI18n();
           :bg-class="props.cardless ? 'bg-white' : ''"
         />
       </div>
+
+      <!-- Show Inactive Assets Pill -->
+      <label
+        v-if="props.showInactiveToggle"
+        class="inline-flex items-center gap-2 h-9 px-3 py-2 rounded-[14px] border border-border bg-background hover:bg-muted/50 cursor-pointer text-sm font-normal text-foreground transition-all duration-150 select-none shadow-sm active:scale-95"
+        :class="[props.cardless ? 'bg-white' : '', { 'border-primary/50 bg-primary/5 text-primary': props.showInactiveAssets }]"
+      >
+        <Checkbox
+          :model-value="Boolean(props.showInactiveAssets)"
+          @update:model-value="emit('update:showInactiveAssets', Boolean($event))"
+          class="rounded-[4px]"
+        />
+        <span>{{ t('inventory.showInactiveAssets') }}</span>
+      </label>
 
       <!-- Advanced Filter Toggle Button -->
       <Button

@@ -16,6 +16,7 @@ interface ModalDisplayField {
   label: string;
   value: any;
   isStatus?: boolean;
+  activeStatusValue?: any;
   statusValue?: any;
   approvalStatusValue?: any;
   colorClass?: string;
@@ -276,6 +277,7 @@ const displayFields = computed(() => {
           label: t('inventory.status'),
           value: getStatusLabel(data.unit_details?.status || data.status),
           isStatus: true,
+          activeStatusValue: data.unit_details?.active_status ?? data.asset_details?.active_status ?? data.active_status,
           statusValue: data.unit_details?.status || data.status,
           approvalStatusValue: data.unit_details?.approval_status || data.approval_status || 'Pending:DM',
         });
@@ -406,6 +408,7 @@ const displayFields = computed(() => {
         label: t('inventory.status'),
         value: getStatusLabel(data.status),
         isStatus: true,
+        activeStatusValue: data.active_status,
         statusValue: data.status,
         approvalStatusValue: data.approval_status,
       });
@@ -547,6 +550,7 @@ const bulkItemsFields = computed(() => {
             label: t('inventory.status'),
             value: getStatusLabel(data.unit_details?.status || data.status),
             isStatus: true,
+            activeStatusValue: data.unit_details?.active_status ?? data.asset_details?.active_status ?? data.active_status,
             statusValue: data.unit_details?.status || data.status,
             approvalStatusValue: data.unit_details?.approval_status || data.approval_status || 'Pending:DM',
           });
@@ -621,6 +625,7 @@ const bulkItemsFields = computed(() => {
           label: t('inventory.status'),
           value: getStatusLabel(data.status),
           isStatus: true,
+          activeStatusValue: data.active_status,
           statusValue: data.status,
           approvalStatusValue: data.approval_status,
         });
@@ -737,7 +742,7 @@ onUnmounted(() => {
                   <div v-for="field in displayFields" :key="field.label" class="grid grid-cols-12 gap-2 text-sm border-b border-border/50 last:border-0 pb-2 last:pb-0 items-center">
                     <span class="col-span-4 text-muted-foreground font-medium">{{ field.label }}</span>
                     <span class="col-span-8 font-semibold text-right break-words flex justify-end items-center" :class="field.colorClass || 'text-foreground'">
-                      <StatusBadge v-if="field.isStatus" :status="field.statusValue" :approval-status="field.approvalStatusValue" />
+                      <StatusBadge v-if="field.isStatus" :active-status="field.activeStatusValue" :status="field.statusValue" :approval-status="field.approvalStatusValue" />
                       <template v-else>{{ field.value }}</template>
                     </span>
                   </div>
@@ -749,7 +754,7 @@ onUnmounted(() => {
                     <div v-for="field in itemFields" :key="field.label" class="grid grid-cols-12 gap-2 text-sm border-b border-border/50 last:border-0 pb-2 last:pb-0 items-center">
                       <span class="col-span-4 text-muted-foreground font-medium">{{ field.label }}</span>
                       <span class="col-span-8 font-semibold text-right break-words flex justify-end items-center" :class="field.colorClass || 'text-foreground'">
-                        <StatusBadge v-if="field.isStatus" :status="field.statusValue" :approval-status="field.approvalStatusValue" />
+                        <StatusBadge v-if="field.isStatus" :active-status="field.activeStatusValue" :status="field.statusValue" :approval-status="field.approvalStatusValue" />
                         <template v-else>{{ field.value }}</template>
                       </span>
                     </div>

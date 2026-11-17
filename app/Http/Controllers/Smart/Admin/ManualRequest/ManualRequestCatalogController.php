@@ -144,6 +144,7 @@ class ManualRequestCatalogController extends Controller
             ->when($borrowingType !== null, function ($q) use ($borrowingType) {
                 $q->where('a.borrowing_type', $borrowingType);
             })
+            ->where('a.active_status', 'Aktif')
             ->where('a.status', 'Tersedia')
             ->whereNull('a.approval_status')
             ->select([

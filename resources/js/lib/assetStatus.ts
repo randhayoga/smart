@@ -3,6 +3,10 @@
  */
 
 export const STATUS_KEY_MAP: Record<string, string> = {
+  'belum aktif': 'status.belumAktif',
+  'not yet active': 'status.belumAktif',
+  'aktif': 'status.aktif',
+  'active': 'status.aktif',
   'tersedia': 'status.tersedia',
   'available': 'status.tersedia',
   'di-assign (lt)': 'status.diAssignLt',
@@ -54,14 +58,23 @@ export const STATUS_KEY_MAP: Record<string, string> = {
 };
 
 /**
- * Split a comma-separated status string or resolve status + approvalStatus into trimmed non-empty tokens.
+ * Split a comma-separated status string or resolve activeStatus + status + approvalStatus into trimmed non-empty tokens.
+ * Order: activeStatus first, then status tokens, then approvalStatus.
  */
-export function parseAssetStatuses(rawStatus?: string | null, approvalStatus?: string | null): string[] {
+export function parseAssetStatuses(
+  rawStatus?: string | null,
+  approvalStatus?: string | null,
+  activeStatus?: string | null,
+): string[] {
   const tokens: string[] = [];
+  if (activeStatus) {
+    const trimmed = String(activeStatus).trim();
+    if (trimmed) tokens.push(trimmed);
+  }
   if (rawStatus) {
     for (const s of String(rawStatus).split(',')) {
       const trimmed = s.trim();
-      if (trimmed) tokens.push(trimmed);
+      if (trimmed && !tokens.includes(trimmed)) tokens.push(trimmed);
     }
   }
   if (approvalStatus) {
@@ -74,12 +87,17 @@ export function parseAssetStatuses(rawStatus?: string | null, approvalStatus?: s
 }
 
 /**
- * Check if an asset status string or approvalStatus contains a specific status token (case-insensitive).
+ * Check if an asset status string, approvalStatus, or activeStatus contains a specific status token (case-insensitive).
  */
-export function hasAssetStatus(rawStatus?: string | null, target?: string | null, approvalStatus?: string | null): boolean {
+export function hasAssetStatus(
+  rawStatus?: string | null,
+  target?: string | null,
+  approvalStatus?: string | null,
+  activeStatus?: string | null,
+): boolean {
   if (!target) return false;
   const targetLower = target.trim().toLowerCase();
-  return parseAssetStatuses(rawStatus, approvalStatus).some((s) => s.toLowerCase() === targetLower);
+  return parseAssetStatuses(rawStatus, approvalStatus, activeStatus).some((s) => s.toLowerCase() === targetLower);
 }
 
 /**
@@ -98,13 +116,14 @@ export function getBaseAssetStatus(rawStatus?: string | null): string {
 /**
  * Check if any status token on the asset restricts manual status/condition edits.
  */
-export function isRestrictedAssetStatus(rawStatus?: string | null): boolean {
-  const tokens = parseAssetStatuses(rawStatus);
+export function isRestrictedAssetStatus(rawStatus?: string | null, activeStatus?: string | null): boolean {
+  const tokens = parseAssetStatuses(rawStatus, null, activeStatus);
   if (tokens.length === 0) return false;
   return tokens.some((token) => {
     const s = token.toLowerCase();
     return (
       s === 'tidak aktif' ||
+      s === 'belum aktif' ||
       s === 'dihapus' ||
       s === 'lisensi kedaluwarsa' ||
       s === 'license expired' ||
@@ -117,22 +136,30 @@ export function isRestrictedAssetStatus(rawStatus?: string | null): boolean {
 }
 
 /**
- * Check if maintenance can be performed on an asset given its status/approvalStatus.
- * Maintenance is disallowed for: 'Tidak Aktif', 'Belum Diverifikasi', 'Verifikasi Ditolak', 'Lisensi Kedaluwarsa'.
+ * Check if maintenance can be performed on an asset given its status/approvalStatus/activeStatus.
+ * Maintenance is disallowed for: 'Tidak Aktif', 'Belum Aktif', 'Belum Diverifikasi', 'Verifikasi Ditolak', 'Lisensi Kedaluwarsa', 'Dihapus'.
  */
-export function isMaintenanceAllowed(rawStatus?: string | null, approvalStatus?: string | null): boolean {
-  const tokens = parseAssetStatuses(rawStatus, approvalStatus);
+export function isMaintenanceAllowed(
+  rawStatus?: string | null,
+  approvalStatus?: string | null,
+  activeStatus?: string | null,
+): boolean {
+  const tokens = parseAssetStatuses(rawStatus, approvalStatus, activeStatus);
   if (tokens.length === 0) return true;
   return !tokens.some((token) => {
     const s = token.toLowerCase();
     return (
       s === 'tidak aktif' ||
+      s === 'inactive' ||
+      s === 'belum aktif' ||
+      s === 'not yet active' ||
       s === 'belum diverifikasi' ||
       s === 'unverified' ||
       s === 'verifikasi ditolak' ||
       s === 'verification rejected' ||
       s === 'lisensi kedaluwarsa' ||
-      s === 'license expired'
+      s === 'license expired' ||
+      s === 'dihapus'
     );
   });
 }
@@ -145,13 +172,27 @@ export function getAssetStatusBadgeClass(status?: string | null): string {
   if (!s) return 'bg-gray-100 text-gray-800';
   const lower = s.toLowerCase();
 
-  if (s === 'Belum Diverifikasi' || lower === 'belum diverifikasi' || lower === 'unverified') {
+  if (
+    s === 'Belum Diverifikasi' ||
+    lower === 'belum diverifikasi' ||
+    lower === 'unverified' ||
+    s === 'Belum Aktif' ||
+    lower === 'belum aktif' ||
+    lower === 'not yet active'
+  ) {
     return 'bg-amber-50 text-amber-900 border border-amber-300 dark:bg-amber-950/40 dark:text-amber-300 dark:border-amber-700';
   }
   if (s === 'Verifikasi Ditolak' || lower === 'verifikasi ditolak' || lower === 'verification rejected') {
     return 'bg-rose-50 text-rose-900 border border-rose-300 dark:bg-rose-950/40 dark:text-rose-300 dark:border-rose-700';
   }
-  if (s === 'Tersedia' || lower === 'tersedia' || lower === 'available') return 'bg-emerald-100 text-emerald-800';
+  if (
+    s === 'Tersedia' ||
+    lower === 'tersedia' ||
+    lower === 'available' ||
+    s === 'Aktif' ||
+    lower === 'aktif' ||
+    lower === 'active'
+  ) return 'bg-emerald-100 text-emerald-800';
   if (s === 'Di-assign (LT)' || lower === 'di-assign (lt)' || lower === 'di-assign') {
     return 'bg-sky-100 text-sky-800 dark:bg-sky-950/40 dark:text-sky-300 dark:border-sky-700';
   }
