@@ -242,13 +242,15 @@ class NotificationService
 
             $uomName = $model->uom->name ?? 'unit';
             $brandName = $model->brand->name ?? '';
-            $fullName = trim(($brandName ? $brandName . ' ' : '') . $model->name);
+            $modelName = $model->name ?? '';
 
             $titleKey = 'inventory.notification_low_stock_title';
-            $titleParams = ['name' => $fullName];
+            $titleParams = [];
             $messageKey = 'inventory.notification_low_stock_message';
             $messageParams = [
                 'number' => $model->number,
+                'brand' => $brandName,
+                'name' => $modelName,
                 'current' => $currentStock,
                 'threshold' => $model->min_stock_threshold,
                 'uom' => $uomName,
@@ -381,12 +383,16 @@ class NotificationService
         $asset->loadMissing('lot.model.brand');
         $brand = $asset->lot?->model?->brand?->name ?? '';
         $assetName = $asset->lot?->model?->name ?? '';
-        $brandAndName = trim("{$brand} {$assetName}") ?: $asset->number;
 
         $titleKey = 'inventory.notification_deactivation_title';
-        $titleParams = ['name' => $brandAndName];
+        $titleParams = [];
         $messageKey = 'inventory.notification_deactivation_message';
-        $messageParams = ['number' => $asset->number];
+        $messageParams = [
+            'number' => $asset->number,
+            'brand' => $brand,
+            'name' => $assetName,
+            'condition' => $asset->condition ?? '-',
+        ];
 
         $title = __($titleKey, $titleParams);
         $message = __($messageKey, $messageParams);
@@ -444,14 +450,22 @@ class NotificationService
             return;
         }
 
+        $firstAsset = $assetsCollection->first();
+        $firstBrand = '';
+        $firstName = '';
+        if ($firstAsset instanceof Asset) {
+            $firstAsset->loadMissing(['lot.model.brand']);
+            $firstBrand = $firstAsset->lot?->model?->brand?->name ?? '';
+            $firstName = $firstAsset->lot?->model?->name ?? '';
+        }
+
         $titleKey = 'inventory.notification_bulk_deactivation_title';
-        $titleParams = [
-            'count' => $count,
-            'condition' => $proposedCondition,
-        ];
+        $titleParams = [];
         $messageKey = 'inventory.notification_bulk_deactivation_message';
         $messageParams = [
             'count' => $count,
+            'brand' => $firstBrand,
+            'name' => $firstName,
             'condition' => $proposedCondition,
         ];
 
@@ -531,7 +545,7 @@ class NotificationService
      */
     public function notifyAdminAssetDeletionDecision(AssetDeletionApproval $approval, string $decision): void
     {
-        $approval->loadMissing(['asset.lot.model.brand']);
+        $approval->loadMissing(['asset.lot.model.brand', 'approver']);
         $asset = $approval->asset;
         if (!$asset) {
             return;
@@ -539,23 +553,31 @@ class NotificationService
 
         $brand = $asset->lot?->model?->brand?->name ?? '';
         $name = $asset->lot?->model?->name ?? '';
-        $brandAndName = trim("{$brand} {$name}") ?: $asset->number;
+        $actorName = $approval->approver?->name ?? $approval->approver?->employee_name ?? 'DM IFS';
 
         if ($decision === 'approved') {
             $titleKey = 'inventory.notification_status_approved_title';
-            $titleParams = ['name' => $brandAndName];
+            $titleParams = [];
             $messageKey = 'inventory.notification_status_approved_message';
-            $messageParams = ['number' => $asset->number];
+            $messageParams = [
+                'number' => $asset->number,
+                'brand' => $brand,
+                'name' => $name,
+                'actor' => $actorName,
+            ];
             $type = 'success';
             $url = "/smart/stock-management/pending-deletion?tab=Pending:BoD/BoC&search=" . urlencode($asset->number);
         } else {
             $currentStatus = $approval->previous_status ?? 'Tersedia';
             $currentCondition = $approval->previous_condition ?? $asset->condition;
             $titleKey = 'inventory.notification_status_rejected_title';
-            $titleParams = ['name' => $brandAndName];
+            $titleParams = [];
             $messageKey = 'inventory.notification_status_rejected_message';
             $messageParams = [
                 'number' => $asset->number,
+                'brand' => $brand,
+                'name' => $name,
+                'actor' => $actorName,
                 'status' => $currentStatus,
                 'condition' => $currentCondition,
             ];
@@ -596,12 +618,15 @@ class NotificationService
         $asset->loadMissing(['lot.model.brand']);
         $brand = $asset->lot?->model?->brand?->name ?? '';
         $assetName = $asset->lot?->model?->name ?? '';
-        $brandAndName = trim("{$brand} {$assetName}") ?: $asset->number;
 
         $titleKey = 'inventory.notification_activation_title';
-        $titleParams = ['name' => $brandAndName];
+        $titleParams = [];
         $messageKey = 'inventory.notification_activation_message';
-        $messageParams = ['number' => $asset->number];
+        $messageParams = [
+            'number' => $asset->number,
+            'brand' => $brand,
+            'name' => $assetName,
+        ];
 
         $title = __($titleKey, $titleParams);
         $message = __($messageKey, $messageParams);
@@ -677,28 +702,24 @@ class NotificationService
 
         if ($count > 1) {
             $titleKey = 'inventory.notification_bulk_activation_title';
-            $titleParams = [
-                'count' => $count,
-                'name' => $brandAndName,
-            ];
+            $titleParams = [];
             $messageKey = 'inventory.notification_bulk_activation_message';
             $messageParams = [
                 'count' => $count,
-                'name' => $brandAndName,
+                'brand' => $brand,
+                'name' => $assetName,
                 'first' => $firstNumber,
                 'last' => $lastNumber,
             ];
             $url = "/smart/approve-activation";
         } else {
             $titleKey = 'inventory.notification_bulk_activation_title';
-            $titleParams = [
-                'count' => 1,
-                'name' => $brandAndName,
-            ];
+            $titleParams = [];
             $messageKey = 'inventory.notification_bulk_activation_single_message';
             $messageParams = [
                 'count' => 1,
-                'name' => $brandAndName,
+                'brand' => $brand,
+                'name' => $assetName,
                 'number' => $firstNumber,
             ];
             $url = "/smart/approve-activation?search=" . urlencode($firstNumber);
@@ -765,7 +786,7 @@ class NotificationService
      */
     public function notifyAdminAssetActivationDecision(AssetActivationApproval $approval, string $decision): void
     {
-        $approval->loadMissing(['asset.lot.model.brand']);
+        $approval->loadMissing(['asset.lot.model.brand', 'approver']);
         $asset = $approval->asset;
         if (!$asset) {
             return;
@@ -773,22 +794,32 @@ class NotificationService
 
         $brand = $asset->lot?->model?->brand?->name ?? '';
         $name = $asset->lot?->model?->name ?? '';
-        $brandAndName = trim("{$brand} {$name}") ?: $asset->number;
+        $actorName = $approval->approver?->name ?? $approval->approver?->employee_name ?? 'DM IFS';
 
         if ($decision === 'approved') {
             $titleKey = 'inventory.notification_activation_approved_title';
-            $titleParams = ['name' => $brandAndName];
+            $titleParams = [];
             $messageKey = ($asset->status === 'Lisensi Kedaluwarsa')
                 ? 'inventory.notification_activation_approved_expired_message'
                 : 'inventory.notification_activation_approved_message';
-            $messageParams = ['number' => $asset->number];
+            $messageParams = [
+                'number' => $asset->number,
+                'brand' => $brand,
+                'name' => $name,
+                'actor' => $actorName,
+            ];
             $type = 'success';
             $url = "/smart/stock-management/non-consumables?search=" . urlencode($asset->number);
         } else {
             $titleKey = 'inventory.notification_activation_rejected_title';
-            $titleParams = ['name' => $brandAndName];
+            $titleParams = [];
             $messageKey = 'inventory.notification_activation_rejected_message';
-            $messageParams = ['number' => $asset->number];
+            $messageParams = [
+                'number' => $asset->number,
+                'brand' => $brand,
+                'name' => $name,
+                'actor' => $actorName,
+            ];
             $type = 'error';
             $url = "/smart/stock-management/pending-activation?search=" . urlencode($asset->number);
         }
@@ -1015,13 +1046,13 @@ class NotificationService
         if ($daysRemaining === 0) {
             $titleKey = 'inventory.notification_license_expiring_today_title';
             $messageKey = 'inventory.notification_license_expiring_today_message';
-            $titleParams = ['asset_number' => $asset->number];
-            $messageParams = ['asset_number' => $asset->number, 'software' => $softwareName];
+            $titleParams = [];
+            $messageParams = ['number' => $asset->number, 'brand' => $brand, 'name' => $modelName];
         } else {
             $titleKey = 'inventory.notification_license_expiring_title';
             $messageKey = 'inventory.notification_license_expiring_message';
-            $titleParams = ['days' => $daysRemaining, 'asset_number' => $asset->number];
-            $messageParams = ['days' => $daysRemaining, 'asset_number' => $asset->number, 'software' => $softwareName];
+            $titleParams = [];
+            $messageParams = ['days' => $daysRemaining, 'number' => $asset->number, 'brand' => $brand, 'name' => $modelName];
         }
 
         $title = __($titleKey, $titleParams);
@@ -1088,8 +1119,8 @@ class NotificationService
 
         $titleKey = 'inventory.notification_license_expired_title';
         $messageKey = 'inventory.notification_license_expired_message';
-        $titleParams = ['asset_number' => $asset->number];
-        $messageParams = ['asset_number' => $asset->number, 'software' => $softwareName];
+        $titleParams = [];
+        $messageParams = ['number' => $asset->number, 'brand' => $brand, 'name' => $modelName];
 
         $title = __($titleKey, $titleParams);
         $message = __($messageKey, $messageParams);

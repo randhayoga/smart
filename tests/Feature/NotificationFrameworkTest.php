@@ -181,8 +181,8 @@ class NotificationFrameworkTest extends TestCase
         $this->assertCount(0, $standardUser->notifications);
 
         $notif = $admin->notifications->first();
-        $this->assertStringContainsString('Peringatan Stok Minimum:', $notif->data['title']);
-        $this->assertStringContainsString($barang->name, $notif->data['title']);
+        $this->assertEquals('Peringatan Stok Minimum', $notif->data['title']);
+        $this->assertStringContainsString("[{$barang->number}]", $notif->data['message']);
         $this->assertEquals('warning', $notif->data['type']);
         $cleanNumber = preg_replace('/[^a-zA-Z0-9]/', '', (string)$barang->number);
         $this->assertEquals('/smart/stock-management/consumables/' . $cleanNumber, $notif->data['url']);
@@ -303,8 +303,8 @@ class NotificationFrameworkTest extends TestCase
         $this->assertCount(1, $admin->notifications);
 
         $notif = $admin->notifications->first();
-        $this->assertStringContainsString('Peringatan Stok Minimum:', $notif->data['title']);
-        $this->assertStringContainsString($barang->name, $notif->data['title']);
+        $this->assertEquals('Peringatan Stok Minimum', $notif->data['title']);
+        $this->assertStringContainsString($barang->name, $notif->data['message']);
         $this->assertEquals(5, $notif->data['extra']['current_stock']);
         $this->assertEquals(10, $notif->data['extra']['min_stock_threshold']);
     }
@@ -357,8 +357,8 @@ class NotificationFrameworkTest extends TestCase
         $this->assertCount(1, $ifsManager->notifications);
 
         $notif = $ifsManager->notifications->first();
-        $this->assertEquals('Penghapusan Aset Dell Laptop Inspiron: Perlu Perhatian Anda', $notif->data['title']);
-        $this->assertEquals('Pengajuan penghapusan aset AST-DEL-001 telah diajukan dan memerlukan approval Anda', $notif->data['message']);
+        $this->assertEquals('Approval Penghapusan Aset', $notif->data['title']);
+        $this->assertStringContainsString('[AST-DEL-001]', $notif->data['message']);
         $this->assertEquals('/smart/approve-deletion?search=AST-DEL-001', $notif->data['url']);
     }
 
@@ -406,8 +406,9 @@ class NotificationFrameworkTest extends TestCase
         $this->assertCount(1, $admin->notifications);
 
         $notif = $admin->notifications->first();
-        $this->assertEquals('Penghapusan Aset Dell Laptop XPS Disetujui DM IFS', $notif->data['title']);
-        $this->assertEquals('Status aset AST-XPS-001 telah berubah menjadi Tidak Aktif, Pending:BoD/BoC.', $notif->data['message']);
+        $this->assertEquals('Penghapusan Aset Disetujui', $notif->data['title']);
+        $this->assertStringContainsString('[AST-XPS-001]', $notif->data['message']);
+        $this->assertStringContainsString('Status sekarang Pending:BoD/BoC.', $notif->data['message']);
         $this->assertEquals('success', $notif->data['type']);
         $this->assertEquals('/smart/stock-management/pending-deletion?tab=Pending:BoD/BoC&search=AST-XPS-001', $notif->data['url']);
     }
@@ -460,8 +461,9 @@ class NotificationFrameworkTest extends TestCase
         $this->assertCount(1, $admin->notifications);
 
         $notif = $admin->notifications->first();
-        $this->assertEquals('Penghapusan Aset Lenovo ThinkPad Ditolak DM IFS', $notif->data['title']);
-        $this->assertEquals('Status aset AST-LNV-002 telah dikembalikan menjadi Tersedia dan kondisi dikembalikan menjadi Bagus.', $notif->data['message']);
+        $this->assertEquals('Penghapusan Aset Ditolak', $notif->data['title']);
+        $this->assertStringContainsString('[AST-LNV-002]', $notif->data['message']);
+        $this->assertStringContainsString('Status dikembalikan ke Tersedia dan kondisi ke Bagus.', $notif->data['message']);
         $this->assertEquals('error', $notif->data['type']);
         $this->assertEquals('/smart/stock-management/non-consumables?search=AST-LNV-002', $notif->data['url']);
     }
@@ -509,8 +511,9 @@ class NotificationFrameworkTest extends TestCase
 
             $admin->refresh();
             $notif = $admin->notifications->first();
-            $this->assertEquals('Asset Deletion Dell Latitude 5420 Approved by DM IFS', $notif->data['title']);
-            $this->assertEquals('Asset AST-EN-001 status has changed to Inactive, Pending:BoD/BoC.', $notif->data['message']);
+            $this->assertEquals('Asset Deletion Approved', $notif->data['title']);
+            $this->assertStringContainsString('[AST-EN-001]', $notif->data['message']);
+            $this->assertStringContainsString('Status is now Pending:BoD/BoC.', $notif->data['message']);
         } finally {
             app()->setLocale($origLocale);
         }
@@ -602,8 +605,8 @@ class NotificationFrameworkTest extends TestCase
             $this->assertCount(1, $ifsManager->notifications);
 
             $notif = $ifsManager->notifications->first();
-            $this->assertEquals('Asset Deletion Approval: 2 Units (Rusak Total)', $notif->data['title']);
-            $this->assertEquals('2 asset units have been submitted for deletion (Rusak Total) and require your approval.', $notif->data['message']);
+            $this->assertEquals('Bulk Asset Deletion Approval', $notif->data['title']);
+            $this->assertEquals('2 units of Dell Latitude have been submitted for deletion (Rusak Total) and require your approval.', $notif->data['message']);
         } finally {
             app()->setLocale($originalLocale);
         }
@@ -646,8 +649,8 @@ class NotificationFrameworkTest extends TestCase
         $response = $this->actingAs($admin)->getJson('/smart/notifications');
         $response->assertOk();
         $json = $response->json();
-        $this->assertStringContainsString('Approved by DM IFS', $json['notifications'][0]['title']);
-        $this->assertStringContainsString('status has changed to Inactive, Pending:BoD/BoC.', $json['notifications'][0]['message']);
+        $this->assertEquals('Asset Deletion Approved', $json['notifications'][0]['title']);
+        $this->assertStringContainsString('Status is now Pending:BoD/BoC.', $json['notifications'][0]['message']);
         $this->assertStringContainsString('tab=Pending:BoD/BoC', $json['notifications'][0]['url']);
 
         // Fetch in ID -> should be localized in Indonesian
@@ -655,8 +658,8 @@ class NotificationFrameworkTest extends TestCase
         $responseId = $this->actingAs($admin)->getJson('/smart/notifications');
         $responseId->assertOk();
         $jsonId = $responseId->json();
-        $this->assertStringContainsString('Disetujui DM IFS', $jsonId['notifications'][0]['title']);
-        $this->assertStringContainsString('telah berubah menjadi Tidak Aktif, Pending:BoD/BoC.', $jsonId['notifications'][0]['message']);
+        $this->assertEquals('Penghapusan Aset Disetujui', $jsonId['notifications'][0]['title']);
+        $this->assertStringContainsString('Status sekarang Pending:BoD/BoC.', $jsonId['notifications'][0]['message']);
     }
 
     public function test_bulk_activation_notification_uses_correct_range_separator_and_url_without_search_query(): void
@@ -684,17 +687,16 @@ class NotificationFrameworkTest extends TestCase
         $this->assertCount(1, $ifsManager->notifications);
         $notif = $ifsManager->notifications->first();
 
-        // Indonesian check
-        $this->assertStringContainsString('03163-COMP-SVR-ICT-PTRE-26 s.d. 03164-COMP-SVR-ICT-PTRE-26', $notif->data['message']);
-        $this->assertStringNotContainsString('03163-COMP-SVR-ICT-PTRE-26 - 03164-COMP-SVR-ICT-PTRE-26', $notif->data['message']);
+        // Standardized range format check
+        $this->assertStringContainsString('[03163-COMP-SVR-ICT-PTRE-26 - 03164-COMP-SVR-ICT-PTRE-26]', $notif->data['message']);
         $this->assertEquals('/smart/approve-activation', $notif->data['url']);
         $this->assertStringNotContainsString('search=', $notif->data['url']);
 
         // English localization check via formatNotificationPayload
         app()->setLocale('en');
         $payloadEn = NotificationService::formatNotificationPayload($notif->data);
-        $this->assertStringContainsString('03163-COMP-SVR-ICT-PTRE-26 to 03164-COMP-SVR-ICT-PTRE-26', $payloadEn['message']);
-        $this->assertStringContainsString('New Asset Approval: 2 Units', $payloadEn['title']);
+        $this->assertStringContainsString('[03163-COMP-SVR-ICT-PTRE-26 - 03164-COMP-SVR-ICT-PTRE-26]', $payloadEn['message']);
+        $this->assertEquals('Bulk Asset Activation Approval', $payloadEn['title']);
     }
 
     public function test_single_unit_bulk_activation_notification_includes_search_url(): void
@@ -748,14 +750,14 @@ class NotificationFrameworkTest extends TestCase
         // 1. Fetch in English
         app()->setLocale('en');
         $payloadEn = NotificationService::formatNotificationPayload($notif->data);
-        $this->assertStringContainsString('Approved by DM IFS', $payloadEn['title']);
-        $this->assertStringContainsString('status has changed to Available.', $payloadEn['message']);
+        $this->assertEquals('Asset Activation Approved', $payloadEn['title']);
+        $this->assertStringContainsString('Status is now Available.', $payloadEn['message']);
 
         // 2. Fetch in Indonesian
         app()->setLocale('id');
         $payloadId = NotificationService::formatNotificationPayload($notif->data);
-        $this->assertStringContainsString('Disetujui DM IFS', $payloadId['title']);
-        $this->assertStringContainsString('telah berubah menjadi Tersedia.', $payloadId['message']);
+        $this->assertEquals('Aktivasi Aset Disetujui', $payloadId['title']);
+        $this->assertStringContainsString('Status sekarang Tersedia.', $payloadId['message']);
     }
 
     public function test_notify_admin_asset_activation_decision_supports_license_expired_status(): void
@@ -783,15 +785,15 @@ class NotificationFrameworkTest extends TestCase
         // 1. Fetch in English
         app()->setLocale('en');
         $payloadEn = NotificationService::formatNotificationPayload($notif->data);
-        $this->assertStringContainsString('Approved by DM IFS', $payloadEn['title']);
-        $this->assertStringContainsString('status has changed to License Expired.', $payloadEn['message']);
+        $this->assertEquals('Asset Activation Approved', $payloadEn['title']);
+        $this->assertStringContainsString('Status is now License Expired.', $payloadEn['message']);
         $this->assertStringContainsString('/smart/stock-management/non-consumables?search=', $notif->data['url']);
 
         // 2. Fetch in Indonesian
         app()->setLocale('id');
         $payloadId = NotificationService::formatNotificationPayload($notif->data);
-        $this->assertStringContainsString('Disetujui DM IFS', $payloadId['title']);
-        $this->assertStringContainsString('telah berubah menjadi Lisensi Kedaluwarsa.', $payloadId['message']);
+        $this->assertEquals('Aktivasi Aset Disetujui', $payloadId['title']);
+        $this->assertStringContainsString('Status sekarang Lisensi Kedaluwarsa.', $payloadId['message']);
     }
 
     public function test_admin_notifications_are_routed_by_organizer_to_admin_cfs_or_admin_ict(): void

@@ -617,6 +617,7 @@ class SoftwareLicenseTest extends TestCase
 
         $asset = Asset::factory()->create([
             'lot_id' => $lot->id,
+            'active_status' => 'Aktif',
             'status' => 'Tersedia',
             'license_exp_date' => Carbon::today()->addMonths(6)->format('Y-m-d'),
         ]);
@@ -655,6 +656,7 @@ class SoftwareLicenseTest extends TestCase
         $yesterday = Carbon::yesterday();
         $asset = Asset::factory()->create([
             'lot_id' => $lot->id,
+            'active_status' => 'Aktif',
             'status' => 'Lisensi Kedaluwarsa',
             'license_exp_date' => $yesterday->format('Y-m-d'),
             'condition' => null,
@@ -722,6 +724,7 @@ class SoftwareLicenseTest extends TestCase
         $currentExp = Carbon::today()->addMonth();
         $asset = Asset::factory()->create([
             'lot_id' => $lot->id,
+            'active_status' => 'Aktif',
             'status' => 'Tersedia',
             'license_exp_date' => $currentExp->format('Y-m-d'),
             'condition' => null,
