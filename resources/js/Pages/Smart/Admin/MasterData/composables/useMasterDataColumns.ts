@@ -4,6 +4,7 @@ import { router } from '@inertiajs/vue3';
 import { ArrowUpDown, ChevronDown, ChevronRight, Pencil, Trash2 } from 'lucide-vue-next';
 import { Button } from '@/Components/ui/button';
 import Switch from '@/Components/ui/switch/Switch.vue';
+import { usePermissions } from '@/composables/usePermissions';
 import type { LocationItem, MasterDataTabKey, VendorItem } from '../Modals/MasterDataModal.vue';
 
 export interface LocationRow extends LocationItem {
@@ -23,6 +24,7 @@ export function useMasterDataColumns(options: {
   openDeleteModal: (item: any) => void;
 }) {
   const { activeTab, currentTabSingular, searchQuery, locations, t, openEditModal, openDeleteModal } = options;
+  const { can } = usePermissions();
 
   const collapsedLocationIds = ref<Set<number>>(new Set());
 
@@ -363,18 +365,24 @@ export function useMasterDataColumns(options: {
           return h('div', { class: 'flex items-center justify-center' }, [
             h(Switch, {
               modelValue: Boolean(item.is_active),
+              disabled: !can('master.manage'),
               class:
                 'data-[state=checked]:!bg-emerald-600 data-[state=unchecked]:!bg-slate-300 dark:data-[state=unchecked]:!bg-slate-700',
               title: item.is_active ? t('masterData.actions.deactivate') : t('masterData.actions.activate'),
-              'onUpdate:modelValue': () => toggleLocationActive(item),
+              'onUpdate:modelValue': () => {
+                if (can('master.manage')) {
+                  toggleLocationActive(item);
+                }
+              },
             }),
           ]);
         },
       });
     }
 
-    cols.push({
-      id: 'actions',
+    if (can('master.manage')) {
+      cols.push({
+        id: 'actions',
       size: 84,
       header: () => h('div', { class: 'text-right' }, t('masterData.columns.actions')),
       cell: ({ row }) => {
@@ -417,6 +425,7 @@ export function useMasterDataColumns(options: {
         return h('div', { class: 'flex items-center justify-end gap-2' }, actionButtons);
       },
     });
+    }
 
     return cols;
   });

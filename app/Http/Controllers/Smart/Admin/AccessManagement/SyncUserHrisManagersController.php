@@ -28,10 +28,12 @@ class SyncUserHrisManagersController extends Controller
         $userRoleId = $roles['user'] ?? null;
         $adminCfsRoleId = $roles['admin_cfs'] ?? null;
         $adminIctRoleId = $roles['admin_ict'] ?? null;
+        $organizerCfsRoleId = $roles['organizer_cfs'] ?? null;
+        $organizerIctRoleId = $roles['organizer_ict'] ?? null;
         $superadminRoleId = $roles['superadmin'] ?? null;
 
-        // 2. Identify Superadmin and Admin users to preserve their privileges
-        $protectedRoles = array_filter([$superadminRoleId, $adminCfsRoleId, $adminIctRoleId]);
+        // 2. Identify Superadmin, Admin, and Organizer users to preserve their privileges
+        $protectedRoles = array_filter([$superadminRoleId, $adminCfsRoleId, $adminIctRoleId, $organizerCfsRoleId, $organizerIctRoleId]);
         $existingAdminAndSuperadminIds = DB::connection('SMART')->table('user_roles')
             ->whereIn('role_id', $protectedRoles)
             ->pluck('user_id')
@@ -40,7 +42,9 @@ class SyncUserHrisManagersController extends Controller
         $hardcodedProtectedIds = User::whereIn('employee_id', array_merge(
             User::SUPERADMIN_EMPLOYEE_IDS,
             User::ADMIN_CFS_EMPLOYEE_IDS,
-            User::ADMIN_ICT_EMPLOYEE_IDS
+            User::ADMIN_ICT_EMPLOYEE_IDS,
+            User::ORGANIZER_CFS_EMPLOYEE_IDS,
+            User::ORGANIZER_ICT_EMPLOYEE_IDS
         ))
             ->pluck('id')
             ->all();

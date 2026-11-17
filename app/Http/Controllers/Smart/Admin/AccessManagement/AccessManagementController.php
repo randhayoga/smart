@@ -89,9 +89,11 @@ class AccessManagementController extends Controller
             'superadmin' => 1,
             'admin_cfs' => 2,
             'admin_ict' => 3,
-            'ifs_manager' => 4,
-            'manager' => 5,
-            'user' => 6,
+            'organizer_cfs' => 4,
+            'organizer_ict' => 5,
+            'ifs_manager' => 6,
+            'manager' => 7,
+            'user' => 8,
         ];
 
         $roles = Role::with('permissions')

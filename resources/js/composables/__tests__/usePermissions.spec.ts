@@ -124,4 +124,43 @@ describe('usePermissions composable', () => {
         expect(ictPerms.defaultOrganizerName.value).toBe('ICT');
         expect(ictPerms.hasRole('admin_ict')).toBe(true);
     });
+
+    it('evaluates organizer_cfs and organizer_ict roles and defaultOrganizerName correctly', () => {
+        vi.mocked(usePage).mockReturnValue({
+            props: {
+                auth: {
+                    user: { id: 4, name: 'Organizer CFS User', role: 'organizer_cfs', employee_id: '140133' },
+                    roles: ['organizer_cfs'],
+                    permissions: ['inventory.view', 'inventory.manage', 'inventory.maintenance', 'master.view'],
+                },
+            },
+        } as any);
+
+        const orgCfsPerms = usePermissions();
+
+        expect(orgCfsPerms.isSuperadmin.value).toBe(false);
+        expect(orgCfsPerms.isAdmin.value).toBe(true);
+        expect(orgCfsPerms.defaultOrganizerName.value).toBe('CFS');
+        expect(orgCfsPerms.hasRole('organizer_cfs')).toBe(true);
+        expect(orgCfsPerms.can('inventory.maintenance')).toBe(true);
+        expect(orgCfsPerms.can('inventory.borrow')).toBe(false);
+        expect(orgCfsPerms.can('master.manage')).toBe(false);
+
+        vi.mocked(usePage).mockReturnValue({
+            props: {
+                auth: {
+                    user: { id: 5, name: 'Organizer ICT User', role: 'organizer_ict', employee_id: '999999' },
+                    roles: ['organizer_ict'],
+                    permissions: ['inventory.view', 'inventory.manage', 'inventory.maintenance', 'master.view'],
+                },
+            },
+        } as any);
+
+        const orgIctPerms = usePermissions();
+
+        expect(orgIctPerms.isSuperadmin.value).toBe(false);
+        expect(orgIctPerms.isAdmin.value).toBe(true);
+        expect(orgIctPerms.defaultOrganizerName.value).toBe('ICT');
+        expect(orgIctPerms.hasRole('organizer_ict')).toBe(true);
+    });
 });

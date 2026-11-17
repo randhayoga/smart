@@ -108,6 +108,8 @@ export default {
       superadmin: 'Superadmin',
       admin_cfs: 'Admin CFS',
       admin_ict: 'Admin ICT',
+      organizer_cfs: 'Organizer CFS',
+      organizer_ict: 'Organizer ICT',
       ifs_manager: 'IFS Manager',
       manager: 'DM/PM',
       user: 'Employee',

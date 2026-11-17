@@ -5,6 +5,9 @@
  */
 import { ref, computed, watch, onMounted, onUnmounted } from 'vue';
 import { useI18n } from 'vue-i18n';
+import { usePermissions } from '@/composables/usePermissions';
+
+const { can } = usePermissions();
 import { useForm, usePage } from '@inertiajs/vue3';
 import { toast } from 'vue-sonner';
 import AppLayout from '@/Layouts/AppLayout.vue';
@@ -322,7 +325,7 @@ onUnmounted(() => {
                 </DropdownMenu>
               </div>
 
-              <Button @click="openCreateModal" variant="primary">
+              <Button v-if="can('master.manage')" @click="openCreateModal" variant="primary">
                 <Plus class="w-4 h-4" />
                 <span>{{ t('masterData.newButton', { tab: currentTabSingular }) }}</span>
               </Button>

@@ -16,6 +16,7 @@ class UserSeeder extends Seeder
         '999997', // Regular User: Karyawan Teladan
         '999996', // TEST-DEPT / Acting IFS Manager (in local dev): Dep Manajer
         '999995', // Project Manager: Proyek Manajer
+        '999994', // Organizer CFS: Organizer
     ];
 
     /**
@@ -59,6 +60,11 @@ class UserSeeder extends Seeder
             'org_name' => 'Departemen Fasilitas Uji Coba',
         ]);
 
+        // Resolve department of existing organizer_cfs users (fallback to TEST-DEPT in isolated test DBs)
+        $organizerOrgchartId = User::whereIn('employee_id', User::ORGANIZER_CFS_EMPLOYEE_IDS)
+            ->whereNotNull('orgchart_id')
+            ->value('orgchart_id') ?? $org->id;
+
         // 3. Seed fake employees in USER_HRIS (hrd_employee) and credentials in USER_HRIS (adm_user)
         $users = [
             [
@@ -66,18 +72,29 @@ class UserSeeder extends Seeder
                 'name' => 'Karyawan Teladan',
                 'email' => 'user@example.com',
                 'password' => 'IfSIcT?25*#!',
+                'orgchart_id' => $org->id,
             ],
             [
                 'employee_id' => '999996',
                 'name' => 'Dep Manajer',
                 'email' => 'poxiho3795@iconcubic.com',
                 'password' => 'IfSerVicEs?25#!*',
+                'orgchart_id' => $org->id,
             ],
             [
                 'employee_id' => '999995',
                 'name' => 'Proyek Manajer',
                 'email' => 'pm@example.com',
                 'password' => 'IfSPM?25#!*',
+                'orgchart_id' => $org->id,
+            ],
+            [
+                'employee_id' => '999994',
+                'name' => 'Organizer',
+                'email' => 'organizer@example.com',
+                'password' => 'IfSOrg?25#!*',
+                'orgchart_id' => $organizerOrgchartId,
+                'role' => 'organizer_cfs',
             ],
         ];
 
@@ -85,7 +102,7 @@ class UserSeeder extends Seeder
         foreach ($users as $userData) {
             $emp = User::create([
                 'employee_id' => $userData['employee_id'],
-                'orgchart_id' => $org->id,
+                'orgchart_id' => $userData['orgchart_id'],
                 'employee_name' => $userData['name'],
                 'email' => $userData['email'],
                 'active' => true,
@@ -98,6 +115,10 @@ class UserSeeder extends Seeder
                 'password' => md5($userData['password']),
                 'active' => true,
             ]);
+
+            if (!empty($userData['role']) && \App\Models\Auth\Role::where('name', $userData['role'])->exists()) {
+                $emp->syncRoles([$userData['role']]);
+            }
 
             if ($userData['employee_id'] === '999996') {
                 $depEmp = $emp;

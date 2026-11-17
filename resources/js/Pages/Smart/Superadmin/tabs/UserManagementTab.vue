@@ -184,7 +184,7 @@ const userColumns = computed<ColumnDef<UserItem>[]>(() => [
               <DropdownMenuTrigger asChild>
                 <Button
                   variant="outline"
-                  class="w-[150px] justify-between rounded-[14px] font-normal"
+                  class="w-[190px] justify-between rounded-[14px] font-normal"
                   :class="selectedRoleFilter === 'all' ? 'text-muted-foreground' : 'text-foreground'"
                 >
                   <span class="truncate capitalize">

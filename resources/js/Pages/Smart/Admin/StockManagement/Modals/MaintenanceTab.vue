@@ -427,7 +427,11 @@ defineExpose({
                 class="w-full justify-between rounded-[14px] font-normal h-10 px-4"
                 :class="[errors.condition ? 'border-destructive' : '']"
               >
-                {{ form.condition === 'Tidak Berubah' ? t('inventory.conditionUnchanged') : form.condition }}
+                {{ ({
+                  'Tidak Berubah': t('inventory.conditionUnchanged'),
+                  'Bagus': t('inventory.conditionGood'),
+                  'Rusak': t('inventory.conditionDamaged'),
+                } as Record<string, string>)[form.condition] ?? form.condition }}
                 <ChevronDown class="w-4 h-4 opacity-50" />
               </Button>
             </DropdownMenuTrigger>

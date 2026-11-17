@@ -11,10 +11,10 @@ export const SUPERADMIN_EMPLOYEE_IDS = ['265656', '235315', '194829', '245417', 
 export function usePermissions() {
     const page = usePage<PageProps>();
 
-    const user = computed<User | null>(() => page.props.auth?.user ?? null);
+    const user = computed<User | null>(() => page?.props?.auth?.user ?? null);
 
     const roles = computed<string[]>(() => {
-        const authRoles = page.props.auth?.roles;
+        const authRoles = page?.props?.auth?.roles;
         if (Array.isArray(authRoles) && authRoles.length > 0) {
             return authRoles;
         }
@@ -25,7 +25,7 @@ export function usePermissions() {
     });
 
     const permissions = computed<string[]>(() => {
-        const authPermissions = page.props.auth?.permissions;
+        const authPermissions = page?.props?.auth?.permissions;
         if (Array.isArray(authPermissions)) {
             return authPermissions;
         }
@@ -46,19 +46,33 @@ export function usePermissions() {
             isSuperadmin.value ||
             roles.value.includes('admin_cfs') ||
             roles.value.includes('admin_ict') ||
+            roles.value.includes('organizer_cfs') ||
+            roles.value.includes('organizer_ict') ||
             user.value?.role === 'admin_cfs' ||
-            user.value?.role === 'admin_ict'
+            user.value?.role === 'admin_ict' ||
+            user.value?.role === 'organizer_cfs' ||
+            user.value?.role === 'organizer_ict'
         );
     });
 
     /**
-     * Default Organizer filter name ('CFS' for admin_cfs, 'ICT' for admin_ict, '' otherwise).
+     * Default Organizer filter name ('CFS' for admin_cfs/organizer_cfs, 'ICT' for admin_ict/organizer_ict, '' otherwise).
      */
     const defaultOrganizerName = computed<'CFS' | 'ICT' | ''>(() => {
-        if (roles.value.includes('admin_cfs') || user.value?.role === 'admin_cfs') {
+        if (
+            roles.value.includes('admin_cfs') ||
+            roles.value.includes('organizer_cfs') ||
+            user.value?.role === 'admin_cfs' ||
+            user.value?.role === 'organizer_cfs'
+        ) {
             return 'CFS';
         }
-        if (roles.value.includes('admin_ict') || user.value?.role === 'admin_ict') {
+        if (
+            roles.value.includes('admin_ict') ||
+            roles.value.includes('organizer_ict') ||
+            user.value?.role === 'admin_ict' ||
+            user.value?.role === 'organizer_ict'
+        ) {
             return 'ICT';
         }
         return '';

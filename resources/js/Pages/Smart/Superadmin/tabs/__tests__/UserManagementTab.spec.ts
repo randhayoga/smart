@@ -118,7 +118,7 @@ describe('UserManagementTab.vue', () => {
 
     // Check UserRoleSelect button width
     const userRoleSelectBtn = wrapper.findComponent({ name: 'UserRoleSelect' }).find('button');
-    expect(userRoleSelectBtn.classes()).toContain('w-[150px]');
+    expect(userRoleSelectBtn.classes()).toContain('w-[190px]');
 
     // Check role filter container width
     const filterContainer = wrapper.find('.w-\\[150px\\]');

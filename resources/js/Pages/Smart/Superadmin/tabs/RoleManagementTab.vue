@@ -50,7 +50,7 @@ const emit = defineEmits<{
 
 const { t, te } = useI18n();
 
-const PROTECTED_ROLES = ['superadmin', 'admin_cfs', 'admin_ict', 'ifs_manager', 'manager', 'user'];
+const PROTECTED_ROLES = ['superadmin', 'admin_cfs', 'admin_ict', 'organizer_cfs', 'organizer_ict', 'ifs_manager', 'manager', 'user'];
 
 const isProtectedRole = (name: string): boolean => {
   return PROTECTED_ROLES.includes((name || '').toLowerCase());
@@ -111,12 +111,11 @@ const formatGroupName = (group: string) => {
 
 <template>
   <div class="px-4 bg-card rounded-xl border border-border shadow-sm overflow-hidden">
-    <div class="py-3">
+    <div class="py-3 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
       <Heading as="h2">{{ $t('access.roles.title') }}</Heading>
 
-      <div class="mt-4 flex flex-col sm:flex-row sm:items-end justify-between gap-3">
-        <!-- Right Controls: Rows per page & Create Role button -->
-        <div class="flex flex-wrap items-center justify-end gap-3 w-full sm:w-auto sm:ml-auto">
+      <!-- Right Controls: Rows per page & Create Role button -->
+      <div class="flex flex-wrap items-center justify-end gap-3 w-full sm:w-auto sm:ml-auto">
           <div class="flex items-center gap-2 text-sm text-muted-foreground">
             <span class="text-right">{{ $t('access.roles.rowsPerPage') }}</span>
             <DropdownMenu>
@@ -140,7 +139,6 @@ const formatGroupName = (group: string) => {
             <span>{{ $t('access.roles.createNewRole') }}</span>
           </Button>
         </div>
-      </div>
     </div>
 
     <!-- Role Permissions Matrix Table with Sticky Left/Right Columns -->

@@ -80,7 +80,6 @@ class User extends Authenticatable
     public const ADMIN_CFS_EMPLOYEE_IDS = [
         '255578',
         '130090',
-        '140133',
     ];
 
     public const ADMIN_ICT_EMPLOYEE_IDS = [
@@ -89,6 +88,14 @@ class User extends Authenticatable
         '215050',
         '306117',
     ];
+
+    public const ORGANIZER_CFS_EMPLOYEE_IDS = [
+        '140133',
+        '020036',
+        '606718',
+    ];
+
+    public const ORGANIZER_ICT_EMPLOYEE_IDS = [];
 
     public const ADMIN_ROLES = [
         'admin_cfs',
@@ -306,7 +313,7 @@ class User extends Authenticatable
             $uid = (int) $user->id;
             if (!empty($rolesByUserId[$uid])) {
                 $roleNames = $rolesByUserId[$uid];
-                foreach (['superadmin', 'admin_cfs', 'admin_ict', 'ifs_manager', 'manager', 'user'] as $priorityRole) {
+                foreach (['superadmin', 'admin_cfs', 'admin_ict', 'organizer_cfs', 'organizer_ict', 'ifs_manager', 'manager', 'user'] as $priorityRole) {
                     if (in_array($priorityRole, $roleNames, true)) {
                         $user->cachedRoleName = $priorityRole;
                         break;
@@ -335,6 +342,14 @@ class User extends Authenticatable
 
         if (in_array($empId, self::ADMIN_ICT_EMPLOYEE_IDS, true)) {
             return 'admin_ict';
+        }
+
+        if (in_array($empId, self::ORGANIZER_ICT_EMPLOYEE_IDS, true)) {
+            return 'organizer_ict';
+        }
+
+        if (in_array($empId, self::ORGANIZER_CFS_EMPLOYEE_IDS, true)) {
+            return 'organizer_cfs';
         }
 
         if (in_array($empId, self::ADMIN_CFS_EMPLOYEE_IDS, true) || ((app()->runningUnitTests() || app()->environment('testing')) && !config('app.disable_test_admin_bypass'))) {
@@ -383,7 +398,7 @@ class User extends Authenticatable
         // 1. Check if roles relation is already eager-loaded
         if ($this->relationLoaded('roles')) {
             $roleNames = $this->roles->pluck('name')->all();
-            foreach (['superadmin', 'admin_cfs', 'admin_ict', 'ifs_manager', 'manager', 'user'] as $priorityRole) {
+            foreach (['superadmin', 'admin_cfs', 'admin_ict', 'organizer_cfs', 'organizer_ict', 'ifs_manager', 'manager', 'user'] as $priorityRole) {
                 if (in_array($priorityRole, $roleNames, true)) {
                     return $this->cachedRoleName = $priorityRole;
                 }
@@ -403,6 +418,14 @@ class User extends Authenticatable
             return $this->cachedRoleName = 'admin_ict';
         }
 
+        if (in_array($empId, self::ORGANIZER_ICT_EMPLOYEE_IDS, true)) {
+            return $this->cachedRoleName = 'organizer_ict';
+        }
+
+        if (in_array($empId, self::ORGANIZER_CFS_EMPLOYEE_IDS, true)) {
+            return $this->cachedRoleName = 'organizer_cfs';
+        }
+
         if (in_array($empId, self::ADMIN_CFS_EMPLOYEE_IDS, true) || ((app()->runningUnitTests() || app()->environment('testing')) && !config('app.disable_test_admin_bypass'))) {
             return $this->cachedRoleName = 'admin_cfs';
         }
@@ -412,7 +435,7 @@ class User extends Authenticatable
             try {
                 $roleNames = $this->roles()->pluck('name')->all();
                 if (!empty($roleNames)) {
-                    foreach (['superadmin', 'admin_cfs', 'admin_ict', 'ifs_manager', 'manager', 'user'] as $priorityRole) {
+                    foreach (['superadmin', 'admin_cfs', 'admin_ict', 'organizer_cfs', 'organizer_ict', 'ifs_manager', 'manager', 'user'] as $priorityRole) {
                         if (in_array($priorityRole, $roleNames, true)) {
                             return $this->cachedRoleName = $priorityRole;
                         }
@@ -433,7 +456,7 @@ class User extends Authenticatable
      */
     public function getIsAdminAttribute(): bool
     {
-        return in_array($this->role, ['superadmin', 'admin_cfs', 'admin_ict', 'ifs_manager'], true);
+        return in_array($this->role, ['superadmin', 'admin_cfs', 'admin_ict', 'organizer_cfs', 'organizer_ict', 'ifs_manager'], true);
     }
 
     /**
@@ -531,6 +554,12 @@ class User extends Authenticatable
                 case 'admin_ict':
                     $targetEmployeeIds = $targetEmployeeIds->merge(self::ADMIN_ICT_EMPLOYEE_IDS);
                     break;
+                case 'organizer_cfs':
+                    $targetEmployeeIds = $targetEmployeeIds->merge(self::ORGANIZER_CFS_EMPLOYEE_IDS);
+                    break;
+                case 'organizer_ict':
+                    $targetEmployeeIds = $targetEmployeeIds->merge(self::ORGANIZER_ICT_EMPLOYEE_IDS);
+                    break;
                 case 'ifs_manager':
                     $targetEmployeeIds = $targetEmployeeIds->merge($getIfsEmployeeIds());
                     break;
@@ -564,6 +593,8 @@ class User extends Authenticatable
                 self::SUPERADMIN_EMPLOYEE_IDS,
                 self::ADMIN_CFS_EMPLOYEE_IDS,
                 self::ADMIN_ICT_EMPLOYEE_IDS,
+                self::ORGANIZER_CFS_EMPLOYEE_IDS,
+                self::ORGANIZER_ICT_EMPLOYEE_IDS,
                 $getIfsEmployeeIds(),
                 $getManagerEmployeeIds()
             ));

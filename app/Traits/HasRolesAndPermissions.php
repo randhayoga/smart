@@ -258,6 +258,14 @@ trait HasRolesAndPermissions
                     'requests.archive.view', 'karyawan.view', 'audit.view', 'notifications.manage'
                 ]);
             }
+            if (in_array('organizer_cfs', $roleNames, true) || in_array('organizer_ict', $roleNames, true)) {
+                $fallbackPerms = array_merge($fallbackPerms, [
+                    'dashboard.admin.view', 'dashboard.user.view', 'master.view',
+                    'inventory.view', 'inventory.manage',
+                    'inventory.maintenance', 'requests.create', 'requests.view_own',
+                    'requests.approve', 'karyawan.view', 'audit.view', 'notifications.manage'
+                ]);
+            }
             if (in_array('ifs_manager', $roleNames, true)) {
                 $fallbackPerms = array_merge($fallbackPerms, [
                     'dashboard.admin.view', 'dashboard.user.view', 'inventory.view',

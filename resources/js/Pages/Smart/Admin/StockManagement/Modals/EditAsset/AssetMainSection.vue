@@ -19,6 +19,9 @@ import CurrencyInput from '@/Components/CurrencyInput.vue';
 import StatusBadge from '@/Components/StatusBadge.vue';
 import { Field, FieldLabel, FieldContent, FieldError } from '@/Components/ui/field';
 import { getQcEditTitle } from '@/lib/qualityControl';
+import { usePermissions } from '@/composables/usePermissions';
+
+const { can } = usePermissions();
 
 interface Props {
   form: any;
@@ -243,7 +246,7 @@ const qcLabel = computed(() => {
             <DropdownMenuContent align="start" class="w-(--reka-dropdown-menu-trigger-width) min-w-(--reka-dropdown-menu-trigger-width) rounded-[14px] z-[1001]">
               <DropdownMenuItem @select="form.condition = 'Bagus'">{{ t('inventory.conditionGood') }}</DropdownMenuItem>
               <DropdownMenuItem @select="form.condition = 'Rusak'">{{ t('inventory.conditionDamaged') }}</DropdownMenuItem>
-              <template v-if="!isBorrowedUnit">
+              <template v-if="!isBorrowedUnit && can('inventory.status_approval.request')">
                 <DropdownMenuItem @select="form.condition = 'Rusak Total'">{{ t('inventory.conditionTotalDamage') }}</DropdownMenuItem>
                 <DropdownMenuItem @select="form.condition = 'Hilang'">{{ t('inventory.conditionLost') }}</DropdownMenuItem>
               </template>

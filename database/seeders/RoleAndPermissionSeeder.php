@@ -28,6 +28,14 @@ class RoleAndPermissionSeeder extends Seeder
                 'label' => 'Admin ICT',
                 'description' => 'ICT administrative user with full inventory, request, and master data management privileges.',
             ],
+            'organizer_cfs' => [
+                'label' => 'Organizer CFS',
+                'description' => 'CFS technician/support organizer handling inventory maintenance, status changes, and stock monitoring without borrowing or request management.',
+            ],
+            'organizer_ict' => [
+                'label' => 'Organizer ICT',
+                'description' => 'ICT technician/support organizer handling inventory maintenance, status changes, and stock monitoring without borrowing or request management.',
+            ],
             'ifs_manager' => [
                 'label' => 'IFS Manager',
                 'description' => 'IFS Department Manager handling inventory audits, asset status approvals, and department approvals.',
@@ -158,6 +166,28 @@ class RoleAndPermissionSeeder extends Seeder
             $roles['admin_cfs']->permissions()->sync($adminPermissionIds);
             $roles['admin_ict']->permissions()->sync($adminPermissionIds);
 
+            // Organizer CFS & Organizer ICT get admin permissions EXCEPT borrowing, requests, and master data mutations
+            $organizerExcludedPermissions = [
+                'inventory.borrow',
+                'inventory.manual_request',
+                'inventory.status_approval.request',
+                'master.manage',
+                'requests.archive.view',
+                'requests.confirm',
+                'requests.fulfill',
+                'requests.handover',
+                'requests.inbox.view',
+                'requests.returns',
+            ];
+            $organizerPermissionIds = collect($permissions)
+                ->filter(fn($p) => $p->group !== 'access'
+                    && $p->name !== 'inventory.status_approval.decide'
+                    && !in_array($p->name, $organizerExcludedPermissions, true))
+                ->pluck('id')
+                ->all();
+            $roles['organizer_cfs']->permissions()->sync($organizerPermissionIds);
+            $roles['organizer_ict']->permissions()->sync($organizerPermissionIds);
+
             // IFS Manager permissions
             $ifsManagerPermissions = [
                 'dashboard.admin.view',
@@ -202,10 +232,35 @@ class RoleAndPermissionSeeder extends Seeder
                 $this->command?->warn('FORCE_ROLE_SEED detected: Reset all role permissions to factory defaults in production.');
             }
         } else {
+            // Ensure newly added organizer roles still receive factory permissions if unseeded in production
+            $organizerExcludedPermissions = [
+                'inventory.borrow',
+                'inventory.manual_request',
+                'inventory.status_approval.request',
+                'master.manage',
+                'requests.archive.view',
+                'requests.confirm',
+                'requests.fulfill',
+                'requests.handover',
+                'requests.inbox.view',
+                'requests.returns',
+            ];
+            $organizerPermissionIds = collect($permissions)
+                ->filter(fn($p) => $p->group !== 'access'
+                    && $p->name !== 'inventory.status_approval.decide'
+                    && !in_array($p->name, $organizerExcludedPermissions, true))
+                ->pluck('id')
+                ->all();
+            foreach (['organizer_cfs', 'organizer_ict'] as $organizerRoleName) {
+                if (!$roles[$organizerRoleName]->permissions()->exists()) {
+                    $roles[$organizerRoleName]->permissions()->sync($organizerPermissionIds);
+                }
+            }
+
             $this->command?->warn('RoleAndPermissionSeeder: Default permission sync skipped to protect active permissions. (Use FORCE_ROLE_SEED=true to override).');
         }
 
-        // 4. Initial User Assignment for Superadmin, Admin CFS, and Admin ICT rosters
+        // 4. Initial User Assignment for Superadmin, Admin, and Organizer rosters
         $superadminUsers = User::whereIn('employee_id', User::SUPERADMIN_EMPLOYEE_IDS)->get();
         foreach ($superadminUsers as $superadminUser) {
             if (!$superadminUser->hasRole('superadmin')) {
@@ -224,6 +279,27 @@ class RoleAndPermissionSeeder extends Seeder
         foreach ($adminIctUsers as $adminIctUser) {
             if (!$adminIctUser->hasRole('admin_ict')) {
                 $adminIctUser->syncRoles(['admin_ict']);
+            }
+        }
+
+        $organizerCfsUsers = User::whereIn('employee_id', User::ORGANIZER_CFS_EMPLOYEE_IDS)->get();
+        foreach ($organizerCfsUsers as $organizerCfsUser) {
+            if (!$organizerCfsUser->hasRole('organizer_cfs')) {
+                $organizerCfsUser->syncRoles(['organizer_cfs']);
+            }
+        }
+
+        $organizerIctUsers = User::whereIn('employee_id', User::ORGANIZER_ICT_EMPLOYEE_IDS)->get();
+        foreach ($organizerIctUsers as $organizerIctUser) {
+            if (!$organizerIctUser->hasRole('organizer_ict')) {
+                $organizerIctUser->syncRoles(['organizer_ict']);
+            }
+        }
+
+        if (!$isProduction) {
+            $dummyOrganizer = User::where('employee_id', '999994')->first();
+            if ($dummyOrganizer && !$dummyOrganizer->hasRole('organizer_cfs')) {
+                $dummyOrganizer->syncRoles(['organizer_cfs']);
             }
         }
     }

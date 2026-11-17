@@ -194,4 +194,33 @@ class UserRoleTest extends TestCase
             $this->app['env'] = $originalEnv;
         }
     }
+
+    public function test_organizer_cfs_employee_ids_resolve_to_organizer_cfs_and_is_admin(): void
+    {
+        config(['app.disable_test_admin_bypass' => true]);
+
+        $org1 = User::factory()->create(['employee_id' => '140133']);
+        $org2 = User::factory()->create(['employee_id' => '020036']);
+        $org3 = User::factory()->create(['employee_id' => '606718']);
+
+        $this->assertEquals('organizer_cfs', $org1->role);
+        $this->assertEquals('organizer_cfs', $org2->role);
+        $this->assertEquals('organizer_cfs', $org3->role);
+        $this->assertTrue($org1->is_admin);
+        $this->assertTrue($org2->is_admin);
+        $this->assertTrue($org3->is_admin);
+
+        $organizerCfsUsers = User::getUsersByRole('organizer_cfs');
+        $this->assertTrue($organizerCfsUsers->contains('employee_id', '140133'));
+        $this->assertTrue($organizerCfsUsers->contains('employee_id', '020036'));
+        $this->assertTrue($organizerCfsUsers->contains('employee_id', '606718'));
+
+        $adminCfsUsers = User::getUsersByRole('admin_cfs');
+        $this->assertFalse($adminCfsUsers->contains('employee_id', '140133'));
+
+        $regularUsers = User::getUsersByRole('user');
+        $this->assertFalse($regularUsers->contains('employee_id', '140133'));
+        $this->assertFalse($regularUsers->contains('employee_id', '020036'));
+        $this->assertFalse($regularUsers->contains('employee_id', '606718'));
+    }
 }

@@ -266,4 +266,101 @@ class AccessManagementTest extends TestCase
         $this->assertFalse($adminCfsRole->hasPermissionTo('access.manage'));
         $this->assertFalse($adminIctRole->hasPermissionTo('access.manage'));
     }
+
+    public function test_organizer_roles_are_seeded_with_expected_permissions_and_protected(): void
+    {
+        $superadmin = User::factory()->create();
+        $superadmin->assignRole('superadmin');
+
+        $allowedPermissions = [
+            'dashboard.admin.view',
+            'dashboard.user.view',
+            'master.view',
+            'inventory.view',
+            'inventory.manage',
+            'inventory.maintenance',
+            'requests.create',
+            'requests.view_own',
+            'requests.approve',
+            'karyawan.view',
+            'audit.view',
+            'notifications.manage',
+        ];
+
+        $excludedPermissions = [
+            'inventory.borrow',
+            'inventory.manual_request',
+            'inventory.status_approval.request',
+            'master.manage',
+            'requests.archive.view',
+            'requests.confirm',
+            'requests.fulfill',
+            'requests.handover',
+            'requests.inbox.view',
+            'requests.returns',
+            'access.manage',
+            'inventory.status_approval.decide',
+        ];
+
+        foreach (['organizer_cfs', 'organizer_ict'] as $roleName) {
+            $role = Role::where('name', $roleName)->first();
+            $this->assertNotNull($role, "Role {$roleName} should be seeded.");
+
+            foreach ($allowedPermissions as $perm) {
+                $this->assertTrue($role->hasPermissionTo($perm), "{$roleName} should have {$perm}");
+            }
+
+            foreach ($excludedPermissions as $perm) {
+                $this->assertFalse($role->hasPermissionTo($perm), "{$roleName} should NOT have {$perm}");
+            }
+
+            // Protected from deletion
+            $response = $this->actingAs($superadmin)->delete(route('smart.access.roles.destroy', $role));
+            $response->assertSessionHas('error');
+            $this->assertDatabaseHas('roles', ['name' => $roleName], 'SMART');
+        }
+    }
+
+    public function test_seeder_assigns_organizer_cfs_to_target_employees_and_hris_sync_preserves_them(): void
+    {
+        $superadmin = User::factory()->create();
+        $superadmin->assignRole('superadmin');
+
+        $u1 = User::factory()->create(['employee_id' => '140133', 'active' => 1]);
+        $u1->assignRole('admin_cfs');
+        $u2 = User::factory()->create(['employee_id' => '020036', 'active' => 1]);
+        $u3 = User::factory()->create(['employee_id' => '606718', 'active' => 1]);
+
+        $this->seed(\Database\Seeders\RoleAndPermissionSeeder::class);
+
+        $this->assertTrue($u1->fresh()->hasRole('organizer_cfs'));
+        $this->assertFalse($u1->fresh()->hasRole('admin_cfs'));
+        $this->assertTrue($u2->fresh()->hasRole('organizer_cfs'));
+        $this->assertTrue($u3->fresh()->hasRole('organizer_cfs'));
+
+        // Manually assigned organizer_ict user should also be preserved by HRIS sync
+        $ictOrganizer = User::factory()->create(['active' => 1]);
+        $ictOrganizer->assignRole('organizer_ict');
+
+        $response = $this->actingAs($superadmin)->post(route('smart.access.sync-managers'));
+        $response->assertSessionHasNoErrors();
+
+        $this->assertTrue($u1->fresh()->hasRole('organizer_cfs'));
+        $this->assertTrue($u2->fresh()->hasRole('organizer_cfs'));
+        $this->assertTrue($u3->fresh()->hasRole('organizer_cfs'));
+        $this->assertTrue($ictOrganizer->fresh()->hasRole('organizer_ict'));
+    }
+
+    public function test_user_seeder_creates_dummy_organizer_in_same_department_with_organizer_cfs_role(): void
+    {
+        $realOrganizer = User::factory()->create(['employee_id' => '140133', 'active' => 1]);
+
+        $this->seed(\Database\Seeders\UserSeeder::class);
+
+        $dummyOrganizer = User::where('employee_id', '999994')->first();
+        $this->assertNotNull($dummyOrganizer);
+        $this->assertEquals('Organizer', $dummyOrganizer->employee_name);
+        $this->assertEquals($realOrganizer->orgchart_id, $dummyOrganizer->orgchart_id);
+        $this->assertTrue($dummyOrganizer->hasRole('organizer_cfs'));
+    }
 }

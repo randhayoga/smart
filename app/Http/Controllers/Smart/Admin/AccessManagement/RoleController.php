@@ -17,6 +17,8 @@ class RoleController extends Controller
         'superadmin',
         'admin_cfs',
         'admin_ict',
+        'organizer_cfs',
+        'organizer_ict',
         'ifs_manager',
         'manager',
         'user',

@@ -37,7 +37,7 @@ const emit = defineEmits<{
 
 const { t, te } = useI18n();
 
-const ALLOWED_SELECTABLE_ROLES = ['superadmin', 'admin_cfs', 'admin_ict', 'user'];
+const ALLOWED_SELECTABLE_ROLES = ['superadmin', 'admin_cfs', 'admin_ict', 'organizer_cfs', 'organizer_ict', 'user'];
 
 const formatRoleLabel = (name: string, label?: string) => {
   const i18nKey = `access.roles.names.${name.toLowerCase()}`;
@@ -64,7 +64,9 @@ const selectableRoles = computed(() => {
     { id: 1, name: 'superadmin', label: 'Superadmin' },
     { id: 2, name: 'admin_cfs', label: 'Admin CFS' },
     { id: 3, name: 'admin_ict', label: 'Admin ICT' },
-    { id: 5, name: 'user', label: 'Employee' },
+    { id: 4, name: 'organizer_cfs', label: 'Organizer CFS' },
+    { id: 5, name: 'organizer_ict', label: 'Organizer ICT' },
+    { id: 6, name: 'user', label: 'Employee' },
   ];
 });
 </script>
@@ -76,13 +78,13 @@ const selectableRoles = computed(() => {
         variant="outline"
         size="sm"
         :disabled="props.disabled"
-        class="h-8 justify-between rounded-[10px] text-sm font-medium w-[150px] bg-background border-border hover:bg-muted/50"
+        class="h-8 justify-between rounded-[10px] text-sm font-medium w-[190px] bg-background border-border hover:bg-muted/50"
       >
         <span class="truncate">{{ currentLabel }}</span>
         <ChevronDown class="ml-2 h-3.5 w-3.5 shrink-0 opacity-50" />
       </Button>
     </DropdownMenuTrigger>
-    <DropdownMenuContent align="start" class="w-[150px] rounded-[12px] z-[1001]">
+    <DropdownMenuContent align="start" class="w-[190px] rounded-[12px] z-[1001]">
       <DropdownMenuItem
         v-for="role in selectableRoles"
         :key="role.id"
