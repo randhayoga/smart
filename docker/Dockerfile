@@ -6,8 +6,7 @@ WORKDIR /var/www/smart
 # Install minimal system dependencies & PHP extensions via install-php-extensions
 # install-php-extensions automatically downloads Microsoft ODBC Driver 18 for SQL Server,
 # compiles sqlsrv & pdo_sqlsrv extensions, and purges build-time dev packages.
-RUN apt-get update && apt-get install -y --no-install-recommends \
-    gnupg2 \
+RUN apt-get update && apt-get upgrade -y --no-install-recommends && apt-get install -y --no-install-recommends \
     curl \
     ca-certificates \
     unzip \

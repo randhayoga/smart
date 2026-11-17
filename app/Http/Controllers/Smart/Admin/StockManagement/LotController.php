@@ -438,8 +438,9 @@ class LotController extends Controller
             app(NotificationService::class)->checkAndNotifyLowStock($model);
         }
 
-        if ($request->filled('redirect_to')) {
-            return redirect($request->input('redirect_to'))->with('success', __('inventory.lot_deleted'));
+        $safeRedirectTo = $this->resolveSafeRedirectUrl($request->input('redirect_to'));
+        if ($safeRedirectTo !== null) {
+            return redirect($safeRedirectTo)->with('success', __('inventory.lot_deleted'));
         }
 
         $previous = url()->previous();
@@ -627,5 +628,32 @@ class LotController extends Controller
             'projects' => $projects,
             'users' => $users,
         ]);
+    }
+
+    /**
+     * Validate and sanitize a redirect_to target to a same-origin relative path.
+     */
+    private function resolveSafeRedirectUrl(?string $redirectTo): ?string
+    {
+        if (!is_string($redirectTo) || $redirectTo === '') {
+            return null;
+        }
+
+        $trimmed = trim($redirectTo);
+        if (!str_starts_with($trimmed, '/') || str_starts_with($trimmed, '//') || str_starts_with($trimmed, '/\\')) {
+            return null;
+        }
+
+        $parsed = parse_url($trimmed);
+        if ($parsed === false || isset($parsed['scheme']) || isset($parsed['host'])) {
+            return null;
+        }
+
+        $path = $parsed['path'] ?? '';
+        if (!str_starts_with($path, '/') || str_starts_with($path, '//')) {
+            return null;
+        }
+
+        return isset($parsed['query']) ? $path . '?' . $parsed['query'] : $path;
     }
 }

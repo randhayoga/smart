@@ -265,6 +265,36 @@ class LotControllerTest extends TestCase
         $this->assertDatabaseMissing('lots', ['id' => $lot->id]);
     }
 
+    public function test_destroy_lot_with_relative_redirect_to_query_string_redirects_safely(): void
+    {
+        $user = User::factory()->create();
+        $lot = Lot::factory()->create();
+        $targetUrl = '/smart/stock-management/custom-target?tab=lots';
+
+        $response = $this->actingAs($user)
+            ->delete(route('smart.inventory.lots.destroy', ['lot' => $lot, 'redirect_to' => $targetUrl]));
+
+        $response->assertRedirect($targetUrl);
+        $this->assertDatabaseMissing('lots', ['id' => $lot->id]);
+    }
+
+    public function test_destroy_lot_ignores_external_and_protocol_relative_redirect_to(): void
+    {
+        $user = User::factory()->create();
+
+        foreach (['https://evil.com/phish', '//evil.com/phish', '/\\evil.com/phish'] as $maliciousUrl) {
+            $lot = Lot::factory()->create();
+            $fallbackUrl = route('smart.inventory.show', $lot->barang);
+
+            $response = $this->actingAs($user)
+                ->from($fallbackUrl)
+                ->delete(route('smart.inventory.lots.destroy', ['lot' => $lot, 'redirect_to' => $maliciousUrl]));
+
+            $response->assertRedirect($fallbackUrl);
+            $this->assertDatabaseMissing('lots', ['id' => $lot->id]);
+        }
+    }
+
     public function test_cannot_destroy_lot_with_units(): void
     {
         $user = User::factory()->create();
