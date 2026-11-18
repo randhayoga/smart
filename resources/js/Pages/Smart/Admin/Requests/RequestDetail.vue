@@ -107,6 +107,7 @@ interface Props {
   request: RequestDetail;
   locations?: any[];
   projects?: { id?: number; id_project?: number; no_project: string; project_name: string; client_id?: string }[];
+  users?: { id: number; name: string; employee_id?: string }[];
   user?: {
     name?: string;
     email?: string;
@@ -669,6 +670,7 @@ const activeStepIndex = computed(() => {
       :barang="activeBarangForEdit"
       :locations="locations || []"
       :projects="projects"
+      :users="users || []"
       @success="handleAssetEditSuccess"
     />
   </AppLayout>

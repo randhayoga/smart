@@ -206,6 +206,7 @@ class RequestDetailController extends Controller
             'request' => $requestData,
             'locations' => $locations,
             'projects' => Inertia::lazy(fn () => TbProject::optionsForSelection()),
+            'users' => app(\App\Services\Inventory\StockInventoryQueryService::class)->getActiveUsersForSelection(),
             'user' => [
                 'name' => auth()->user()->name,
                 'email' => auth()->user()->email,

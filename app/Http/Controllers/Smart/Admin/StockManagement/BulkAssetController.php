@@ -11,6 +11,7 @@ use App\Models\Inventory\AssetActivationApproval;
 use App\Models\Inventory\AssetLifecycle;
 use App\Services\Inventory\AssetNumberService;
 use App\Models\TbProject;
+use App\Models\User;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
@@ -314,6 +315,15 @@ class BulkAssetController extends Controller
             'burden' => 'nullable|string|in:Corporate,Project',
             'project_id' => 'required_if:burden,Project|nullable|integer',
             'is_assigned_to_location' => ['nullable', 'boolean'],
+            'location_pic_id' => [
+                'nullable',
+                'integer',
+                function ($attribute, $value, $fail) {
+                    if ($value !== null && !User::where('id', $value)->where('active', 1)->exists()) {
+                        $fail('PIC yang dipilih tidak ditemukan atau tidak aktif.');
+                    }
+                },
+            ],
             'license_exp_date' => ['nullable', 'date'],
             'renewal_reminder' => ['nullable', 'integer', 'min:0'],
             'warranty_date' => ['nullable', 'date'],
@@ -634,7 +644,7 @@ class BulkAssetController extends Controller
 
         if ($request->has('is_assigned_to_location') && $request->input('is_assigned_to_location') !== null) {
             $isAssigned = $request->boolean('is_assigned_to_location');
-            if ($isAssigned) {
+            if ($isAssigned && !$isSoft) {
                 $hasInvalid = $assets->contains(function ($u) {
                     $s = strtolower(trim($u->status ?? ''));
                     return $s !== 'tersedia' && $s !== 'di-assign (lt)' && $s !== 'lisensi kedaluwarsa';
@@ -642,10 +652,15 @@ class BulkAssetController extends Controller
                 if ($hasInvalid) {
                     return redirect()->back()->withErrors(['is_assigned_to_location' => 'Semua aset yang dipilih harus berstatus Tersedia untuk di-assign ke lokasi.']);
                 }
+                if (!$request->filled('location_pic_id')) {
+                    return redirect()->back()->withErrors(['location_pic_id' => 'PIC Assignment Lokasi wajib dipilih.']);
+                }
                 $updateData['is_assigned_to_location'] = true;
+                $updateData['location_pic_id'] = (int) $request->input('location_pic_id');
                 $updateData['status'] = 'Di-assign (LT)';
             } else {
                 $updateData['is_assigned_to_location'] = false;
+                $updateData['location_pic_id'] = null;
             }
         }
 

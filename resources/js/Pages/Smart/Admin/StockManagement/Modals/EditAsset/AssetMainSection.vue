@@ -37,6 +37,7 @@ interface Props {
   isBorrowingTypeDisabled?: boolean;
   locations: any[];
   projectOptions: { id: number; name: string }[];
+  users?: { id: number; name: string; employee_id?: string }[];
   hasImage: boolean;
   getStatusLabel: (s: string) => string;
   getConditionLabel: (c: string) => string;
@@ -193,6 +194,31 @@ const qcLabel = computed(() => {
             </DropdownMenuContent>
           </DropdownMenu>
         </FieldContent>
+      </Field>
+
+      <!-- PIC Location Assignment (Conditional: only when Assign to Location is Yes and not SOFT) -->
+      <Field
+        v-if="canShowAssignToLocation && !isSoft && form.is_assigned_to_location === true"
+        :data-invalid="!!errors.location_pic_id || undefined"
+      >
+        <FieldLabel>
+          <span>{{ t('inventory.locationPic') }}<span class="text-rose-500">*</span></span>
+        </FieldLabel>
+        <FieldContent>
+          <Combobox
+            :model-value="form.location_pic_id"
+            :options="users || []"
+            :placeholder="t('inventory.selectLocationPic')"
+            :default-label="t('inventory.selectLocationPic')"
+            :search-placeholder="t('inventory.searchEmployeePlaceholder')"
+            :error="!!errors.location_pic_id"
+            width-class="w-full"
+            bg-class="bg-background h-10"
+            :limit="50"
+            @update:model-value="(val) => form.location_pic_id = val ? Number(val) : null"
+          />
+        </FieldContent>
+        <FieldError v-if="errors.location_pic_id">{{ errors.location_pic_id }}</FieldError>
       </Field>
 
       <!-- Status (Disabled with informative helper message & tooltip) -->

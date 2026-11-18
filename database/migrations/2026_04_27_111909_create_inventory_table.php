@@ -54,6 +54,7 @@ return new class extends Migration {
             $table->foreignId('lot_id')->constrained('lots')->cascadeOnDelete();
             $table->foreignId('legacy_vendor_id')->nullable()->constrained('vendors')->nullOnDelete()->comment('Refers to local vendors table (legacy migration only)');
             $table->foreignId('location_id')->nullable()->constrained('locations')->nullOnDelete()->comment('current location');
+            $table->unsignedBigInteger('location_pic_id')->nullable()->index()->comment('Refers to USER_HRIS:hrd_employee.id');
             $table->string('active_status', 50)->default('Belum Aktif')->comment('Belum Aktif | Aktif | Tidak Aktif');
             $table->string('status', 50)->default('Belum Diverifikasi');
             $table->string('approval_status', 50)->nullable()->comment('Pending:DM | Pending:BoD/BoC');
@@ -150,10 +151,23 @@ return new class extends Migration {
             $table->index('start_date');
             $table->index('status');
         });
+
+        Schema::create('asset_location_assignments', function (Blueprint $table) {
+            $table->id();
+            $table->foreignId('asset_id')->constrained('assets')->cascadeOnDelete();
+            $table->foreignId('location_id')->nullable()->constrained('locations')->nullOnDelete();
+            $table->unsignedBigInteger('pic_user_id')->index()->comment('Refers to USER_HRIS:hrd_employee.id');
+            $table->dateTime('assigned_at')->index();
+            $table->dateTime('unassigned_at')->nullable()->index();
+
+            $table->index(['pic_user_id', 'assigned_at'], 'ala_pic_assigned_idx');
+            $table->index(['asset_id', 'unassigned_at'], 'ala_asset_unassigned_idx');
+        });
     }
 
     public function down(): void
     {
+        Schema::dropIfExists('asset_location_assignments');
         Schema::dropIfExists('asset_lifecycles');
         Schema::dropIfExists('inventory_logs');
         Schema::dropIfExists('asset_activation_approvals');

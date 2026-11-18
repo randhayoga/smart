@@ -323,6 +323,7 @@ export function prepareUnitsBundle(
         if (sparse.rr !== undefined) unit.renewal_reminder = sparse.rr;
         if (sparse.wd) unit.warranty_date = sparse.wd;
         if (sparse.no) unit.is_non_owned = true;
+        if (sparse.lpic) unit.location_pic_id = sparse.lpic;
       }
 
       if (projectId) {

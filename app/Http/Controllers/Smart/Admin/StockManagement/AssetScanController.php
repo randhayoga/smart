@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Inventory\Asset;
 use App\Models\Master\Location;
 use App\Models\TbProject;
+use App\Services\Inventory\StockInventoryQueryService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -16,6 +17,10 @@ use Inertia\Response;
  */
 class AssetScanController extends Controller
 {
+    public function __construct(
+        private readonly StockInventoryQueryService $queryService
+    ) {}
+
     /**
      * Look up an asset by raw/alphanumeric code or legacy number and return matching asset number & clean route key.
      */
@@ -47,7 +52,7 @@ class AssetScanController extends Controller
     public function show(Asset $asset): Response
     {
         $asset->load([
-            'location.parent.parent', 'deletionApprovals',
+            'location.parent.parent', 'locationPic:id,employee_id,employee_name', 'deletionApprovals',
             'lot.model.type.category', 'lot.model.brand', 'lot.model.uom',
             'lot.organizer', 'lot.vendor', 'lot.legacyVendor', 'legacyVendor',
             'project',
@@ -110,6 +115,8 @@ class AssetScanController extends Controller
             'price' => $asset->price,
             'image_url' => $asset->image_url,
             'vehicle_registration' => $asset->vehicle_registration,
+            'is_assigned_to_location' => (bool) $asset->is_assigned_to_location,
+            'location_pic_id' => $asset->location_pic_id,
             'updated_at' => $asset->updated_at ? $asset->updated_at->format('d-m-Y H:i') : '-',
             
             // Asset-specific legacy vendor
@@ -171,6 +178,7 @@ class AssetScanController extends Controller
             'asset' => $mappedAsset,
             'locations' => $locations,
             'projects' => TbProject::optionsForSelection(),
+            'users' => $this->queryService->getActiveUsersForSelection(),
         ]);
     }
 }

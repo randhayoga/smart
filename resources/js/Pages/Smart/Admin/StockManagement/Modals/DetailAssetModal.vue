@@ -23,7 +23,7 @@ interface Props {
   asset: any;
   lot?: any;
   locations?: any[];
-  users?: { id: number; name: string }[];
+  users?: { id: number; name: string; employee_name?: string }[];
 }
 
 const props = defineProps<Props>();
@@ -65,9 +65,46 @@ const isAssignment = computed(() => {
 
 const isAssignmentOrBorrowing = computed(() => isBorrowing.value || isAssignment.value);
 
+const fetchedActiveBorrowing = ref<any>(undefined);
+const fetchedAssetPatch = ref<Record<string, any> | null>(null);
+
+const handleEditClick = () => {
+  emit('update:open', false);
+  emit('edit', fetchedAssetPatch.value ? { ...props.asset, ...fetchedAssetPatch.value } : props.asset);
+};
+
+const localLocationPicBorrowing = computed(() => {
+  if (!props.asset?.is_assigned_to_location || !props.asset?.location_pic_id || !Array.isArray(props.users)) {
+    return undefined;
+  }
+  const picId = Number(props.asset.location_pic_id);
+  const pic = props.users.find((u) => Number(u.id) === picId);
+  if (!pic) return undefined;
+
+  const userName = pic.employee_name?.trim() || pic.name.replace(/\s*\([^)]*\)\s*$/, '').trim() || '-';
+  return {
+    assignment_id: null,
+    request_id: null,
+    request_number: null,
+    user_id: pic.id,
+    user_name: userName,
+    is_location_assignment: true,
+  };
+});
+
+const resolvedActiveBorrowing = computed(() => {
+  if (props.asset?.active_borrowing !== undefined) {
+    return props.asset.active_borrowing;
+  }
+  if (fetchedActiveBorrowing.value !== undefined) {
+    return fetchedActiveBorrowing.value;
+  }
+  return localLocationPicBorrowing.value;
+});
+
 const activeRequestId = computed<number | null>(() => {
-  if (props.asset?.active_borrowing?.request_id) {
-    return Number(props.asset.active_borrowing.request_id);
+  if (resolvedActiveBorrowing.value?.request_id) {
+    return Number(resolvedActiveBorrowing.value.request_id);
   }
   if (props.asset?.request_id) {
     return Number(props.asset.request_id);
@@ -90,8 +127,8 @@ const fetchAssetDetailsIfNeeded = async () => {
   if (!props.open || !props.asset?.id) return;
   // If Jejak Audit is open and lifecycles already exists, no need to fetch
   const needsLifecycles = detailActiveTab.value === 'Jejak Audit' && !Array.isArray(props.asset.lifecycles);
-  // If Perawatan is open or asset is borrowed/assigned, and active_borrowing is not yet loaded on the asset
-  const needsBorrowing = (detailActiveTab.value === 'Perawatan' || isAssignmentOrBorrowing.value) && props.asset.active_borrowing === undefined;
+  // If Perawatan is open or asset is borrowed/assigned, and active_borrowing is not yet resolved
+  const needsBorrowing = (detailActiveTab.value === 'Perawatan' || isAssignmentOrBorrowing.value) && resolvedActiveBorrowing.value === undefined;
 
   if (!needsLifecycles && !needsBorrowing) {
     if (detailActiveTab.value === 'Jejak Audit' && Array.isArray(props.asset.lifecycles)) {
@@ -114,8 +151,14 @@ const fetchAssetDetailsIfNeeded = async () => {
           props.asset.lifecycles = data.lifecycles;
         }
       }
-      if (data && data.active_borrowing !== undefined && props.asset) {
-        props.asset.active_borrowing = data.active_borrowing;
+      if (data && data.active_borrowing !== undefined) {
+        fetchedActiveBorrowing.value = data.active_borrowing;
+      }
+      if (data) {
+        fetchedAssetPatch.value = {
+          ...(data.location_pic_id !== undefined ? { location_pic_id: data.location_pic_id } : {}),
+          ...(data.is_assigned_to_location !== undefined ? { is_assigned_to_location: data.is_assigned_to_location } : {}),
+        };
       }
     }
   } catch {
@@ -144,6 +187,8 @@ watch(
       detailActiveTab.value = 'Detail Aset';
       showMoreInfo.value = false;
       isUploading.value = false;
+      fetchedActiveBorrowing.value = undefined;
+      fetchedAssetPatch.value = null;
       fetchedLifecycles.value = Array.isArray(props.asset?.lifecycles) ? props.asset.lifecycles : [];
       if (fileInputRef.value) {
         fileInputRef.value.value = '';
@@ -151,7 +196,7 @@ watch(
       if (disapprovalFileInputRef.value) {
         disapprovalFileInputRef.value.value = '';
       }
-      if (isAssignmentOrBorrowing.value && props.asset?.active_borrowing === undefined) {
+      if (isAssignmentOrBorrowing.value && resolvedActiveBorrowing.value === undefined) {
         void fetchAssetDetailsIfNeeded();
       }
     }
@@ -554,7 +599,7 @@ const isAssetLocationActive = computed(() => {
 
                     <!-- User (if Borrowed/Assigned) -->
                     <p v-if="isAssignmentOrBorrowing" class="text-foreground">
-                      User: <span class="font-semibold">{{ asset.active_borrowing?.user_name || asset.active_borrowing?.employee_name || '-' }}</span>
+                      User: <span class="font-semibold">{{ resolvedActiveBorrowing?.user_name || resolvedActiveBorrowing?.employee_name || '-' }}</span>
                     </p>
 
                     <!-- 9. Kondisi -->
@@ -836,10 +881,7 @@ const isAssetLocationActive = computed(() => {
 
                 <Button 
                   v-if="can('inventory.manage')"
-                  @click="
-                    emit('update:open', false);
-                    emit('edit', props.asset);
-                  "
+                  @click="handleEditClick"
                   variant="primary"
                   size="lg"
                 >

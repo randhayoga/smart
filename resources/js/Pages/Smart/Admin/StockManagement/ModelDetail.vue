@@ -70,6 +70,7 @@ interface Props {
   floors?: any[];
   rooms?: any[];
   projects: { id: number; no_project: string; project_name: string; client_id: string; }[];
+  users?: { id: number; name: string; employee_name?: string; employee_id?: string }[];
   units?: any[];
   inventoryLogs?: InventoryLogItem[];
 }
@@ -299,6 +300,7 @@ onUnmounted(() => {
         :organizers="props.organizers"
         :vendors="props.vendors"
         :projects="props.projects"
+        :users="props.users"
         :barang="props.barang"
         :show-error-modal="false"
         status-scope="all"

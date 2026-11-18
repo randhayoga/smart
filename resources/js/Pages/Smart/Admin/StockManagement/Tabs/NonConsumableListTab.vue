@@ -125,15 +125,19 @@ const isComp = computed(() => {
   return unitsBundle.value.facets.hasComp;
 });
 
+const ensureUsersLoaded = () => {
+  if ((!props.users || props.users.length === 0) && typeof router?.reload === 'function') {
+    router.reload({ only: ['users'] });
+  }
+};
+
 // View Asset Modal Setup
 const isViewAssetModalOpen = ref(false);
 const selectedAssetForView = ref<any>(null);
 const openViewAssetModal = (asset: any) => {
   selectedAssetForView.value = asset;
   isViewAssetModalOpen.value = true;
-  if ((!props.users || props.users.length === 0) && typeof router?.reload === 'function') {
-    router.reload({ only: ['users'] });
-  }
+  ensureUsersLoaded();
 };
 
 watch(
@@ -163,6 +167,7 @@ const openEditAssetModal = (asset: any) => {
   selectedAssetsForEdit.value = [asset];
   isEditAssetModalOpen.value = true;
   ensureProjectsLoaded();
+  ensureUsersLoaded();
 };
 
 const handleEditTerpilih = () => {
@@ -174,6 +179,7 @@ const handleEditTerpilih = () => {
     selectedAssetsForEdit.value = selectedRows.map((row: any) => row.original);
     isEditAssetModalOpen.value = true;
     ensureProjectsLoaded();
+    ensureUsersLoaded();
   }
 };
 
@@ -682,6 +688,7 @@ const totalAsetTerpilihCount = computed(() => {
     :barang="activeBarangForEdit"
     :locations="props.locations"
     :projects="props.projects"
+    :users="props.users"
     @success="handleAssetSuccess"
   />
 

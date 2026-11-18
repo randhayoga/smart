@@ -152,4 +152,34 @@ describe('EmployeeDetailModal.vue', () => {
     expect(text).toContain('Department: Information Technology');
     expect(text).toContain('Employee Status: Active');
   });
+
+  it('renders 4 tabs including PIC Location Assignment (no End Time) and PIC Location History (with End Time)', async () => {
+    setI18nLanguage('en');
+    const wrapper = mount(EmployeeDetailModal, {
+      props: {
+        open: true,
+        employee: {
+          id: 1,
+          employee_id: '12345',
+          name: 'Budi Santoso',
+          department: 'Information Technology',
+          is_active: true,
+        },
+      },
+      global: {
+        plugins: [i18n],
+        stubs: {
+          Teleport: true,
+        },
+      },
+    });
+
+    const vm = wrapper.vm as any;
+    expect(vm.tabLabels).toHaveLength(4);
+    expect(vm.tabLabels[2]).toContain('PIC Location Assignment');
+    expect(vm.tabLabels[3]).toContain('PIC Location History');
+
+    expect(vm.activeAssignmentColumns.some((c: any) => c.id === 'return_date')).toBe(false);
+    expect(vm.historyColumns.some((c: any) => c.id === 'return_date')).toBe(true);
+  });
 });

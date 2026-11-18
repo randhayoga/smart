@@ -241,6 +241,7 @@ class StockInventoryQueryService
             'a.image_url',
             'a.vehicle_registration',
             'a.is_assigned_to_location',
+            'a.location_pic_id',
             'a.license_exp_date',
             'a.renewal_reminder',
             'a.warranty_date',
@@ -360,6 +361,7 @@ class StockInventoryQueryService
                 'price' => $price,
                 'image_url' => $imageUrl,
                 'is_assigned_to_location' => (bool) ($row->is_assigned_to_location ?? false),
+                'location_pic_id' => $row->location_pic_id ? (int) $row->location_pic_id : null,
                 'is_software' => $isSwCategory,
                 'burden' => $row->burden ?? $lotInfo?->lot_burden ?? 'Corporate',
                 'vendor_id' => $effectiveVendorId ? (int) $effectiveVendorId : null,
@@ -608,6 +610,7 @@ class StockInventoryQueryService
             'a.serial_number',          // 24
             'a.warranty_date',          // 25
             'a.is_non_owned',           // 26
+            'a.location_pic_id',        // 27
         ]);
 
         if (!empty($filters['exclude_unverified'])) {
@@ -714,6 +717,9 @@ class StockInventoryQueryService
             if (!empty($r[26])) {
                 $sparse['no'] = 1;
             }
+            if ($r[27] !== null) {
+                $sparse['lpic'] = (int) $r[27];
+            }
 
             $tuple = [
                 (int) $r[0],
@@ -785,6 +791,7 @@ class StockInventoryQueryService
                     return [
                         'id' => (int) $u->id,
                         'name' => "{$u->employee_name} ({$empId})",
+                        'employee_name' => trim((string) ($u->employee_name ?? '-')) ?: '-',
                         'employee_id' => $empId,
                     ];
                 });

@@ -23,6 +23,7 @@ interface Props {
   rooms?: any[];
   lot?: any;
   barang?: any;
+  users?: { id: number; name: string; employee_id?: string }[];
 }
 
 const props = defineProps<Props>();
@@ -127,6 +128,7 @@ const handleMaintenanceSaved = (payload: { maintenance: any; assetCondition: str
           :projects="props.projects"
           :lot="props.lot"
           :barang="props.barang"
+          :users="props.users || []"
           @cancel="activeTab = 'detail'"
           @success="activeTab = 'detail'"
         />

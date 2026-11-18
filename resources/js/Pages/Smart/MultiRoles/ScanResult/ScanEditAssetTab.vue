@@ -30,6 +30,7 @@ interface Props {
   projects?: any[];
   lot?: any;
   barang?: any;
+  users?: { id: number; name: string; employee_id?: string }[];
 }
 
 const props = defineProps<Props>();
@@ -119,6 +120,8 @@ const form = useForm({
   active_status: props.asset?.active_status || '',
   status: props.asset?.status || '',
   approval_status: props.asset?.approval_status || '',
+  is_assigned_to_location: Boolean(props.asset?.is_assigned_to_location),
+  location_pic_id: props.asset?.location_pic_id ? Number(props.asset.location_pic_id) : (null as number | null),
   condition: props.asset?.condition || '',
   qc_pass: props.asset?.qc_pass !== undefined && props.asset?.qc_pass !== null ? props.asset.qc_pass : null,
   specification: props.asset?.comp_specification || props.asset?.specification || '',
@@ -150,6 +153,8 @@ watch(() => props.asset, (newAsset) => {
   form.active_status = newAsset.active_status || '';
   form.status = newAsset.status || '';
   form.approval_status = newAsset.approval_status || '';
+  form.is_assigned_to_location = Boolean(newAsset.is_assigned_to_location);
+  form.location_pic_id = newAsset.location_pic_id ? Number(newAsset.location_pic_id) : null;
   form.condition = newAsset.condition || '';
   form.qc_pass = newAsset.qc_pass !== undefined && newAsset.qc_pass !== null ? newAsset.qc_pass : null;
   form.specification = newAsset.comp_specification || newAsset.specification || '';
@@ -180,6 +185,7 @@ watch(() => props.asset, (newAsset) => {
 
 const errors = ref({
   location_id: '',
+  location_pic_id: '',
   status: '',
   condition: '',
   image_url: '',
@@ -200,6 +206,7 @@ const errors = ref({
 const resetErrors = () => {
   errors.value = {
     location_id: '',
+    location_pic_id: '',
     status: '',
     condition: '',
     image_url: '',
@@ -220,6 +227,25 @@ const resetErrors = () => {
 
 // Reactive error clearing
 watch(() => form.location_id, v => { if (v && errors.value.location_id) errors.value.location_id = ''; });
+watch(() => form.location_pic_id, v => { if (v && errors.value.location_pic_id) errors.value.location_pic_id = ''; });
+
+const canShowAssignToLocation = computed(() => {
+  if (isSoft.value) return false;
+  return props.asset?.status === 'Tersedia' || (props.asset?.status === 'Di-assign (LT)' && Boolean(props.asset?.is_assigned_to_location));
+});
+
+const handleAssignToLocationSelect = (value: boolean) => {
+  form.is_assigned_to_location = value;
+  if (value) {
+    form.status = 'Di-assign (LT)';
+  } else {
+    if (form.status === 'Di-assign (LT)' || props.asset?.is_assigned_to_location) {
+      form.status = 'Tersedia';
+    }
+    form.location_pic_id = null;
+    errors.value.location_pic_id = '';
+  }
+};
 watch(() => form.status, v => { if (v && errors.value.status) errors.value.status = ''; });
 watch(() => form.condition, v => { if (v && errors.value.condition) errors.value.condition = ''; });
 watch(() => form.image_url, v => { if (v && errors.value.image_url) errors.value.image_url = ''; });
@@ -412,6 +438,10 @@ const handleSubmit = () => {
   if (!isSoft.value) {
     if (!form.condition) { errors.value.condition = t('scanner.conditionRequired'); isValid = false; }
     if (!form.location_id) { errors.value.location_id = t('scanner.locationRequired'); isValid = false; }
+    if (canShowAssignToLocation.value && form.is_assigned_to_location && !form.location_pic_id) {
+      errors.value.location_pic_id = t('inventory.locationPicRequired');
+      isValid = false;
+    }
   }
   if (!form.status) { errors.value.status = t('scanner.statusRequired'); isValid = false; }
   if (isVehicle.value && !form.vehicle_registration) { errors.value.vehicle_registration = t('scanner.tnkbRequired'); isValid = false; }
@@ -444,6 +474,10 @@ const handleSubmit = () => {
       serial_number: data.serial_number || null,
       warranty_date: data.warranty_date || null,
     };
+    if (canShowAssignToLocation.value) {
+      fd.is_assigned_to_location = Boolean(data.is_assigned_to_location);
+      fd.location_pic_id = data.is_assigned_to_location ? (data.location_pic_id || null) : null;
+    }
     if (data.qc_pass !== null && data.qc_pass !== undefined && data.qc_pass !== '') {
       fd.qc_pass = data.qc_pass;
     }
@@ -467,6 +501,7 @@ const handleSubmit = () => {
     },
     onError: (err) => {
       if (err.location_id) errors.value.location_id = err.location_id;
+      if (err.location_pic_id) errors.value.location_pic_id = err.location_pic_id;
       if (err.status) errors.value.status = err.status;
       if (err.condition) errors.value.condition = err.condition;
       if (err.image_url) errors.value.image_url = err.image_url;
@@ -567,6 +602,59 @@ const handleSubmit = () => {
             />
           </FieldContent>
           <FieldError v-if="errors.location_id">{{ errors.location_id }}</FieldError>
+        </Field>
+
+        <!-- 3b. Assign to Location (non-software, Tersedia or Di-assign (LT)) -->
+        <Field v-if="canShowAssignToLocation">
+          <FieldLabel>
+            <span>{{ t('inventory.isAssignedToLocation') }}</span>
+          </FieldLabel>
+          <FieldContent>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  variant="outline"
+                  class="w-full justify-between rounded-[14px] font-normal h-10 px-4 bg-background text-foreground"
+                >
+                  {{ form.is_assigned_to_location ? t('inventory.assignedToLocationYes') : t('inventory.assignedToLocationNo') }}
+                  <ChevronDown class="w-4 h-4 opacity-50" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="start" class="w-(--reka-dropdown-menu-trigger-width) min-w-(--reka-dropdown-menu-trigger-width) rounded-[14px] z-[1001]">
+                <DropdownMenuItem @select="handleAssignToLocationSelect(false)">
+                  {{ t('inventory.assignedToLocationNo') }}
+                </DropdownMenuItem>
+                <DropdownMenuItem @select="handleAssignToLocationSelect(true)">
+                  {{ t('inventory.assignedToLocationYes') }}
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </FieldContent>
+        </Field>
+
+        <!-- 3c. PIC Location Assignment (Conditional: hidden if Assign to Location is No) -->
+        <Field
+          v-if="canShowAssignToLocation && form.is_assigned_to_location"
+          :data-invalid="!!errors.location_pic_id || undefined"
+        >
+          <FieldLabel>
+            <span>{{ t('inventory.locationPic') }}<span class="text-rose-500">*</span></span>
+          </FieldLabel>
+          <FieldContent>
+            <Combobox
+              :model-value="form.location_pic_id"
+              :options="users || []"
+              :placeholder="t('inventory.selectLocationPic')"
+              :default-label="t('inventory.selectLocationPic')"
+              :search-placeholder="t('inventory.searchEmployeePlaceholder')"
+              :error="!!errors.location_pic_id"
+              width-class="w-full"
+              bg-class="bg-background h-10"
+              :limit="50"
+              @update:model-value="(val) => form.location_pic_id = val ? Number(val) : null"
+            />
+          </FieldContent>
+          <FieldError v-if="errors.location_pic_id">{{ errors.location_pic_id }}</FieldError>
         </Field>
 
         <!-- 4. Photo -->

@@ -234,7 +234,7 @@ describe('EditAssetModal.vue - Single & Mass Edit Logic and Layout', () => {
       const wrapper = mountModal([
         { id: 1, number: 'AST-001', status: 'Tersedia', condition: 'Bagus', is_assigned_to_location: false },
       ]);
-      expect(wrapper.text()).toContain('Tetapkan ke Lokasi');
+      expect(wrapper.text()).toContain('Assign ke Lokasi');
     });
 
     it('shows the Assign to Location dropdown when unit status is Di-assign (LT) and is_assigned_to_location is true', () => {
@@ -242,7 +242,7 @@ describe('EditAssetModal.vue - Single & Mass Edit Logic and Layout', () => {
       const wrapper = mountModal([
         { id: 1, number: 'AST-001', status: 'Di-assign (LT)', condition: 'Bagus', is_assigned_to_location: true },
       ]);
-      expect(wrapper.text()).toContain('Tetapkan ke Lokasi');
+      expect(wrapper.text()).toContain('Assign ke Lokasi');
     });
 
     it('hides the Assign to Location dropdown when unit status is not Tersedia (e.g. Dipinjam (ST) or Rusak Total)', () => {
@@ -250,7 +250,7 @@ describe('EditAssetModal.vue - Single & Mass Edit Logic and Layout', () => {
       const wrapper = mountModal([
         { id: 1, number: 'AST-001', status: 'Dipinjam (ST)', condition: 'Bagus', is_assigned_to_location: false },
       ]);
-      expect(wrapper.text()).not.toContain('Tetapkan ke Lokasi');
+      expect(wrapper.text()).not.toContain('Assign ke Lokasi');
     });
 
     it('in mass edit, shows the Assign to Location dropdown only if all items are Tersedia', () => {
@@ -259,13 +259,13 @@ describe('EditAssetModal.vue - Single & Mass Edit Logic and Layout', () => {
         { id: 1, number: 'AST-001', status: 'Tersedia', condition: 'Bagus' },
         { id: 2, number: 'AST-002', status: 'Tersedia', condition: 'Bagus' },
       ]);
-      expect(wrapperAllTersedia.text()).toContain('Tetapkan ke Lokasi');
+      expect(wrapperAllTersedia.text()).toContain('Assign ke Lokasi');
 
       const wrapperMixed = mountModal([
         { id: 1, number: 'AST-001', status: 'Tersedia', condition: 'Bagus' },
         { id: 2, number: 'AST-002', status: 'Dipinjam (ST)', condition: 'Bagus' },
       ]);
-      expect(wrapperMixed.text()).not.toContain('Tetapkan ke Lokasi');
+      expect(wrapperMixed.text()).not.toContain('Assign ke Lokasi');
     });
 
     it('automatically updates form.status to Di-assign (LT) and locks it when selecting true', async () => {
@@ -320,6 +320,67 @@ describe('EditAssetModal.vue - Single & Mass Edit Logic and Layout', () => {
       vm.handleAssignToLocationSelect(false);
       await wrapper.vm.$nextTick();
       expect(locationCombobox.attributes('data-disabled')).toBe('false');
+    });
+
+    it('shows PIC Assignment Lokasi only when is_assigned_to_location is true, clears it on false, and validates on submit', async () => {
+      setI18nLanguage('id');
+      const wrapper = mountModal([
+        { id: 1, number: 'AST-001', status: 'Tersedia', condition: 'Bagus', location_id: 10, type: 'LT', classification: 'Aset', burden: 'Corporate', is_assigned_to_location: false },
+      ]);
+      const vm = wrapper.vm as any;
+
+      expect(wrapper.text()).not.toContain('PIC Assignment Lokasi');
+
+      vm.handleAssignToLocationSelect(true);
+      await wrapper.vm.$nextTick();
+      expect(wrapper.text()).toContain('PIC Assignment Lokasi');
+
+      // Submitting without PIC should set location_pic_id error
+      vm.handleSubmit();
+      await wrapper.vm.$nextTick();
+      expect(vm.errors.location_pic_id).toBeTruthy();
+
+      // Selecting PIC and then unassigning clears location_pic_id
+      vm.form.location_pic_id = 55;
+      vm.handleAssignToLocationSelect(false);
+      await wrapper.vm.$nextTick();
+      expect(vm.form.location_pic_id).toBeNull();
+      expect(wrapper.text()).not.toContain('PIC Assignment Lokasi');
+    });
+
+    it('pre-selects existing location_pic_id in single edit when asset is assigned to location', () => {
+      setI18nLanguage('id');
+      const users = [{ id: 10, name: 'Budi PIC (99001)', employee_id: '99001' }];
+      const wrapper = mount(EditAssetModal, {
+        props: {
+          ...baseProps,
+          users,
+          items: [
+            {
+              id: 1,
+              number: 'AST-001',
+              status: 'Di-assign (LT)',
+              condition: 'Bagus',
+              location_id: 1,
+              is_assigned_to_location: true,
+              location_pic_id: 10,
+            },
+          ],
+        },
+        global: {
+          plugins: [i18n],
+          stubs: {
+            Teleport: true,
+            Transition: false,
+            LocationCombobox: true,
+          },
+        },
+      });
+
+      const vm = wrapper.vm as any;
+      expect(vm.form.location_pic_id).toBe(10);
+      expect(wrapper.text()).toContain('Budi PIC (99001)');
+      expect(wrapper.text()).not.toContain('Pilih PIC Assignment Lokasi');
     });
   });
 

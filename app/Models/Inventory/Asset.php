@@ -3,6 +3,7 @@
 namespace App\Models\Inventory;
 
 use App\Models\Master\Location;
+use App\Models\User;
 use App\Services\NotificationService;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -86,7 +87,7 @@ class Asset extends Model
             }
 
             $dirty = $asset->getDirty();
-            $tracked = ['active_status', 'status', 'approval_status', 'condition', 'location_id', 'is_assigned_to_location', 'license_exp_date', 'last_qc', 'qc_pass', 'warranty_date'];
+            $tracked = ['active_status', 'status', 'approval_status', 'condition', 'location_id', 'location_pic_id', 'is_assigned_to_location', 'license_exp_date', 'last_qc', 'qc_pass', 'warranty_date'];
             $changed = array_intersect(array_keys($dirty), $tracked);
 
             if (!empty($changed)) {
@@ -108,15 +109,30 @@ class Asset extends Model
                 $actions = [];
 
                 // 1. Assignment Action (Preempts redundant status change log)
-                if ($asset->isDirty('is_assigned_to_location')) {
-                    // When unassigning or assigning, the assignment event happened at the original location
-                    $locId = $asset->getOriginal('location_id') ?? $asset->location_id;
+                if ($asset->isDirty('is_assigned_to_location') || ($asset->is_assigned_to_location && $asset->isDirty('location_pic_id'))) {
+                    // When unassigning or assigning, the assignment event happened at the relevant location
+                    $locId = $asset->is_assigned_to_location
+                        ? ($asset->location_id ?? $asset->getOriginal('location_id'))
+                        : ($asset->getOriginal('location_id') ?? $asset->location_id);
                     $location = $locId ? \App\Models\Master\Location::find($locId) : null;
                     $locationName = $location?->name ?? $location?->full_name ?? '-';
 
-                    $note = $asset->is_assigned_to_location
-                        ? "Di-assign ke lokasi {$locationName}"
-                        : "Assignment ke lokasi {$locationName} selesai.";
+                    if ($asset->is_assigned_to_location) {
+                        $pic = $asset->location_pic_id
+                            ? User::select('id', 'employee_id', 'employee_name')->find($asset->location_pic_id)
+                            : null;
+                        if ($pic) {
+                            $picName = trim((string) ($pic->employee_name ?? '-'));
+                            $picNpk = trim((string) ($pic->employee_id ?? ''));
+                            $note = $picNpk !== ''
+                                ? "Di-assign ke lokasi {$locationName}, dengan PIC {$picName} ({$picNpk})"
+                                : "Di-assign ke lokasi {$locationName}, dengan PIC {$picName}";
+                        } else {
+                            $note = "Di-assign ke lokasi {$locationName}";
+                        }
+                    } else {
+                        $note = "Assignment ke lokasi {$locationName} selesai.";
+                    }
 
                     $actions[] = [
                         'action_type' => 'Assignment',
@@ -124,10 +140,12 @@ class Asset extends Model
                         'location_id' => $locId,
                         'previous_state' => [
                             'is_assigned_to_location' => $asset->getOriginal('is_assigned_to_location'),
+                            'location_pic_id' => $asset->getOriginal('location_pic_id'),
                             'status' => $asset->getOriginal('status'),
                         ],
                         'new_state' => [
                             'is_assigned_to_location' => $asset->is_assigned_to_location,
+                            'location_pic_id' => $asset->location_pic_id,
                             'status' => $asset->status,
                         ],
                         'approval' => null,
@@ -295,13 +313,40 @@ class Asset extends Model
                     }
                 }
             }
+
+            // Sync dedicated asset_location_assignments table for O(1) Start/End Time queries
+            $statusLeftAssigned = $asset->isDirty('status')
+                && $asset->getOriginal('status') === 'Di-assign (LT)'
+                && $asset->status !== 'Di-assign (LT)';
+
+            if ($asset->isDirty('is_assigned_to_location') || $asset->isDirty('location_pic_id') || $statusLeftAssigned) {
+                $assignmentNow = now();
+                AssetLocationAssignment::where('asset_id', $asset->id)
+                    ->whereNull('unassigned_at')
+                    ->update(['unassigned_at' => $assignmentNow]);
+
+                if ($asset->is_assigned_to_location && $asset->location_pic_id && !$statusLeftAssigned) {
+                    AssetLocationAssignment::create([
+                        'asset_id' => $asset->id,
+                        'location_id' => $asset->location_id,
+                        'pic_user_id' => $asset->location_pic_id,
+                        'assigned_at' => $assignmentNow,
+                        'unassigned_at' => null,
+                    ]);
+                }
+            }
         });
 
-        // 3. Close lifecycle on delete
+        // 3. Close lifecycle and active location assignment on delete
         static::deleted(function (Asset $asset) {
+            $now = now();
             AssetLifecycle::where('asset_id', $asset->id)
                 ->whereNull('end_date')
-                ->update(['end_date' => now()]);
+                ->update(['end_date' => $now]);
+
+            AssetLocationAssignment::where('asset_id', $asset->id)
+                ->whereNull('unassigned_at')
+                ->update(['unassigned_at' => $now]);
         });
     }
 
@@ -351,6 +396,7 @@ class Asset extends Model
         'serial_number',
         'lot_id',
         'location_id',
+        'location_pic_id',
         'active_status',
         'status',
         'approval_status',
@@ -376,6 +422,7 @@ class Asset extends Model
 
     protected $casts = [
         'price' => 'decimal:2',
+        'location_pic_id' => 'integer',
         'project_id' => 'integer',
         'legacy_vendor_id' => 'integer',
         'is_assigned_to_location' => 'boolean',
@@ -409,6 +456,22 @@ class Asset extends Model
     public function location(): BelongsTo
     {
         return $this->belongsTo(Location::class);
+    }
+
+    /**
+     * Current employee (PIC) assigned to this asset's location assignment.
+     */
+    public function locationPic(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'location_pic_id');
+    }
+
+    /**
+     * All location assignment records (active and historical) for this asset.
+     */
+    public function locationAssignments(): HasMany
+    {
+        return $this->hasMany(AssetLocationAssignment::class);
     }
 
     /**
@@ -613,6 +676,24 @@ class Asset extends Model
                 'start_date' => $activeLifecycle->start_date ? $activeLifecycle->start_date->format('Y-m-d') : null,
                 'note' => $activeLifecycle->note ?? '',
             ];
+        }
+
+        // Fallback to Location Assignment PIC when assigned to a location without a request
+        if ($this->is_assigned_to_location && $this->location_pic_id) {
+            $pic = $this->relationLoaded('locationPic')
+                ? $this->locationPic
+                : $this->locationPic()->select(['id', 'employee_name'])->first();
+
+            if ($pic) {
+                return [
+                    'assignment_id' => null,
+                    'request_id' => null,
+                    'request_number' => null,
+                    'user_id' => $pic->id,
+                    'user_name' => trim((string) ($pic->employee_name ?? '-')) ?: '-',
+                    'is_location_assignment' => true,
+                ];
+            }
         }
 
         return null;

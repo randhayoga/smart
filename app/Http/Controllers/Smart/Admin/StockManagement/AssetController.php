@@ -14,6 +14,7 @@ use App\Models\Master\Organizer;
 use App\Models\Master\Vendor;
 use App\Models\Request\RequestFulfillment;
 use App\Models\TbProject;
+use App\Models\User;
 use App\Services\Inventory\AssetNumberService;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
@@ -145,6 +146,8 @@ class AssetController extends Controller
         unset($validated['type']);
         if ($isSoft) {
             $validated['location_id'] = null;
+            $validated['location_pic_id'] = null;
+            $validated['is_assigned_to_location'] = false;
             $validated['condition'] = null;
         }
         $validated['burden'] = $validated['burden'] ?? 'Corporate';
@@ -385,6 +388,7 @@ class AssetController extends Controller
             'burden' => 'nullable|string|in:Corporate,Project',
             'project_id' => 'required_if:burden,Project|nullable|integer',
             'is_assigned_to_location' => 'nullable|boolean',
+            'location_pic_id' => ['nullable'],
             'qc_pass' => 'nullable|boolean',
             'serial_number' => 'nullable|string|max:255',
             'warranty_date' => 'nullable|date',
@@ -406,6 +410,17 @@ class AssetController extends Controller
 
         $lot = Lot::with('model.type.category')->findOrFail($request->input('lot_id'));
         $isSoft = ($lot->model?->type?->category?->code === 'SOFT' || strtolower($lot->model?->type?->category?->name ?? '') === 'software');
+        if (!$isSoft && $request->has('is_assigned_to_location') && $request->boolean('is_assigned_to_location')) {
+            $rules['location_pic_id'] = [
+                'required',
+                'integer',
+                function ($attribute, $value, $fail) {
+                    if ($value !== null && !User::where('id', $value)->where('active', 1)->exists()) {
+                        $fail('PIC yang dipilih tidak ditemukan atau tidak aktif.');
+                    }
+                },
+            ];
+        }
         if ($isSoft) {
             $rules['license_exp_date'] = 'nullable|date';
             $rules['renewal_reminder'] = 'nullable|integer|min:0';
@@ -561,16 +576,18 @@ class AssetController extends Controller
 
         if ($request->has('is_assigned_to_location') && $request->input('is_assigned_to_location') !== null) {
             $isAssigned = $request->boolean('is_assigned_to_location');
-            if ($isAssigned) {
+            if ($isAssigned && !$isSoft) {
                 $previousStatus = 'Di-assign (LT)';
                 $validated['status'] = 'Di-assign (LT)';
                 $validated['is_assigned_to_location'] = true;
+                $validated['location_pic_id'] = $request->filled('location_pic_id') ? (int) $request->input('location_pic_id') : null;
             } else {
                 if ($asset->is_assigned_to_location || $asset->status === 'Di-assign (LT)') {
                     $previousStatus = 'Tersedia';
                     $validated['status'] = 'Tersedia';
                 }
                 $validated['is_assigned_to_location'] = false;
+                $validated['location_pic_id'] = null;
             }
         }
 
@@ -588,6 +605,8 @@ class AssetController extends Controller
 
         if ($isSoft) {
             $validated['location_id'] = null;
+            $validated['location_pic_id'] = null;
+            $validated['is_assigned_to_location'] = false;
             $validated['condition'] = null;
             if ($request->has('license_exp_date')) {
                 $validated['license_exp_date'] = $request->input('license_exp_date') ?: null;
@@ -698,6 +717,7 @@ class AssetController extends Controller
     {
         $asset->loadMissing([
             'location.parent.parent',
+            'locationPic:id,employee_id,employee_name',
             'deletionApprovals',
             'lot.model.type.category',
             'lot.model.brand',
@@ -765,6 +785,7 @@ class AssetController extends Controller
             'image_url' => $asset->image_url,
             'vehicle_registration' => $asset->vehicle_registration,
             'is_assigned_to_location' => (bool)$asset->is_assigned_to_location,
+            'location_pic_id' => $asset->location_pic_id,
             'license_exp_date' => $asset->license_exp_date ? $asset->license_exp_date->format('Y-m-d') : null,
             'renewal_reminder' => $asset->renewal_reminder,
             'warranty_date' => $asset->warranty_date ? $asset->warranty_date->format('Y-m-d') : null,

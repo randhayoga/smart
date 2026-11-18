@@ -4,6 +4,8 @@ namespace App\Http\Controllers\Smart\Admin\Employees;
 
 use App\Http\Controllers\Controller;
 use App\Models\HrdEmployee;
+use App\Models\Inventory\Asset;
+use App\Models\Inventory\AssetLocationAssignment;
 use App\Models\Request\RequestFulfillment;
 use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
@@ -25,6 +27,8 @@ class EmployeeLoanController extends Controller
             return response()->json([
                 'active' => [],
                 'history' => [],
+                'active_location_assignments' => [],
+                'location_assignment_history' => [],
             ]);
         }
 
@@ -70,88 +74,7 @@ class EmployeeLoanController extends Controller
             $brand = $model?->brand?->name ?? '-';
             $location = $asset?->location?->full_name ?? '-';
 
-            $pendingApproval = $asset?->deletionApprovals?->firstWhere('decision', 'pending');
-            $approvedApproval = ($asset && ($asset->active_status === 'Tidak Aktif' || $asset->hasStatus('Pending:BoD/BoC') || $asset->hasStatus('Dihapus')))
-                ? $asset->deletionApprovals?->where('decision', 'approved')->sortByDesc('id')->first()
-                : null;
-            $rejectedApproval = (!$pendingApproval && !$approvedApproval)
-                ? $asset?->deletionApprovals?->where('decision', 'rejected')->sortByDesc('id')->first()
-                : null;
-            $latestDisapproval = $asset?->deletionApprovals?->whereNotNull('bod_boc_disapproval_url')->sortByDesc('id')->first();
-
-            $assetData = $asset ? [
-                'id' => $asset->id,
-                'number' => $asset->number,
-                'legacy_number' => $asset->legacy_number,
-                'active_status' => $asset->active_status,
-                'status' => $asset->status,
-                'approval_status' => $asset->approval_status,
-                'proposed_status' => $pendingApproval 
-                    ? $pendingApproval->proposed_condition 
-                    : ($approvedApproval ? $approvedApproval->proposed_condition : null),
-                'proposed_condition' => $pendingApproval 
-                    ? $pendingApproval->proposed_condition 
-                    : ($approvedApproval ? $approvedApproval->proposed_condition : null),
-                'memo_url' => $pendingApproval 
-                    ? $pendingApproval->memo_url 
-                    : ($approvedApproval ? $approvedApproval->memo_url : null),
-                'lost_doc_url' => $pendingApproval 
-                    ? $pendingApproval->lost_doc_url 
-                    : ($approvedApproval ? $approvedApproval->lost_doc_url : null),
-                'bod_boc_approval_url' => $pendingApproval 
-                    ? $pendingApproval->bod_boc_approval_url 
-                    : ($approvedApproval ? $approvedApproval->bod_boc_approval_url : null),
-                'bod_boc_disapproval_url' => $latestDisapproval?->bod_boc_disapproval_url,
-                'admin_note' => $pendingApproval ? $pendingApproval->admin_note : ($approvedApproval ? $approvedApproval->admin_note : ($rejectedApproval ? $rejectedApproval->admin_note : null)),
-                'dm_note' => $pendingApproval ? $pendingApproval->dm_note : ($approvedApproval ? $approvedApproval->dm_note : ($rejectedApproval ? $rejectedApproval->dm_note : null)),
-                'condition' => $asset->condition,
-                'price' => $asset->price,
-                'type' => $asset->borrowing_type,
-                'borrowing_type' => $asset->borrowing_type,
-                'classification' => $asset->classification,
-                'specification' => $asset->specification,
-                'image_url' => $asset->image_url,
-                'vehicle_registration' => $asset->vehicle_registration,
-                'burden' => $asset->burden,
-                'created_at' => $asset->created_at?->toIso8601String(),
-                'updated_at' => $asset->updated_at ? $asset->updated_at->format('d-m-Y H:i') : '-',
-                'location' => $location,
-                'location_id' => $asset->location_id,
-                'lot_id' => $lot?->id,
-                'lot_number' => $lot?->number ?? '-',
-                'lot_imageUrl' => $lot?->image_url,
-                'organizer' => $lot?->organizer?->name ?? '-',
-                'vendor' => $lot?->vendor_name ?? '-',
-                'model_id' => $model?->id,
-                'model_number' => $model?->number ?? '-',
-                'model_name' => $model?->name ?? '-',
-                'model_brand' => $brand,
-                'model_specification' => $model?->specification ?? '-',
-                'model_category' => $model?->type?->category?->name ?? '-',
-                'model_type' => $model?->type?->name ?? '-',
-                'model_uom' => $model?->uom?->name ?? '-',
-                'barang_id' => $model?->id,
-                'barang_code' => $model?->number ?? '-',
-                'barang_nama' => $model?->name ?? '-',
-                'barang_brand' => $brand,
-                'barang_specification' => $model?->specification ?? '-',
-                'barang_category' => $model?->type?->category?->name ?? '-',
-                'barang_subcategory' => $model?->type?->name ?? '-',
-                'barang_uom' => $model?->uom?->name ?? '-',
-                'lifecycles' => $asset->lifecycles->map(function ($log) {
-                    return [
-                        'waktu' => $log->start_date ? $log->start_date->format('d-m-Y H:i:s') : '-',
-                        'status' => $log->status,
-                        'condition' => $log->condition ?? '-',
-                        'action_type' => $log->action_type,
-                        'aktor' => ($log->action_type === 'Approval' && str_contains($log->note ?? '', 'BoD/BoC')) ? 'BoD/BoC' : ($log->actor->name ?? '-'),
-                        'durasi' => $log->formatted_duration,
-                        'catatan' => $log->note ?? '-',
-                        'request_id' => $log->request_id,
-                        'request_number' => $log->request?->request_number,
-                    ];
-                })->toArray(),
-            ] : null;
+            $assetData = $this->formatAssetPayload($asset);
 
             $itemName = $model?->name ?? '-';
             $itemCode = $model?->number ?? '-';
@@ -207,9 +130,187 @@ class EmployeeLoanController extends Controller
         usort($active, fn($a, $b) => strcmp($b['start_date_raw'] ?? '', $a['start_date_raw'] ?? ''));
         usort($history, fn($a, $b) => strcmp($b['return_date_raw'] ?? '', $a['return_date_raw'] ?? ''));
 
+        // Fetch PIC location assignments (O(1) indexed query on asset_location_assignments)
+        $assignments = AssetLocationAssignment::query()
+            ->with([
+                'location.parent.parent',
+                'asset.location.parent.parent',
+                'asset.deletionApprovals',
+                'asset.lot.model.type.category',
+                'asset.lot.model.brand',
+                'asset.lot.model.uom',
+                'asset.lot.organizer',
+                'asset.lot.vendor',
+                'asset.lifecycles.actor',
+                'asset.lifecycles.request:id,request_number',
+            ])
+            ->where('pic_user_id', $userId)
+            ->orderByDesc('assigned_at')
+            ->get();
+
+        $activeLocationAssignments = [];
+        $locationAssignmentHistory = [];
+
+        foreach ($assignments as $assignment) {
+            $asset = $assignment->asset;
+            $lot = $asset?->lot;
+            $model = $lot?->model;
+            $brand = $model?->brand?->name ?? '-';
+            $location = $assignment->location?->full_name ?? $asset?->location?->full_name ?? '-';
+            $assetData = $this->formatAssetPayload($asset);
+
+            $itemName = $model?->name ?? '-';
+            $itemCode = $model?->number ?? '-';
+            $assetCode = $asset?->number ?? '-';
+            $lotCode = $lot?->number ?? '-';
+            $categoryName = $model?->type?->category?->name ?? '-';
+            $typeName = $model?->type?->name ?? '-';
+
+            $item = [
+                'id' => $assignment->id,
+                'asset_id' => $assignment->asset_id,
+                'unit_id' => $assignment->asset_id,
+                'item_name' => $itemName,
+                'barang_nama' => $itemName,
+                'model_name' => $itemName,
+                'item_code' => $itemCode,
+                'item_number' => $itemCode,
+                'barang_code' => $itemCode,
+                'model_number' => $itemCode,
+                'asset_code' => $assetCode,
+                'asset_number' => $assetCode,
+                'unit_code' => $assetCode,
+                'unit_number' => $assetCode,
+                'lot_code' => $lotCode,
+                'lot_number' => $lotCode,
+                'brand' => $brand,
+                'category' => $categoryName,
+                'type' => $typeName,
+                'subcategory' => $typeName,
+                'condition' => $asset?->condition ?? '-',
+                'location' => $location,
+                'start_date' => $assignment->assigned_at ? Carbon::parse($assignment->assigned_at)->format('d-m-Y H:i') : '-',
+                'start_date_raw' => $assignment->assigned_at ? Carbon::parse($assignment->assigned_at)->toISOString() : null,
+                'asset' => $assetData,
+                'unit' => $assetData,
+            ];
+
+            if ($assignment->unassigned_at) {
+                $item['return_date'] = Carbon::parse($assignment->unassigned_at)->format('d-m-Y H:i');
+                $item['return_date_raw'] = Carbon::parse($assignment->unassigned_at)->toISOString();
+                $locationAssignmentHistory[] = $item;
+            } else {
+                $activeLocationAssignments[] = $item;
+            }
+        }
+
+        usort($locationAssignmentHistory, fn($a, $b) => strcmp($b['return_date_raw'] ?? '', $a['return_date_raw'] ?? ''));
+
         return response()->json([
             'active' => $active,
             'history' => $history,
+            'active_location_assignments' => $activeLocationAssignments,
+            'location_assignment_history' => $locationAssignmentHistory,
         ]);
+    }
+
+    /**
+     * Format an Asset model into the standardized detail modal payload.
+     */
+    private function formatAssetPayload(?Asset $asset): ?array
+    {
+        if (!$asset) {
+            return null;
+        }
+
+        $lot = $asset->lot;
+        $model = $lot?->model;
+        $brand = $model?->brand?->name ?? '-';
+        $location = $asset->location?->full_name ?? '-';
+
+        $pendingApproval = $asset->deletionApprovals?->firstWhere('decision', 'pending');
+        $approvedApproval = ($asset->active_status === 'Tidak Aktif' || $asset->hasStatus('Pending:BoD/BoC') || $asset->hasStatus('Dihapus'))
+            ? $asset->deletionApprovals?->where('decision', 'approved')->sortByDesc('id')->first()
+            : null;
+        $rejectedApproval = (!$pendingApproval && !$approvedApproval)
+            ? $asset->deletionApprovals?->where('decision', 'rejected')->sortByDesc('id')->first()
+            : null;
+        $latestDisapproval = $asset->deletionApprovals?->whereNotNull('bod_boc_disapproval_url')->sortByDesc('id')->first();
+
+        return [
+            'id' => $asset->id,
+            'number' => $asset->number,
+            'legacy_number' => $asset->legacy_number,
+            'active_status' => $asset->active_status,
+            'status' => $asset->status,
+            'approval_status' => $asset->approval_status,
+            'proposed_status' => $pendingApproval
+                ? $pendingApproval->proposed_condition
+                : ($approvedApproval ? $approvedApproval->proposed_condition : null),
+            'proposed_condition' => $pendingApproval
+                ? $pendingApproval->proposed_condition
+                : ($approvedApproval ? $approvedApproval->proposed_condition : null),
+            'memo_url' => $pendingApproval
+                ? $pendingApproval->memo_url
+                : ($approvedApproval ? $approvedApproval->memo_url : null),
+            'lost_doc_url' => $pendingApproval
+                ? $pendingApproval->lost_doc_url
+                : ($approvedApproval ? $approvedApproval->lost_doc_url : null),
+            'bod_boc_approval_url' => $pendingApproval
+                ? $pendingApproval->bod_boc_approval_url
+                : ($approvedApproval ? $approvedApproval->bod_boc_approval_url : null),
+            'bod_boc_disapproval_url' => $latestDisapproval?->bod_boc_disapproval_url,
+            'admin_note' => $pendingApproval ? $pendingApproval->admin_note : ($approvedApproval ? $approvedApproval->admin_note : ($rejectedApproval ? $rejectedApproval->admin_note : null)),
+            'dm_note' => $pendingApproval ? $pendingApproval->dm_note : ($approvedApproval ? $approvedApproval->dm_note : ($rejectedApproval ? $rejectedApproval->dm_note : null)),
+            'condition' => $asset->condition,
+            'price' => $asset->price,
+            'type' => $asset->borrowing_type,
+            'borrowing_type' => $asset->borrowing_type,
+            'classification' => $asset->classification,
+            'specification' => $asset->specification,
+            'image_url' => $asset->image_url,
+            'vehicle_registration' => $asset->vehicle_registration,
+            'burden' => $asset->burden,
+            'is_assigned_to_location' => (bool) $asset->is_assigned_to_location,
+            'location_pic_id' => $asset->location_pic_id,
+            'created_at' => $asset->created_at?->toIso8601String(),
+            'updated_at' => $asset->updated_at ? $asset->updated_at->format('d-m-Y H:i') : '-',
+            'location' => $location,
+            'location_id' => $asset->location_id,
+            'lot_id' => $lot?->id,
+            'lot_number' => $lot?->number ?? '-',
+            'lot_imageUrl' => $lot?->image_url,
+            'organizer' => $lot?->organizer?->name ?? '-',
+            'vendor' => $lot?->vendor_name ?? '-',
+            'model_id' => $model?->id,
+            'model_number' => $model?->number ?? '-',
+            'model_name' => $model?->name ?? '-',
+            'model_brand' => $brand,
+            'model_specification' => $model?->specification ?? '-',
+            'model_category' => $model?->type?->category?->name ?? '-',
+            'model_type' => $model?->type?->name ?? '-',
+            'model_uom' => $model?->uom?->name ?? '-',
+            'barang_id' => $model?->id,
+            'barang_code' => $model?->number ?? '-',
+            'barang_nama' => $model?->name ?? '-',
+            'barang_brand' => $brand,
+            'barang_specification' => $model?->specification ?? '-',
+            'barang_category' => $model?->type?->category?->name ?? '-',
+            'barang_subcategory' => $model?->type?->name ?? '-',
+            'barang_uom' => $model?->uom?->name ?? '-',
+            'lifecycles' => $asset->lifecycles->map(function ($log) {
+                return [
+                    'waktu' => $log->start_date ? $log->start_date->format('d-m-Y H:i:s') : '-',
+                    'status' => $log->status,
+                    'condition' => $log->condition ?? '-',
+                    'action_type' => $log->action_type,
+                    'aktor' => ($log->action_type === 'Approval' && str_contains($log->note ?? '', 'BoD/BoC')) ? 'BoD/BoC' : ($log->actor->name ?? '-'),
+                    'durasi' => $log->formatted_duration,
+                    'catatan' => $log->note ?? '-',
+                    'request_id' => $log->request_id,
+                    'request_number' => $log->request?->request_number,
+                ];
+            })->toArray(),
+        ];
     }
 }

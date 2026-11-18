@@ -376,9 +376,13 @@ export default {
   newStockSuccessPrefix: 'Input stok berhasil: ',
   seeHere: 'lihat di sini',
   newStockFailed: 'Gagal menyimpan data stok baru. Periksa kembali input Anda.',
-  isAssignedToLocation: 'Tetapkan ke Lokasi',
+  isAssignedToLocation: 'Assign ke Lokasi',
   assignedToLocationYes: 'Ya',
   assignedToLocationNo: 'Tidak',
+  locationPic: 'PIC Assignment Lokasi',
+  selectLocationPic: 'Pilih PIC Assignment Lokasi',
+  searchEmployeePlaceholder: 'Cari karyawan (nama atau NPK)...',
+  locationPicRequired: 'PIC Assignment Lokasi wajib dipilih.',
 
   // Lisensi Software & Pengingat Perpanjangan
   licenseExpDate: 'Tanggal Kedaluwarsa Lisensi',

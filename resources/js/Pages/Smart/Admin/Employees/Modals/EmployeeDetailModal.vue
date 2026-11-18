@@ -77,10 +77,12 @@ const openViewAssetModal = (rowOriginal: any) => {
 };
 
 // --- Active Tab State ---
-const activeTab = ref<'active' | 'history'>('active');
+const activeTab = ref<'active' | 'history' | 'pic_active' | 'pic_history'>('active');
 const isLoading = ref(false);
 const activeLoans = ref<LoanItem[]>([]);
 const historicalLoans = ref<LoanItem[]>([]);
+const activeLocationAssignments = ref<LoanItem[]>([]);
+const historicalLocationAssignments = ref<LoanItem[]>([]);
 
 // --- Filters for Peminjaman Aktif ---
 const activeSearchQuery = ref('');
@@ -96,22 +98,39 @@ const historyConditionFilter = ref('');
 const historyLocationFilter = ref('');
 const historyRowsPerPage = ref('50');
 
+// --- Filters for PIC Location Assignment & PIC Location History ---
+const picSearchQuery = ref('');
+const picBrandFilter = ref('');
+const picConditionFilter = ref('');
+const picLocationFilter = ref('');
+const picRowsPerPage = ref('50');
+
 // Dynamic tab labels with counters
 const tabLabels = computed(() => [
   `${t('admin.activeLoansTab')} (${activeLoans.value.length})`,
   `${t('admin.historicalLoansTab')} (${historicalLoans.value.length})`,
+  `${t('admin.picLocationAssignmentTab')} (${activeLocationAssignments.value.length})`,
+  `${t('admin.picLocationHistoryTab')} (${historicalLocationAssignments.value.length})`,
 ]);
 
 const currentTabName = computed({
   get() {
-    return activeTab.value === 'active' ? tabLabels.value[0] : tabLabels.value[1];
+    if (activeTab.value === 'active') return tabLabels.value[0];
+    if (activeTab.value === 'history') return tabLabels.value[1];
+    if (activeTab.value === 'pic_active') return tabLabels.value[2];
+    return tabLabels.value[3];
   },
   set(val: string) {
     if (val === tabLabels.value[0]) {
       activeTab.value = 'active';
-    } else {
+    } else if (val === tabLabels.value[1]) {
       activeTab.value = 'history';
+    } else if (val === tabLabels.value[2]) {
+      activeTab.value = 'pic_active';
+    } else {
+      activeTab.value = 'pic_history';
     }
+    clearPicFilters();
   }
 });
 
@@ -233,6 +252,71 @@ const filteredHistoricalLoans = computed(() => {
 
 const conditionOptions = ['Bagus', 'Rusak', 'Rusak Total', 'Hilang'];
 
+// --- PIC Location Tabs Filtering (shared for pic_active & pic_history) ---
+const currentPicSource = computed(() =>
+  activeTab.value === 'pic_active' ? activeLocationAssignments.value : historicalLocationAssignments.value
+);
+
+const hasPicFilters = computed(() => !!(
+  picSearchQuery.value ||
+  picBrandFilter.value ||
+  picConditionFilter.value ||
+  picLocationFilter.value
+));
+
+const clearPicFilters = () => {
+  picSearchQuery.value = '';
+  picBrandFilter.value = '';
+  picConditionFilter.value = '';
+  picLocationFilter.value = '';
+};
+
+const availablePicBrands = computed(() => {
+  const brands = currentPicSource.value.map(i => i.brand).filter(b => b && b !== '-');
+  return [...new Set(brands)].sort();
+});
+
+const availablePicLocations = computed(() => {
+  const locs = currentPicSource.value.map(i => i.location).filter(Boolean);
+  return [...new Set(locs)].sort();
+});
+
+const filteredPicAssignments = computed(() => {
+  let list = currentPicSource.value;
+
+  if (picSearchQuery.value) {
+    const q = picSearchQuery.value.toLowerCase();
+    list = list.filter(item =>
+      (item.unit_number && item.unit_number.toLowerCase().includes(q)) ||
+      (item.barang_nama && item.barang_nama.toLowerCase().includes(q))
+    );
+  }
+  if (picBrandFilter.value) {
+    list = list.filter(item => item.brand === picBrandFilter.value);
+  }
+  if (picConditionFilter.value) {
+    list = list.filter(item => item.condition === picConditionFilter.value);
+  }
+  if (picLocationFilter.value) {
+    list = list.filter(item => item.location === picLocationFilter.value);
+  }
+  return list;
+});
+
+const picPageSizeNumber = computed(() => {
+  if (picRowsPerPage.value === 'Semua baris' || !picRowsPerPage.value) {
+    return 999999;
+  }
+  return parseInt(picRowsPerPage.value, 10) || 50;
+});
+
+const picRowsPerPageLabel = computed(() => {
+  if (picRowsPerPage.value === 'Semua baris' || !picRowsPerPage.value) {
+    return t('admin.allRows');
+  }
+  return picRowsPerPage.value;
+});
+
 // Fetch employee loans from endpoint
 const fetchEmployeeLoans = async () => {
   if (!props.employee) return;
@@ -243,11 +327,15 @@ const fetchEmployeeLoans = async () => {
     const response = await axios.get(url);
     activeLoans.value = response.data.active || [];
     historicalLoans.value = response.data.history || [];
+    activeLocationAssignments.value = response.data.active_location_assignments || [];
+    historicalLocationAssignments.value = response.data.location_assignment_history || [];
   } catch (err: any) {
     console.error('Failed to fetch employee loans:', err);
     toast.error(t('admin.loadLoansFailed'));
     activeLoans.value = [];
     historicalLoans.value = [];
+    activeLocationAssignments.value = [];
+    historicalLocationAssignments.value = [];
   } finally {
     isLoading.value = false;
   }
@@ -258,12 +346,16 @@ watch(() => props.open, (isOpen) => {
     activeTab.value = 'active';
     clearActiveFilters();
     clearHistoryFilters();
+    clearPicFilters();
     activeRowsPerPage.value = '50';
     historyRowsPerPage.value = '50';
+    picRowsPerPage.value = '50';
     fetchEmployeeLoans();
   } else {
     activeLoans.value = [];
     historicalLoans.value = [];
+    activeLocationAssignments.value = [];
+    historicalLocationAssignments.value = [];
   }
 });
 
@@ -534,6 +626,11 @@ const historyColumns = computed<ColumnDef<LoanItem>[]>(() => [
     }
   },
 ]);
+
+// --- Table Columns: PIC Location Assignment (active only, without End Time) ---
+const activeAssignmentColumns = computed<ColumnDef<LoanItem>[]>(() =>
+  historyColumns.value.filter(col => col.id !== 'return_date')
+);
 </script>
 
 <template>
@@ -702,7 +799,7 @@ const historyColumns = computed<ColumnDef<LoanItem>[]>(() => [
               </div>
 
               <!-- Tab 2: Peminjaman Historis -->
-              <div v-else class="space-y-4">
+              <div v-else-if="activeTab === 'history'" class="space-y-4">
                 <!-- Toolbar: Search + Filters & Rows per page (hidden if no entry) -->
                 <div v-if="historicalLoans.length > 0" class="flex items-center justify-between gap-4 flex-wrap">
                   <div class="flex items-center gap-3 flex-wrap flex-grow">
@@ -799,6 +896,101 @@ const historyColumns = computed<ColumnDef<LoanItem>[]>(() => [
                     :page-size="historyPageSizeNumber"
                     :show-selection-count="false"
                     :default-sorting="[{ id: 'return_date', desc: true }]"
+                    table-container-class="max-h-[360px]"
+                  />
+                </div>
+              </div>
+
+              <!-- Tab 3 & 4: PIC Location Assignment (active) & PIC Location History (completed) -->
+              <div v-else class="space-y-4">
+                <div v-if="currentPicSource.length > 0" class="flex items-center justify-between gap-4 flex-wrap">
+                  <div class="flex items-center gap-3 flex-wrap flex-grow">
+                    <div class="w-full sm:w-72">
+                      <TableSearch
+                        v-model="picSearchQuery"
+                        :placeholder="t('admin.searchAssetLoanPlaceholder')"
+                        bg-class="bg-background"
+                      />
+                    </div>
+
+                    <div v-if="availablePicBrands.length > 0" class="w-full sm:w-48">
+                      <Combobox
+                        v-model="picBrandFilter"
+                        :options="availablePicBrands"
+                        :placeholder="t('admin.allBrands')"
+                        :default-label="t('admin.allBrands')"
+                        :search-placeholder="t('admin.searchBrandPlaceholder')"
+                        width-class="w-full sm:w-48"
+                      />
+                    </div>
+
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button variant="outline" :class="['w-[160px] justify-between rounded-[14px] font-normal', !picConditionFilter ? 'text-muted-foreground' : 'text-foreground']">
+                          <span class="truncate">{{ picConditionFilter || t('admin.allConditions') }}</span>
+                          <ChevronDown class="w-4 h-4 opacity-50 shrink-0" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent class="w-[160px] rounded-[14px] max-h-60 overflow-y-auto" align="start" :side-offset="4">
+                        <DropdownMenuItem @select="picConditionFilter = ''">{{ t('admin.allConditions') }}</DropdownMenuItem>
+                        <DropdownMenuItem v-for="cond in conditionOptions" :key="cond" @select="picConditionFilter = cond">
+                          {{ cond }}
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+
+                    <div v-if="availablePicLocations.length > 0" class="w-full sm:w-56">
+                      <Combobox
+                        v-model="picLocationFilter"
+                        :options="availablePicLocations"
+                        :placeholder="t('admin.allLocations')"
+                        :default-label="t('admin.allLocations')"
+                        :search-placeholder="t('admin.searchLocationPlaceholder')"
+                        width-class="w-full sm:w-56"
+                      />
+                    </div>
+
+                    <Transition
+                      enter-active-class="transition ease-out duration-200"
+                      enter-from-class="transform scale-95 opacity-0"
+                      enter-to-class="transform scale-100 opacity-100"
+                      leave-active-class="transition ease-in duration-150"
+                      leave-from-class="transform scale-100 opacity-100"
+                      leave-to-class="transform scale-95 opacity-0"
+                    >
+                      <ResetFilterButton
+                        v-if="hasPicFilters"
+                        @click="clearPicFilters"
+                      />
+                    </Transition>
+                  </div>
+
+                  <div class="flex items-center gap-2 text-sm text-muted-foreground shrink-0">
+                    <span class="whitespace-nowrap">{{ t('admin.rowsPerPage') }}</span>
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button variant="outline" :class="['w-[100px] justify-between rounded-[14px] font-normal', (picRowsPerPage === 'Semua baris' || !picRowsPerPage) ? 'text-muted-foreground' : 'text-foreground']">
+                          {{ picRowsPerPageLabel }}
+                          <ChevronDown class="w-4 h-4 opacity-50 shrink-0" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent class="w-[100px] rounded-[14px]" align="end" :side-offset="4">
+                        <DropdownMenuItem @select="picRowsPerPage = 'Semua baris'">{{ t('admin.allRows') }}</DropdownMenuItem>
+                        <DropdownMenuItem @select="picRowsPerPage = '10'">10</DropdownMenuItem>
+                        <DropdownMenuItem @select="picRowsPerPage = '25'">25</DropdownMenuItem>
+                        <DropdownMenuItem @select="picRowsPerPage = '50'">50</DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </div>
+                </div>
+
+                <div class="pb-1">
+                  <DataTable
+                    :columns="activeTab === 'pic_active' ? activeAssignmentColumns : historyColumns"
+                    :data="filteredPicAssignments"
+                    :page-size="picPageSizeNumber"
+                    :show-selection-count="false"
+                    :default-sorting="activeTab === 'pic_active' ? [{ id: 'start_date', desc: true }] : [{ id: 'return_date', desc: true }]"
                     table-container-class="max-h-[360px]"
                   />
                 </div>

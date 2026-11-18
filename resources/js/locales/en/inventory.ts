@@ -379,6 +379,10 @@ export default {
   isAssignedToLocation: 'Assign to Location',
   assignedToLocationYes: 'Yes',
   assignedToLocationNo: 'No',
+  locationPic: 'PIC Location Assignment',
+  selectLocationPic: 'Select PIC Location Assignment',
+  searchEmployeePlaceholder: 'Search employee (name or NPK)...',
+  locationPicRequired: 'PIC Location Assignment is required.',
 
   // Software License & Renewal
   licenseExpDate: 'License Expiration Date',

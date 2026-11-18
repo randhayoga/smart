@@ -1,4 +1,5 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { reactive } from 'vue';
 import { mount } from '@vue/test-utils';
 import { i18n, setI18nLanguage } from '@/locales';
 import ScanResult from '../ScanResult.vue';
@@ -17,7 +18,7 @@ vi.mock('@inertiajs/vue3', async (importOriginal) => {
     router: {
       post: mockRouterPost,
     },
-    useForm: (initialData: any) => ({
+    useForm: (initialData: any) => reactive({
       ...initialData,
       processing: false,
       transform: vi.fn().mockReturnThis(),
@@ -337,6 +338,44 @@ describe('ScanResult Componentization, Maintenance Tab, and Parity', () => {
       expect(wdInput.exists()).toBe(true);
       expect((snInput.element as HTMLInputElement).value).toBe('SN-EDIT-01');
       expect((wdInput.element as HTMLInputElement).value).toBe('2028-05-10');
+    });
+
+    it('renders Assign ke Lokasi and conditional PIC Assignment Lokasi in ScanEditAssetTab', async () => {
+      setI18nLanguage('id');
+      const wrapper = mount(ScanEditAssetTab, {
+        props: {
+          asset: {
+            ...mockAsset,
+            status: 'Tersedia',
+            is_assigned_to_location: false,
+            location_pic_id: null,
+          },
+          locations: mockLocations,
+          projects: mockProjects,
+          users: [{ id: 10, name: 'Budi PIC (99001)', employee_id: '99001' }],
+        },
+        global: { plugins: [i18n] },
+      });
+
+      const vm = wrapper.vm as any;
+      expect(wrapper.text()).toContain('Assign ke Lokasi');
+      expect(wrapper.text()).not.toContain('PIC Assignment Lokasi');
+
+      vm.handleAssignToLocationSelect(true);
+      await wrapper.vm.$nextTick();
+      expect(wrapper.text()).toContain('PIC Assignment Lokasi');
+      expect(vm.form.status).toBe('Di-assign (LT)');
+
+      vm.handleSubmit();
+      await wrapper.vm.$nextTick();
+      expect(vm.errors.location_pic_id).toBeTruthy();
+
+      vm.form.location_pic_id = 10;
+      vm.handleAssignToLocationSelect(false);
+      await wrapper.vm.$nextTick();
+      expect(vm.form.location_pic_id).toBeNull();
+      expect(vm.form.status).toBe('Tersedia');
+      expect(wrapper.text()).not.toContain('PIC Assignment Lokasi');
     });
   });
 });

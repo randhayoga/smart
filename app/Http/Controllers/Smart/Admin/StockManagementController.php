@@ -287,6 +287,7 @@ class StockManagementController extends Controller
             'locations' => $locations,
             'units' => $units,
             'projects' => $projects,
+            'users' => Inertia::lazy(fn () => app(\App\Services\Inventory\StockInventoryQueryService::class)->getActiveUsersForSelection()),
             'inventoryLogs' => $inventoryLogs,
         ]);
     }

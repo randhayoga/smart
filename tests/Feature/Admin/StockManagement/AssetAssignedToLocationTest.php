@@ -4,6 +4,7 @@ namespace Tests\Feature\Admin\StockManagement;
 
 use App\Models\Inventory\Asset;
 use App\Models\Inventory\AssetLifecycle;
+use App\Models\Inventory\AssetLocationAssignment;
 use App\Models\Inventory\Model as InventoryModel;
 use App\Models\Inventory\Lot;
 use App\Models\Master\Brand;
@@ -22,6 +23,7 @@ class AssetAssignedToLocationTest extends TestCase
     use RefreshDatabase;
 
     private User $user;
+    private User $pic;
     private Lot $lot;
     private Location $location;
 
@@ -30,6 +32,11 @@ class AssetAssignedToLocationTest extends TestCase
         parent::setUp();
 
         $this->user = User::factory()->create();
+        $this->pic = User::factory()->create([
+            'employee_id' => '99001',
+            'employee_name' => 'Budi PIC',
+            'active' => 1,
+        ]);
 
         $category = Category::factory()->create([
             'code' => 'ELEC',
@@ -68,6 +75,7 @@ class AssetAssignedToLocationTest extends TestCase
             'number' => 'AST-ASSIGN-01',
             'lot_id' => $this->lot->id,
             'location_id' => $this->location->id,
+            'active_status' => 'Aktif',
             'status' => 'Tersedia',
             'condition' => 'Bagus',
             'borrowing_type' => 'LT',
@@ -84,11 +92,13 @@ class AssetAssignedToLocationTest extends TestCase
             'type' => 'LT',
             'classification' => 'Aset',
             'is_assigned_to_location' => true,
+            'location_pic_id' => $this->pic->id,
         ]);
 
         $response->assertSessionHasNoErrors();
         $fresh = $asset->fresh();
         $this->assertTrue($fresh->is_assigned_to_location);
+        $this->assertSame($this->pic->id, $fresh->location_pic_id);
         $this->assertSame('Di-assign (LT)', $fresh->status);
 
         // Verify lifecycle entry
@@ -100,9 +110,16 @@ class AssetAssignedToLocationTest extends TestCase
         $this->assertSame('Assignment', $log->action_type);
         $this->assertSame('Di-assign (LT)', $log->status);
         $this->assertSame('Bagus', $log->condition);
-        $this->assertSame("Di-assign ke lokasi {$this->location->name}", $log->note);
+        $this->assertSame("Di-assign ke lokasi {$this->location->name}, dengan PIC Budi PIC (99001)", $log->note);
         $this->assertSame($this->user->id, $log->actor_id);
         $this->assertNull($log->end_date);
+
+        // Verify dedicated asset_location_assignments entry
+        $assignment = AssetLocationAssignment::where('asset_id', $asset->id)->first();
+        $this->assertNotNull($assignment);
+        $this->assertSame($this->pic->id, $assignment->pic_user_id);
+        $this->assertSame($this->location->id, $assignment->location_id);
+        $this->assertNull($assignment->unassigned_at);
 
         // Verify no duplicate 'Perubahan status' log was created
         $statusLogs = AssetLifecycle::where('asset_id', $asset->id)
@@ -117,6 +134,8 @@ class AssetAssignedToLocationTest extends TestCase
             'number' => 'AST-ASSIGN-02',
             'lot_id' => $this->lot->id,
             'location_id' => $this->location->id,
+            'location_pic_id' => $this->pic->id,
+            'active_status' => 'Aktif',
             'status' => 'Di-assign (LT)',
             'condition' => 'Bagus',
             'borrowing_type' => 'LT',
@@ -124,7 +143,16 @@ class AssetAssignedToLocationTest extends TestCase
             'is_assigned_to_location' => true,
         ]);
 
-        $response = $this->actingAs($this->user)->put("/smart/stock-management/assets/{$asset->id}", [
+        AssetLocationAssignment::create([
+            'asset_id' => $asset->id,
+            'location_id' => $this->location->id,
+            'pic_user_id' => $this->pic->id,
+            'assigned_at' => now()->subDay(),
+            'unassigned_at' => null,
+        ]);
+
+        $response = $this->actingAs($this->user)->post("/smart/stock-management/assets/{$asset->id}", [
+            '_method' => 'PUT',
             'number' => $asset->number,
             'lot_id' => $this->lot->id,
             'location_id' => $this->location->id,
@@ -132,13 +160,19 @@ class AssetAssignedToLocationTest extends TestCase
             'condition' => 'Bagus',
             'type' => 'LT',
             'classification' => 'Aset',
+            'warranty_date' => null,
             'is_assigned_to_location' => false,
+            'location_pic_id' => null,
         ]);
 
         $response->assertSessionHasNoErrors();
         $fresh = $asset->fresh();
         $this->assertFalse($fresh->is_assigned_to_location);
+        $this->assertNull($fresh->location_pic_id);
         $this->assertSame('Tersedia', $fresh->status);
+
+        $assignment = AssetLocationAssignment::where('asset_id', $asset->id)->first();
+        $this->assertNotNull($assignment->unassigned_at);
 
         // Verify assignment unassign lifecycle entry
         $log = AssetLifecycle::where('asset_id', $asset->id)
@@ -197,12 +231,15 @@ class AssetAssignedToLocationTest extends TestCase
         $response = $this->actingAs($this->user)->post('/smart/stock-management/assets/bulk-update', [
             'ids' => [$asset1->id, $asset2->id],
             'is_assigned_to_location' => true,
+            'location_pic_id' => $this->pic->id,
         ]);
 
         $response->assertSessionHasNoErrors();
         $this->assertTrue($asset1->fresh()->is_assigned_to_location);
+        $this->assertSame($this->pic->id, $asset1->fresh()->location_pic_id);
         $this->assertSame('Di-assign (LT)', $asset1->fresh()->status);
         $this->assertTrue($asset2->fresh()->is_assigned_to_location);
+        $this->assertSame($this->pic->id, $asset2->fresh()->location_pic_id);
         $this->assertSame('Di-assign (LT)', $asset2->fresh()->status);
 
         $this->assertSame(1, AssetLifecycle::where('asset_id', $asset1->id)->where('action_type', 'Assignment')->count());
@@ -272,6 +309,7 @@ class AssetAssignedToLocationTest extends TestCase
             'number' => 'AST-ORDER-01',
             'lot_id' => $this->lot->id,
             'location_id' => $oldLocation->id,
+            'active_status' => 'Aktif',
             'status' => 'Di-assign (LT)',
             'condition' => 'Bagus',
             'borrowing_type' => 'LT',
@@ -316,6 +354,7 @@ class AssetAssignedToLocationTest extends TestCase
             'number' => 'AST-ASSIGN-DM-01',
             'lot_id' => $this->lot->id,
             'location_id' => $this->location->id,
+            'active_status' => 'Aktif',
             'status' => 'Tersedia',
             'condition' => 'Bagus',
             'borrowing_type' => 'LT',
@@ -334,6 +373,7 @@ class AssetAssignedToLocationTest extends TestCase
             'type' => 'LT',
             'classification' => 'Aset',
             'is_assigned_to_location' => true,
+            'location_pic_id' => $this->pic->id,
             'memo_file' => $file,
         ]);
 
@@ -346,5 +386,212 @@ class AssetAssignedToLocationTest extends TestCase
         // Verify assignment lifecycle logged
         $lifecycles = AssetLifecycle::where('asset_id', $asset->id)->get();
         $this->assertTrue($lifecycles->contains('action_type', 'Assignment'));
+    }
+
+    public function test_assign_to_location_requires_location_pic_id_on_single_and_bulk_update(): void
+    {
+        $asset = Asset::factory()->create([
+            'number' => 'AST-PIC-REQ-01',
+            'lot_id' => $this->lot->id,
+            'location_id' => $this->location->id,
+            'active_status' => 'Aktif',
+            'status' => 'Tersedia',
+            'condition' => 'Bagus',
+            'borrowing_type' => 'LT',
+            'classification' => 'Aset',
+            'is_assigned_to_location' => false,
+        ]);
+
+        $singleResponse = $this->actingAs($this->user)->put("/smart/stock-management/assets/{$asset->id}", [
+            'number' => $asset->number,
+            'lot_id' => $this->lot->id,
+            'location_id' => $this->location->id,
+            'status' => 'Di-assign (LT)',
+            'condition' => 'Bagus',
+            'type' => 'LT',
+            'classification' => 'Aset',
+            'is_assigned_to_location' => true,
+        ]);
+        $singleResponse->assertSessionHasErrors(['location_pic_id']);
+
+        $bulkResponse = $this->actingAs($this->user)->post('/smart/stock-management/assets/bulk-update', [
+            'ids' => [$asset->id],
+            'is_assigned_to_location' => true,
+        ]);
+        $bulkResponse->assertSessionHasErrors(['location_pic_id']);
+    }
+
+    public function test_changing_pic_while_assigned_closes_previous_assignment_and_unrelated_edits_do_not(): void
+    {
+        $secondPic = User::factory()->create([
+            'employee_id' => '99002',
+            'employee_name' => 'Siti PIC',
+            'active' => 1,
+        ]);
+
+        $asset = Asset::factory()->create([
+            'number' => 'AST-PIC-CHG-01',
+            'lot_id' => $this->lot->id,
+            'location_id' => $this->location->id,
+            'location_pic_id' => $this->pic->id,
+            'active_status' => 'Aktif',
+            'status' => 'Di-assign (LT)',
+            'condition' => 'Bagus',
+            'borrowing_type' => 'LT',
+            'classification' => 'Aset',
+            'is_assigned_to_location' => true,
+        ]);
+
+        $firstAssignment = AssetLocationAssignment::create([
+            'asset_id' => $asset->id,
+            'location_id' => $this->location->id,
+            'pic_user_id' => $this->pic->id,
+            'assigned_at' => now()->subDays(2),
+            'unassigned_at' => null,
+        ]);
+
+        // Unrelated QC update must NOT close active location assignment
+        $this->actingAs($this->user)->put("/smart/stock-management/assets/{$asset->id}", [
+            'number' => $asset->number,
+            'lot_id' => $this->lot->id,
+            'location_id' => $this->location->id,
+            'status' => 'Di-assign (LT)',
+            'condition' => 'Bagus',
+            'qc_pass' => true,
+            'type' => 'LT',
+            'classification' => 'Aset',
+            'is_assigned_to_location' => true,
+            'location_pic_id' => $this->pic->id,
+        ])->assertSessionHasNoErrors();
+
+        $this->assertNull($firstAssignment->fresh()->unassigned_at);
+
+        // Changing PIC closes old assignment and opens new one
+        $this->actingAs($this->user)->put("/smart/stock-management/assets/{$asset->id}", [
+            'number' => $asset->number,
+            'lot_id' => $this->lot->id,
+            'location_id' => $this->location->id,
+            'status' => 'Di-assign (LT)',
+            'condition' => 'Bagus',
+            'type' => 'LT',
+            'classification' => 'Aset',
+            'is_assigned_to_location' => true,
+            'location_pic_id' => $secondPic->id,
+        ])->assertSessionHasNoErrors();
+
+        $this->assertNotNull($firstAssignment->fresh()->unassigned_at);
+        $secondAssignment = AssetLocationAssignment::where('asset_id', $asset->id)
+            ->where('pic_user_id', $secondPic->id)
+            ->first();
+        $this->assertNotNull($secondAssignment);
+        $this->assertNull($secondAssignment->unassigned_at);
+    }
+
+    public function test_employee_loans_endpoint_returns_active_and_historical_pic_location_assignments(): void
+    {
+        $asset1 = Asset::factory()->create([
+            'number' => 'AST-EMP-PIC-01',
+            'lot_id' => $this->lot->id,
+            'location_id' => $this->location->id,
+            'location_pic_id' => $this->pic->id,
+            'active_status' => 'Aktif',
+            'status' => 'Di-assign (LT)',
+            'condition' => 'Bagus',
+            'is_assigned_to_location' => true,
+        ]);
+        $asset2 = Asset::factory()->create([
+            'number' => 'AST-EMP-PIC-02',
+            'lot_id' => $this->lot->id,
+            'location_id' => $this->location->id,
+            'active_status' => 'Aktif',
+            'status' => 'Tersedia',
+            'condition' => 'Bagus',
+            'is_assigned_to_location' => false,
+        ]);
+
+        AssetLocationAssignment::create([
+            'asset_id' => $asset1->id,
+            'location_id' => $this->location->id,
+            'pic_user_id' => $this->pic->id,
+            'assigned_at' => now()->subDay(),
+            'unassigned_at' => null,
+        ]);
+        AssetLocationAssignment::create([
+            'asset_id' => $asset2->id,
+            'location_id' => $this->location->id,
+            'pic_user_id' => $this->pic->id,
+            'assigned_at' => now()->subDays(5),
+            'unassigned_at' => now()->subDays(2),
+        ]);
+
+        $response = $this->actingAs($this->user)
+            ->getJson("/smart/employee-list/{$this->pic->id}/loans");
+
+        $response->assertOk()
+            ->assertJsonCount(1, 'active_location_assignments')
+            ->assertJsonCount(1, 'location_assignment_history')
+            ->assertJsonPath('active_location_assignments.0.unit_number', 'AST-EMP-PIC-01')
+            ->assertJsonPath('location_assignment_history.0.unit_number', 'AST-EMP-PIC-02');
+    }
+
+    public function test_scan_show_includes_location_pic_id_is_assigned_to_location_and_users(): void
+    {
+        $asset = Asset::factory()->create([
+            'number' => 'AST-SCAN-PIC-01',
+            'lot_id' => $this->lot->id,
+            'location_id' => $this->location->id,
+            'location_pic_id' => $this->pic->id,
+            'active_status' => 'Aktif',
+            'status' => 'Di-assign (LT)',
+            'is_assigned_to_location' => true,
+        ]);
+
+        $cleanCode = preg_replace('/[^a-zA-Z0-9]/', '', $asset->number);
+        $response = $this->actingAs($this->user)->get("/smart/scan/{$cleanCode}");
+
+        $response->assertOk();
+        $response->assertInertia(fn ($page) => $page
+            ->component('Smart/MultiRoles/ScanResult')
+            ->where('asset.is_assigned_to_location', true)
+            ->where('asset.location_pic_id', $this->pic->id)
+            ->where('asset.active_borrowing.user_name', 'Budi PIC')
+            ->where('asset.active_borrowing.request_id', null)
+            ->has('users')
+        );
+
+        $detailResponse = $this->actingAs($this->user)->getJson("/smart/stock-management/assets/{$asset->id}");
+        $detailResponse->assertOk()
+            ->assertJsonPath('active_borrowing.user_name', 'Budi PIC')
+            ->assertJsonPath('active_borrowing.request_id', null);
+    }
+
+    public function test_compact_units_maps_serial_number_warranty_date_and_location_pic_id_accurately(): void
+    {
+        $asset = Asset::factory()->create([
+            'number' => 'AST-COMPACT-01',
+            'lot_id' => $this->lot->id,
+            'location_id' => $this->location->id,
+            'location_pic_id' => $this->pic->id,
+            'active_status' => 'Aktif',
+            'status' => 'Di-assign (LT)',
+            'condition' => 'Bagus',
+            'is_assigned_to_location' => true,
+            'serial_number' => null,
+            'warranty_date' => null,
+            'is_non_owned' => false,
+        ]);
+
+        $compact = app(\App\Services\Inventory\StockInventoryQueryService::class)
+            ->getCompactUnitsPayload(['lot_id' => $this->lot->id]);
+
+        $row = collect($compact['rows'])->firstWhere(0, $asset->id);
+        $this->assertNotNull($row);
+        $sparse = $row[8] ?? [];
+
+        $this->assertArrayNotHasKey('sn', $sparse);
+        $this->assertArrayNotHasKey('wd', $sparse);
+        $this->assertArrayNotHasKey('no', $sparse);
+        $this->assertSame(1, $sparse['al'] ?? null);
+        $this->assertSame($this->pic->id, $sparse['lpic'] ?? null);
     }
 }

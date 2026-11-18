@@ -31,6 +31,7 @@ interface Props {
   floors?: any[];
   rooms?: any[];
   projects?: { id?: number; id_project?: number; no_project: string; project_name: string; client_id?: string }[];
+  users?: { id: number; name: string; employee_id?: string }[];
 }
 
 const props = defineProps<Props>();
@@ -178,6 +179,7 @@ const form = useForm({
   status: '',
   approval_status: '',
   is_assigned_to_location: null as boolean | null,
+  location_pic_id: null as number | null,
   condition: '',
   qc_pass: null as boolean | string | null,
   type: '',
@@ -211,6 +213,7 @@ const bodBocDecisionType = ref<'approval' | 'disapproval' | null>(null);
 const errors = ref({
   specification: '',
   location_id: '',
+  location_pic_id: '',
   status: '',
   condition: '',
   type: '',
@@ -234,6 +237,7 @@ const resetErrors = () => {
   errors.value = {
     specification: '',
     location_id: '',
+    location_pic_id: '',
     status: '',
     condition: '',
     type: '',
@@ -270,6 +274,7 @@ const projectOptions = computed(() => {
 // Reactive error clearing
 watch(() => form.specification, v => { if (v && errors.value.specification) errors.value.specification = ''; });
 watch(() => form.location_id, v => { if (v && errors.value.location_id) errors.value.location_id = ''; });
+watch(() => form.location_pic_id, v => { if (v && errors.value.location_pic_id) errors.value.location_pic_id = ''; });
 watch(() => form.status, v => { if (v && errors.value.status) errors.value.status = ''; });
 watch(() => form.condition, v => { if (v && errors.value.condition) errors.value.condition = ''; });
 watch(() => form.type, v => { if (v && errors.value.type) errors.value.type = ''; });
@@ -331,8 +336,12 @@ const handleAssignToLocationSelect = (value: boolean | null) => {
     }
   } else if (value === false) {
     form.status = 'Tersedia';
+    form.location_pic_id = null;
+    errors.value.location_pic_id = '';
   } else {
     form.status = '';
+    form.location_pic_id = null;
+    errors.value.location_pic_id = '';
   }
 };
 
@@ -349,6 +358,7 @@ const resetModalState = () => {
   form.status = '';
   form.approval_status = '';
   form.is_assigned_to_location = null;
+  form.location_pic_id = null;
   form.condition = '';
   form.type = '';
   form.classification = '';
@@ -407,6 +417,7 @@ watch(() => props.open, (val) => {
     form.status = item.status || 'Tersedia';
     form.approval_status = item.approval_status || '';
     form.is_assigned_to_location = Boolean(item.is_assigned_to_location);
+    form.location_pic_id = item.location_pic_id ? Number(item.location_pic_id) : null;
     form.condition = item.condition || '';
     form.qc_pass = null;
     form.type = item.type || item.borrowing_type || '';
@@ -447,6 +458,7 @@ watch(() => props.open, (val) => {
     form.status = '';
     form.approval_status = '';
     form.is_assigned_to_location = null;
+    form.location_pic_id = null;
     form.condition = '';
     form.qc_pass = null;
     form.type = '';
@@ -698,8 +710,13 @@ const handleSubmit = () => {
     if (!isSoft.value) {
       if (!form.location_id) { errors.value.location_id = t('inventory.locationRequired'); isValid = false; }
       if (!form.condition) { errors.value.condition = t('inventory.conditionRequired'); isValid = false; }
+      if (canShowAssignToLocation.value && form.is_assigned_to_location === true && !form.location_pic_id) {
+        errors.value.location_pic_id = t('inventory.locationPicRequired');
+        isValid = false;
+      }
     } else {
       form.location_id = '' as any;
+      form.location_pic_id = null;
       form.condition = '';
     }
     if (!form.type) { errors.value.type = t('inventory.typeRequired'); isValid = false; }
@@ -749,6 +766,7 @@ const handleSubmit = () => {
       }
       if (canShowAssignToLocation.value && data.is_assigned_to_location !== null) {
         fd.is_assigned_to_location = data.is_assigned_to_location;
+        fd.location_pic_id = (!isSoft.value && data.is_assigned_to_location === true) ? (data.location_pic_id || null) : null;
       }
       if (isVehicle.value) fd.vehicle_registration = data.vehicle_registration;
       if (isComp.value) {
@@ -782,17 +800,25 @@ const handleSubmit = () => {
       onError: (errs) => {
         const errorKeys = Object.keys(errs || {});
         if (errorKeys.length > 0) {
+          let firstUnmappedError = '';
           errorKeys.forEach((key) => {
             if (key in errors.value) {
               (errors.value as any)[key] = errs[key];
+            } else if (!firstUnmappedError && errs[key]) {
+              firstUnmappedError = String(errs[key]);
             }
           });
-          toast.error(t('common.modals.formInvalid'));
+          toast.error(firstUnmappedError || t('common.modals.formInvalid'));
         }
       },
     });
   } else {
     // Bulk edit
+    if (canShowAssignToLocation.value && !isSoft.value && form.is_assigned_to_location === true && !form.location_pic_id) {
+      errors.value.location_pic_id = t('inventory.locationPicRequired');
+      toast.error(t('common.modals.formInvalid'));
+      return;
+    }
     if (form.burden === 'Project' && !form.project_id) {
       errors.value.project_id = t('inventory.projectRequired');
       toast.error(t('common.modals.formInvalid'));
@@ -833,6 +859,7 @@ const handleSubmit = () => {
     const payload: any = { ids: form.ids };
     if (canShowAssignToLocation.value && form.is_assigned_to_location !== null) {
       payload.is_assigned_to_location = form.is_assigned_to_location;
+      payload.location_pic_id = (!isSoft.value && form.is_assigned_to_location === true) ? (form.location_pic_id || null) : null;
     }
     if (form.status && !isStatusDisabled.value) payload.status = form.status;
     if (isSoft.value) {
@@ -938,6 +965,7 @@ const handleSubmit = () => {
                 :is-borrowing-type-disabled="isBorrowingTypeDisabled"
                 :locations="locations"
                 :project-options="projectOptions"
+                :users="users || []"
                 :has-image="hasImage"
                 :get-status-label="getStatusLabel"
                 :get-condition-label="getConditionLabel"

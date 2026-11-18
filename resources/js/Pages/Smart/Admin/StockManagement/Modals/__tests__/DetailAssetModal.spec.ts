@@ -503,5 +503,118 @@ describe('DetailAssetModal.vue - Status, BoD/BoC Buttons, and Deletion Note', ()
       expect(text).toContain('Ownership: Managed Only');
       expect(text.indexOf('Ownership:')).toBeLessThan(text.indexOf('Organizer:'));
     });
+
+    it('displays Location Assignment PIC in User field without external request link', () => {
+      setI18nLanguage('en');
+      const wrapper = mountModal({
+        id: 4,
+        number: 'AST-LOC-PIC-1',
+        status: 'Di-assign (LT)',
+        condition: 'Bagus',
+        is_assigned_to_location: true,
+        location_pic_id: 10,
+        active_borrowing: {
+          assignment_id: null,
+          request_id: null,
+          request_number: null,
+          user_id: 10,
+          user_name: 'Budi PIC',
+          is_location_assignment: true,
+        },
+      });
+
+      expect(wrapper.text()).toContain('User: Budi PIC');
+      expect(wrapper.find('a[href*="/smart/requests/"]').exists()).toBe(false);
+    });
+
+    it('resolves Location Assignment PIC immediately from props.users with zero fetch calls', () => {
+      setI18nLanguage('en');
+      const fetchSpy = vi.fn();
+      vi.stubGlobal('fetch', fetchSpy);
+
+      try {
+        const wrapper = mount(DetailAssetModal, {
+          props: {
+            open: true,
+            asset: {
+              id: 5,
+              number: 'AST-LOC-PIC-2',
+              status: 'Di-assign (LT)',
+              condition: 'Bagus',
+              is_assigned_to_location: true,
+              location_pic_id: 10,
+            },
+            users: [
+              { id: 10, name: 'Budi PIC (99001)', employee_name: 'Budi PIC' },
+            ],
+          },
+          global: {
+            plugins: [i18n],
+            stubs: { Teleport: true },
+          },
+        });
+
+        expect(wrapper.text()).toContain('User: Budi PIC');
+        expect(fetchSpy).not.toHaveBeenCalled();
+      } finally {
+        vi.unstubAllGlobals();
+      }
+    });
+
+    it('updates User immediately on Detail Aset tab when fetched asynchronously without switching tabs', async () => {
+      setI18nLanguage('en');
+      const fetchSpy = vi.fn().mockResolvedValue({
+        ok: true,
+        json: async () => ({
+          active_borrowing: {
+            assignment_id: null,
+            request_id: null,
+            request_number: null,
+            user_id: 11,
+            user_name: 'Siti PIC',
+            is_location_assignment: true,
+          },
+        }),
+      });
+      vi.stubGlobal('fetch', fetchSpy);
+
+      try {
+        const wrapper = mountModal({
+          id: 6,
+          number: 'AST-LOC-PIC-3',
+          status: 'Di-assign (LT)',
+          condition: 'Bagus',
+          is_assigned_to_location: true,
+          location_pic_id: 11,
+        });
+
+        await Promise.resolve();
+        await Promise.resolve();
+        await wrapper.vm.$nextTick();
+
+        expect(fetchSpy).toHaveBeenCalledTimes(1);
+        expect(wrapper.text()).toContain('User: Siti PIC');
+      } finally {
+        vi.unstubAllGlobals();
+      }
+    });
+
+    it('emits update:open(false) and edit payload when clicking Edit button even when fetchedAssetPatch is null', async () => {
+      setI18nLanguage('en');
+      const asset = {
+        id: 7,
+        number: 'AST-EDIT-CLICK-1',
+        status: 'Tersedia',
+        condition: 'Bagus',
+      };
+      const wrapper = mountModal(asset);
+
+      const editBtn = wrapper.findAll('button').find(b => b.text().includes('Edit'));
+      expect(editBtn).toBeDefined();
+      await editBtn!.trigger('click');
+
+      expect(wrapper.emitted('update:open')?.[0]).toEqual([false]);
+      expect(wrapper.emitted('edit')?.[0]).toEqual([asset]);
+    });
   });
 });
