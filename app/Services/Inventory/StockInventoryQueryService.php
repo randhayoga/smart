@@ -226,6 +226,7 @@ class StockInventoryQueryService
             'a.id',
             'a.number',
             'a.legacy_number',
+            'a.serial_number',
             'a.lot_id',
             'a.location_id',
             'a.active_status',
@@ -234,6 +235,7 @@ class StockInventoryQueryService
             'a.condition',
             'a.borrowing_type',
             'a.classification',
+            'a.is_non_owned',
             'a.comp_specification',
             'a.price',
             'a.image_url',
@@ -241,6 +243,7 @@ class StockInventoryQueryService
             'a.is_assigned_to_location',
             'a.license_exp_date',
             'a.renewal_reminder',
+            'a.warranty_date',
             'a.burden',
             'a.project_id',
             'a.legacy_vendor_id as asset_legacy_vendor_id',
@@ -392,8 +395,11 @@ class StockInventoryQueryService
                 'admin_note' => $adminNote,
                 'dm_note' => $dmNote,
                 'vehicle_registration' => $row->vehicle_registration,
+                'serial_number' => $row->serial_number,
+                'is_non_owned' => (bool) $row->is_non_owned,
                 'license_exp_date' => $row->license_exp_date ? substr((string) $row->license_exp_date, 0, 10) : null,
                 'renewal_reminder' => $row->renewal_reminder !== null ? (int) $row->renewal_reminder : null,
+                'warranty_date' => $row->warranty_date ? substr((string) $row->warranty_date, 0, 10) : null,
                 'project_id' => $projectId ? (int) $projectId : null,
                 'project_no' => $projectNo,
                 'asset_vendor' => $assetLegacyVendorName,
@@ -599,6 +605,9 @@ class StockInventoryQueryService
             'a.qc_pass',                // 21
             'a.last_qc',                // 22
             'a.active_status',          // 23
+            'a.serial_number',          // 24
+            'a.warranty_date',          // 25
+            'a.is_non_owned',           // 26
         ]);
 
         if (!empty($filters['exclude_unverified'])) {
@@ -695,6 +704,15 @@ class StockInventoryQueryService
             }
             if ($r[23] !== null && $r[23] !== '' && $r[23] !== 'Aktif') {
                 $sparse['act'] = $r[23];
+            }
+            if ($r[24] !== null && $r[24] !== '') {
+                $sparse['sn'] = $r[24];
+            }
+            if ($r[25] !== null && $r[25] !== '') {
+                $sparse['wd'] = substr((string) $r[25], 0, 10);
+            }
+            if (!empty($r[26])) {
+                $sparse['no'] = 1;
             }
 
             $tuple = [

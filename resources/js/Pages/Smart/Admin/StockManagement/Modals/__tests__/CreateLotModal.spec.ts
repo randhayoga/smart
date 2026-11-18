@@ -164,7 +164,7 @@ describe('CreateLotModal.vue', () => {
     vm.handleSubmit();
 
     expect(vm.errors.initial_quantity).toBeTruthy();
-    expect(vm.errors.location_id).toBeTruthy();
+    expect(vm.errors.location_id).toBeFalsy();
     expect(vm.errors.project_id).toBeTruthy();
     expect(vm.lotForm.post).not.toHaveBeenCalled();
   });

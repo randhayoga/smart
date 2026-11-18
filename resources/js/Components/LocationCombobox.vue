@@ -330,7 +330,7 @@ watch(open, (isOpen) => {
               @click="handleSelect('')"
             >
               <Check :class="['mr-2 h-4 w-4 shrink-0', !modelValue && modelValue !== 0 ? 'opacity-100' : 'opacity-0']" />
-              <span class="text-foreground">{{ defaultLabel }}</span>
+              <span>{{ defaultLabel }}</span>
             </div>
 
             <!-- Flattened Hierarchy Tree Nodes -->

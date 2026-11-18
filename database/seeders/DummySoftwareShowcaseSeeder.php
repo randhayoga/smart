@@ -530,102 +530,52 @@ class DummySoftwareShowcaseSeeder extends Seeder
     ): void {
         $notificationService = app(NotificationService::class);
 
-        // 1. Critical Notification (7 days) for JetBrains All Products Pack
-        $brandJetBrains = $assetJetBrains->lot?->model?->brand?->name ?? '';
-        $nameJetBrains = $assetJetBrains->lot?->model?->name ?? '';
-        $swJetBrains = trim("{$brandJetBrains} {$nameJetBrains}");
+        $expiringAlerts = [
+            ['asset' => $assetJetBrains, 'days' => 7, 'level' => 'warning'],
+            ['asset' => $assetAutodesk, 'days' => 14, 'level' => 'info'],
+            ['asset' => $assetSketchUp, 'days' => 30, 'level' => 'info'],
+        ];
 
-        $title7 = __("inventory.notification_license_expiring_title", ['days' => 7, 'asset_number' => $assetJetBrains->number]);
-        $msg7 = __("inventory.notification_license_expiring_message", ['days' => 7, 'asset_number' => $assetJetBrains->number, 'software' => $swJetBrains]);
-        $url7 = '/smart/stock-management/non-consumables?search=' . urlencode($assetJetBrains->number);
+        foreach ($expiringAlerts as ['asset' => $asset, 'days' => $days, 'level' => $level]) {
+            $brand = $asset->lot?->model?->brand?->name ?? '';
+            $name = $asset->lot?->model?->name ?? '';
+            $titleParams = ['days' => $days, 'asset_number' => $asset->number];
+            $messageParams = [
+                'days' => $days,
+                'number' => $asset->number,
+                'brand' => $brand,
+                'name' => $name,
+            ];
 
-        $notificationService->sendToUser(
-            $adminUser,
-            $title7,
-            $msg7,
-            'warning',
-            $url7,
-            [
-                'asset_id' => $assetJetBrains->id,
-                'asset_number' => $assetJetBrains->number,
-                'days_remaining' => 7,
-                'title_key' => 'inventory.notification_license_expiring_title',
-                'title_params' => ['days' => 7, 'asset_number' => $assetJetBrains->number],
-                'message_key' => 'inventory.notification_license_expiring_message',
-                'message_params' => ['days' => 7, 'asset_number' => $assetJetBrains->number, 'software' => $swJetBrains],
-            ]
-        );
-
-        // 2. Email Notification (7 days) strictly sent to Muhamad Radifa Azizi (255578)
-        if (!empty($adminUser->email)) {
-            try {
-                Mail::to($adminUser->email)->send(
-                    new SoftwareLicenseExpiringMail($assetJetBrains, 7, $adminUser->name)
-                );
-                $this->command?->info("Dispatched SoftwareLicenseExpiringMail to {$adminUser->name} ({$adminUser->email}).");
-            } catch (\Throwable $e) {
-                $this->command?->warn("Email delivery notice: Could not send email to {$adminUser->email} ({$e->getMessage()}).");
-                Log::warning("SoftwareLicenseExpiringMail sending skipped or failed: " . $e->getMessage());
-            }
+            $notificationService->sendToUser(
+                $adminUser,
+                __('inventory.notification_license_expiring_title', $titleParams),
+                __('inventory.notification_license_expiring_message', $messageParams),
+                $level,
+                '/smart/stock-management/non-consumables?search=' . urlencode($asset->number),
+                [
+                    'asset_id' => $asset->id,
+                    'asset_number' => $asset->number,
+                    'days_remaining' => $days,
+                    'title_key' => 'inventory.notification_license_expiring_title',
+                    'title_params' => $titleParams,
+                    'message_key' => 'inventory.notification_license_expiring_message',
+                    'message_params' => $messageParams,
+                ]
+            );
         }
-
-        // 3. Warning Notification (14 days) for Autodesk AEC Collection 2026
-        $brandAutodesk = $assetAutodesk->lot?->model?->brand?->name ?? '';
-        $nameAutodesk = $assetAutodesk->lot?->model?->name ?? '';
-        $swAutodesk = trim("{$brandAutodesk} {$nameAutodesk}");
-
-        $title14 = __("inventory.notification_license_expiring_title", ['days' => 14, 'asset_number' => $assetAutodesk->number]);
-        $msg14 = __("inventory.notification_license_expiring_message", ['days' => 14, 'asset_number' => $assetAutodesk->number, 'software' => $swAutodesk]);
-
-        $notificationService->sendToUser(
-            $adminUser,
-            $title14,
-            $msg14,
-            'info',
-            '/smart/stock-management/non-consumables?search=' . urlencode($assetAutodesk->number),
-            [
-                'asset_id' => $assetAutodesk->id,
-                'asset_number' => $assetAutodesk->number,
-                'days_remaining' => 14,
-                'title_key' => 'inventory.notification_license_expiring_title',
-                'title_params' => ['days' => 14, 'asset_number' => $assetAutodesk->number],
-                'message_key' => 'inventory.notification_license_expiring_message',
-                'message_params' => ['days' => 14, 'asset_number' => $assetAutodesk->number, 'software' => $swAutodesk],
-            ]
-        );
-
-        // 4. Info Notification (30 days) for SketchUp Pro 2026
-        $brandSketchUp = $assetSketchUp->lot?->model?->brand?->name ?? '';
-        $nameSketchUp = $assetSketchUp->lot?->model?->name ?? '';
-        $swSketchUp = trim("{$brandSketchUp} {$nameSketchUp}");
-
-        $title30 = __("inventory.notification_license_expiring_title", ['days' => 30, 'asset_number' => $assetSketchUp->number]);
-        $msg30 = __("inventory.notification_license_expiring_message", ['days' => 30, 'asset_number' => $assetSketchUp->number, 'software' => $swSketchUp]);
-
-        $notificationService->sendToUser(
-            $adminUser,
-            $title30,
-            $msg30,
-            'info',
-            '/smart/stock-management/non-consumables?search=' . urlencode($assetSketchUp->number),
-            [
-                'asset_id' => $assetSketchUp->id,
-                'asset_number' => $assetSketchUp->number,
-                'days_remaining' => 30,
-                'title_key' => 'inventory.notification_license_expiring_title',
-                'title_params' => ['days' => 30, 'asset_number' => $assetSketchUp->number],
-                'message_key' => 'inventory.notification_license_expiring_message',
-                'message_params' => ['days' => 30, 'asset_number' => $assetSketchUp->number, 'software' => $swSketchUp],
-            ]
-        );
 
         // 5. Expired Notification for Figma Enterprise Organization
         $brandFigma = $assetFigma->lot?->model?->brand?->name ?? '';
         $nameFigma = $assetFigma->lot?->model?->name ?? '';
-        $swFigma = trim("{$brandFigma} {$nameFigma}");
+        $messageParamsExp = [
+            'number' => $assetFigma->number,
+            'brand' => $brandFigma,
+            'name' => $nameFigma,
+        ];
 
         $titleExp = __("inventory.notification_license_expired_title", ['asset_number' => $assetFigma->number]);
-        $msgExp = __("inventory.notification_license_expired_message", ['asset_number' => $assetFigma->number, 'software' => $swFigma]);
+        $msgExp = __("inventory.notification_license_expired_message", $messageParamsExp);
 
         $notificationService->sendToUser(
             $adminUser,
@@ -639,7 +589,7 @@ class DummySoftwareShowcaseSeeder extends Seeder
                 'title_key' => 'inventory.notification_license_expired_title',
                 'title_params' => ['asset_number' => $assetFigma->number],
                 'message_key' => 'inventory.notification_license_expired_message',
-                'message_params' => ['asset_number' => $assetFigma->number, 'software' => $swFigma],
+                'message_params' => $messageParamsExp,
             ]
         );
     }

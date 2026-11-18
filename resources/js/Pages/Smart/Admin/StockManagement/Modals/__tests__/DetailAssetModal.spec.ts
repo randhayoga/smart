@@ -438,5 +438,70 @@ describe('DetailAssetModal.vue - Status, BoD/BoC Buttons, and Deletion Note', ()
       expect(wrapper.text()).toContain('Rp20.000.000');
       expect(wrapper.text()).toContain('Klasifikasi:');
     });
+
+    it('renders active warranty in green below location, and expired/null warranty + serial_number in More Info above Last Update', async () => {
+      setI18nLanguage('en');
+
+      // 1. Active warranty (future date) -> primary section with emerald class
+      const activeWrapper = mountModal({
+        id: 1,
+        number: 'AST-W1',
+        status: 'Tersedia',
+        condition: 'Bagus',
+        location: 'HQ',
+        serial_number: 'SN-ACT-1',
+        warranty_date: '2099-12-31',
+        updated_at: '17-11-2026 10:00',
+      });
+      const activeWarrantyP = activeWrapper.findAll('p').find(p => p.text().includes('Warranty End Date:'));
+      expect(activeWarrantyP).toBeDefined();
+      expect(activeWarrantyP!.text()).toContain('31-12-2099');
+      expect(activeWarrantyP!.find('span').classes()).toContain('text-emerald-600');
+
+      const moreBtn1 = activeWrapper.findAll('button').find(b => b.text().includes('More Info'));
+      await moreBtn1?.trigger('click');
+      expect(activeWrapper.text()).toContain('Serial Number: SN-ACT-1');
+
+      // 2. Expired warranty -> More Info below Serial Number, above Last Update, with text-destructive
+      const expiredWrapper = mountModal({
+        id: 2,
+        number: 'AST-W2',
+        status: 'Tersedia',
+        condition: 'Bagus',
+        location: 'HQ',
+        serial_number: null,
+        warranty_date: '2020-01-15',
+        updated_at: '17-11-2026 10:00',
+      });
+      expect(expiredWrapper.text()).not.toContain('Warranty End Date:');
+      const moreBtn2 = expiredWrapper.findAll('button').find(b => b.text().includes('More Info'));
+      await moreBtn2?.trigger('click');
+
+      const expiredText = expiredWrapper.text();
+      expect(expiredText).toContain('Serial Number: -');
+      expect(expiredText).toContain('Warranty End Date: 15-01-2020');
+      expect(expiredText.indexOf('Serial Number:')).toBeLessThan(expiredText.indexOf('Warranty End Date:'));
+      expect(expiredText.indexOf('Warranty End Date:')).toBeLessThan(expiredText.indexOf('Last Update:'));
+      const expiredWarrantyP = expiredWrapper.findAll('p').find(p => p.text().includes('Warranty End Date:'));
+      expect(expiredWarrantyP!.find('span').classes()).toContain('text-destructive');
+    });
+
+    it('renders Ownership in More Info above Organizer', async () => {
+      setI18nLanguage('en');
+      const wrapper = mountModal({
+        id: 3,
+        number: 'AST-OWN-1',
+        status: 'Tersedia',
+        condition: 'Bagus',
+        is_non_owned: true,
+        lot_organizer: 'IT Dept',
+      });
+      const moreBtn = wrapper.findAll('button').find(b => b.text().includes('More Info'));
+      await moreBtn?.trigger('click');
+
+      const text = wrapper.text();
+      expect(text).toContain('Ownership: Managed Only');
+      expect(text.indexOf('Ownership:')).toBeLessThan(text.indexOf('Organizer:'));
+    });
   });
 });

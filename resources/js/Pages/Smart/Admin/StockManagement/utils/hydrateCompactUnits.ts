@@ -56,10 +56,13 @@ export interface CompactUnitSparse {
   cs?: string;
   pr?: number;
   im?: string;
+  sn?: string;
   vr?: string;
   al?: number;
   le?: string;
   rr?: number;
+  wd?: string;
+  no?: boolean;
   bu?: string;
   pi?: number;
   lv?: number;
@@ -314,9 +317,12 @@ export function prepareUnitsBundle(
       }
 
       if (sparse) {
+        if (sparse.sn) unit.serial_number = sparse.sn;
         if (sparse.vr) unit.vehicle_registration = sparse.vr;
         if (sparse.le) unit.license_exp_date = sparse.le;
         if (sparse.rr !== undefined) unit.renewal_reminder = sparse.rr;
+        if (sparse.wd) unit.warranty_date = sparse.wd;
+        if (sparse.no) unit.is_non_owned = true;
       }
 
       if (projectId) {

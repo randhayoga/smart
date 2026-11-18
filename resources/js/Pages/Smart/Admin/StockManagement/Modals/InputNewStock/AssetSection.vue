@@ -100,6 +100,7 @@ const onToggleInputAsset = (checked: boolean | 'indeterminate' | null | undefine
     props.form.location_id = null;
     props.form.price = '';
     props.form.classification = 'Aset';
+    props.form.is_non_owned = false;
     props.form.burden = 'Corporate';
     props.form.project_id = null;
     props.form.photo = null;
@@ -109,9 +110,21 @@ const onToggleInputAsset = (checked: boolean | 'indeterminate' | null | undefine
     props.form.bulk_quantity = '';
     props.form.license_exp_date = null;
     props.form.renewal_reminder = null;
+    props.form.serial_number = '';
+    props.form.warranty_date = null;
     props.form.license_type = 'Subscription';
   }
 };
+
+const isBulkMultiple = computed(() => Boolean(props.form.is_bulk) && Number(props.form.bulk_quantity) > 1);
+watch(isBulkMultiple, (multiple) => {
+  if (multiple) {
+    props.form.serial_number = '';
+    if (props.errors.serial_number) {
+      delete props.errors.serial_number;
+    }
+  }
+});
 
 const onToggleIsBulk = (checked: boolean | 'indeterminate' | null | undefined) => {
   props.form.is_bulk = checked === true;
@@ -288,28 +301,12 @@ const getClassificationLabel = (cls: string) => {
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="start" class="w-(--reka-dropdown-menu-trigger-width) min-w-(--reka-dropdown-menu-trigger-width) rounded-[14px] z-[1001]">
+                  <DropdownMenuItem @select="form.qc_pass = null">{{ t('inventory.selectQualityControl') }}</DropdownMenuItem>
                   <DropdownMenuItem class="text-emerald-600 dark:text-emerald-500 font-semibold" @select="form.qc_pass = true">{{ t('inventory.qcPass') }}</DropdownMenuItem>
                   <DropdownMenuItem class="text-rose-600 dark:text-rose-500 font-semibold" @select="form.qc_pass = false">{{ t('inventory.qcFail') }}</DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
             </FieldContent>
-          </Field>
-
-          <!-- Location (combobox list all active location) -->
-          <Field v-if="!isSoft" :data-invalid="!!errors.location_id || undefined">
-            <FieldLabel for="new-asset-location">
-              <span>{{ t('inventory.location') }}<span class="text-rose-500">*</span></span>
-            </FieldLabel>
-            <FieldContent>
-              <LocationCombobox
-                v-model="form.location_id"
-                :locations="locations"
-                :placeholder="t('inventory.selectLocation')"
-                :error="!!errors.location_id"
-                :active-only="true"
-              />
-            </FieldContent>
-            <FieldError v-if="errors.location_id">{{ errors.location_id }}</FieldError>
           </Field>
 
           <!-- Software License Expiration Date (with integrated License Type Dropdown) -->
@@ -392,6 +389,41 @@ const getClassificationLabel = (cls: string) => {
             <FieldError v-if="errors.renewal_reminder">{{ errors.renewal_reminder }}</FieldError>
           </Field>
 
+          <!-- Serial Number (Single asset creation only) -->
+          <Field v-if="!isBulkMultiple" :data-invalid="!!errors.serial_number || undefined">
+            <FieldLabel for="new-asset-serial-number">
+              <span>{{ t('inventory.serialNumber') }}</span>
+            </FieldLabel>
+            <FieldContent>
+              <input
+                id="new-asset-serial-number"
+                type="text"
+                v-model="form.serial_number"
+                :placeholder="t('inventory.serialNumberPlaceholder')"
+                class="w-full px-4 py-2 text-sm border rounded-[14px] bg-background focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors h-10"
+                :class="[errors.serial_number ? 'border-destructive' : 'border-input']"
+              />
+            </FieldContent>
+            <FieldError v-if="errors.serial_number">{{ errors.serial_number }}</FieldError>
+          </Field>
+
+          <!-- Warranty End Date -->
+          <Field :data-invalid="!!errors.warranty_date || undefined">
+            <FieldLabel for="new-asset-warranty-date">
+              <span>{{ t('inventory.warrantyDate') }}</span>
+            </FieldLabel>
+            <FieldContent>
+              <input
+                id="new-asset-warranty-date"
+                type="date"
+                v-model="form.warranty_date"
+                class="w-full px-4 py-2 border rounded-[14px] bg-background focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors h-10 text-sm"
+                :class="[errors.warranty_date ? 'border-destructive focus:ring-destructive/20 focus:border-destructive' : 'border-input']"
+              />
+            </FieldContent>
+            <FieldError v-if="errors.warranty_date">{{ errors.warranty_date }}</FieldError>
+          </Field>
+
           <!-- Bulk Creation (Only when not vehicle category) -->
           <Field v-if="!isKend" :data-invalid="!!errors.bulk_quantity || undefined">
             <FieldContent>
@@ -422,6 +454,24 @@ const getClassificationLabel = (cls: string) => {
 
         <!-- Right Column -->
         <div class="space-y-6">
+          <!-- Location (combobox list all active location) -->
+          <Field v-if="!isSoft" :data-invalid="!!errors.location_id || undefined">
+            <FieldLabel for="new-asset-location">
+              <span>{{ t('inventory.location') }}</span>
+            </FieldLabel>
+            <FieldContent>
+              <LocationCombobox
+                v-model="form.location_id"
+                :locations="locations"
+                :placeholder="t('inventory.selectLocation')"
+                :error="!!errors.location_id"
+                :active-only="true"
+                :default-label="t('inventory.selectLocation')"
+              />
+            </FieldContent>
+            <FieldError v-if="errors.location_id">{{ errors.location_id }}</FieldError>
+          </Field>
+
           <!-- Price / Harga (freetext, formatted currency) -->
           <Field :data-invalid="!!errors.price || undefined">
             <FieldLabel for="new-asset-price">
@@ -464,7 +514,31 @@ const getClassificationLabel = (cls: string) => {
             <FieldError v-if="errors.classification">{{ errors.classification }}</FieldError>
           </Field>
 
-          <!-- Burden / Pembebanan (below Classification input and above Photo) -->
+          <!-- Ownership (Kepemilikan) -->
+          <Field>
+            <FieldLabel>
+              <span>{{ t('inventory.ownership') }}<span class="text-rose-500">*</span></span>
+            </FieldLabel>
+            <FieldContent>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button
+                    variant="outline"
+                    class="w-full justify-between rounded-[14px] font-normal h-10 px-4 text-foreground"
+                  >
+                    {{ form.is_non_owned ? t('inventory.managedOnly') : t('inventory.companyOwned') }}
+                    <ChevronDown class="w-4 h-4 opacity-50" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="start" class="w-(--reka-dropdown-menu-trigger-width) min-w-(--reka-dropdown-menu-trigger-width) rounded-[14px] z-[1001]">
+                  <DropdownMenuItem @select="form.is_non_owned = false">{{ t('inventory.companyOwned') }}</DropdownMenuItem>
+                  <DropdownMenuItem @select="form.is_non_owned = true">{{ t('inventory.managedOnly') }}</DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </FieldContent>
+          </Field>
+
+          <!-- Burden / Pembebanan (below Ownership input and above Photo) -->
           <Field :data-invalid="!!errors.burden || undefined">
             <FieldLabel>
               <span>{{ t('inventory.burden') }}<span class="text-rose-500">*</span></span>

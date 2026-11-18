@@ -33,6 +33,7 @@ const { t } = useI18n();
       :hide-status-filter="true"
       :hide-condition-filter="true"
       :hide-actions="true"
+      :show-row-actions="true"
       :hide-export="false"
       :cardless="true"
       :hide-header="true"

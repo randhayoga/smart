@@ -28,6 +28,7 @@ const props = defineProps<{
   brandFilter: string;
   organizerFilter: string;
   vendorFilter: string;
+  ownershipFilter?: string;
   showAdvancedFilters: boolean;
   showInactiveAssets?: boolean;
   showInactiveToggle?: boolean;
@@ -60,6 +61,7 @@ const emit = defineEmits<{
   (e: 'update:brandFilter', val: string): void;
   (e: 'update:organizerFilter', val: string): void;
   (e: 'update:vendorFilter', val: string): void;
+  (e: 'update:ownershipFilter', val: string): void;
   (e: 'update:showAdvancedFilters', val: boolean): void;
   (e: 'update:showInactiveAssets', val: boolean): void;
   (e: 'clear'): void;
@@ -273,6 +275,24 @@ const { t } = useI18n();
           width-class="w-full"
           :bg-class="props.cardless ? 'bg-white' : 'bg-background'"
         />
+      </div>
+
+      <!-- Ownership Filter -->
+      <div class="space-y-1.5 w-[190px]">
+        <label class="text-xs text-muted-foreground font-medium block ml-0.5">{{ t('inventory.ownership') }}</label>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="outline" :class="['w-full justify-between rounded-[14px] font-normal', props.cardless ? 'bg-white' : 'bg-background', !ownershipFilter ? 'text-muted-foreground' : 'text-foreground']">
+              <span class="truncate">{{ ownershipFilter === '0' ? t('inventory.companyOwned') : (ownershipFilter === '1' ? t('inventory.managedOnly') : t('inventory.allOwnership')) }}</span>
+              <ChevronDown class="w-4 h-4 opacity-50 shrink-0" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent class="w-(--reka-dropdown-menu-trigger-width) min-w-(--reka-dropdown-menu-trigger-width) rounded-[14px]" align="start" :side-offset="4">
+            <DropdownMenuItem @select="emit('update:ownershipFilter', '')">{{ t('inventory.allOwnership') }}</DropdownMenuItem>
+            <DropdownMenuItem @select="emit('update:ownershipFilter', '0')">{{ t('inventory.companyOwned') }}</DropdownMenuItem>
+            <DropdownMenuItem @select="emit('update:ownershipFilter', '1')">{{ t('inventory.managedOnly') }}</DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
       </div>
     </div>
   </Transition>

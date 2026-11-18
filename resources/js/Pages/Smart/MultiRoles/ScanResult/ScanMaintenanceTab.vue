@@ -218,7 +218,6 @@ const handleSubmit = () => {
     errors.value.reference = t('inventory.referenceRequired');
   }
   if (!form.value.type) errors.value.type = t('common.required');
-  if (!form.value.user_id) errors.value.user_id = t('common.required');
   if (!form.value.date) errors.value.date = t('common.required');
   if (form.value.cost === '' || form.value.cost === null || Number(form.value.cost) < 0) {
     errors.value.cost = t('common.required');
@@ -359,7 +358,7 @@ const handleSubmit = () => {
       <!-- 4. Pengguna / User -->
       <Field :data-invalid="!!errors.user_id || undefined">
         <FieldLabel>
-          <span>{{ t('inventory.maintenanceUser') }}<span class="text-rose-500">*</span></span>
+          <span>{{ t('inventory.maintenanceUser') }}</span>
         </FieldLabel>
         <FieldContent>
           <Combobox

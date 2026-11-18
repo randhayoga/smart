@@ -232,9 +232,6 @@ const submitForm = async () => {
   if (!form.value.type) {
     errors.value.type = t('common.required');
   }
-  if (!form.value.user_id) {
-    errors.value.user_id = t('common.required');
-  }
   if (!form.value.date) {
     errors.value.date = t('common.required');
   }
@@ -399,7 +396,7 @@ defineExpose({
       <!-- User (Combobox defaulting to borrower) -->
       <Field :data-invalid="!!errors.user_id || undefined">
         <FieldLabel>
-          <span>{{ t('inventory.maintenanceUser') }}<span class="text-rose-500">*</span></span>
+          <span>{{ t('inventory.maintenanceUser') }}</span>
         </FieldLabel>
         <FieldContent>
           <Combobox

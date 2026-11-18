@@ -406,4 +406,24 @@ describe('EditAssetModal.vue - Single & Mass Edit Logic and Layout', () => {
       expect(availableWrapper.text()).not.toContain('Tipe peminjaman tidak dapat diubah saat aset sedang dipinjam atau di-assign');
     });
   });
+
+  describe('Serial Number and Warranty Date Visibility', () => {
+    it('shows serial_number only in single edit and warranty_date in both single and mass edit', () => {
+      setI18nLanguage('en');
+      const singleWrapper = mountModal([
+        { id: 1, number: 'AST-001', status: 'Tersedia', condition: 'Bagus', type: 'LT', serial_number: 'SN-111', warranty_date: '2028-01-01' },
+      ]);
+      expect(singleWrapper.find('#edit-asset-serial-number').exists()).toBe(true);
+      expect((singleWrapper.find('#edit-asset-serial-number').element as HTMLInputElement).value).toBe('SN-111');
+      expect(singleWrapper.find('#edit-asset-warranty-date').exists()).toBe(true);
+      expect((singleWrapper.find('#edit-asset-warranty-date').element as HTMLInputElement).value).toBe('2028-01-01');
+
+      const massWrapper = mountModal([
+        { id: 1, number: 'AST-001', status: 'Tersedia', condition: 'Bagus', type: 'LT' },
+        { id: 2, number: 'AST-002', status: 'Tersedia', condition: 'Bagus', type: 'LT' },
+      ]);
+      expect(massWrapper.find('#edit-asset-serial-number').exists()).toBe(false);
+      expect(massWrapper.find('#edit-asset-warranty-date').exists()).toBe(true);
+    });
+  });
 });

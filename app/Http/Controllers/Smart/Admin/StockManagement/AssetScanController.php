@@ -50,7 +50,8 @@ class AssetScanController extends Controller
             'location.parent.parent', 'deletionApprovals',
             'lot.model.type.category', 'lot.model.brand', 'lot.model.uom',
             'lot.organizer', 'lot.vendor', 'lot.legacyVendor', 'legacyVendor',
-            'project'
+            'project',
+            'fulfillments' => fn ($q) => $q->whereNull('return_id')->with('requestItem.request.user'),
         ]);
 
         $pendingApproval = $asset->deletionApprovals->firstWhere('decision', 'pending');
@@ -70,6 +71,7 @@ class AssetScanController extends Controller
             'active_status' => $asset->active_status,
             'status' => $asset->status,
             'approval_status' => $asset->approval_status,
+            'active_borrowing' => $asset->active_borrowing,
             'proposed_status' => $pendingApproval 
                 ? $pendingApproval->proposed_condition 
                 : ($approvedApproval ? $approvedApproval->proposed_condition : null),
@@ -97,9 +99,12 @@ class AssetScanController extends Controller
             'project_name' => $asset->project?->project_name,
             'license_exp_date' => $asset->license_exp_date ? $asset->license_exp_date->format('Y-m-d') : null,
             'renewal_reminder' => $asset->renewal_reminder,
+            'serial_number' => $asset->serial_number,
+            'warranty_date' => $asset->warranty_date ? $asset->warranty_date->format('Y-m-d') : null,
             'type' => $asset->borrowing_type,
             'borrowing_type' => $asset->borrowing_type,
             'classification' => $asset->classification,
+            'is_non_owned' => (bool) $asset->is_non_owned,
             'comp_specification' => $asset->comp_specification,
             'specification' => $asset->comp_specification,
             'price' => $asset->price,

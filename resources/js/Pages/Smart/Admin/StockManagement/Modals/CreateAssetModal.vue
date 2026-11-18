@@ -96,6 +96,7 @@ const form = useForm({
   qc_pass: null as boolean | null,
   type: '',
   classification: '',
+  is_non_owned: false,
   burden: 'Corporate' as 'Corporate' | 'Project',
   project_id: '' as string | number,
   price: '' as string | number,
@@ -105,6 +106,8 @@ const form = useForm({
   is_bulk: false,
   bulk_quantity: '' as string | number,
   vehicle_registration: '',
+  serial_number: '',
+  warranty_date: null as string | null,
   license_exp_date: null as string | null,
   renewal_reminder: null as number | string | null,
   license_type: 'Subscription' as 'Subscription' | 'Perpetual',
@@ -136,6 +139,8 @@ const errors = ref({
   bulk_quantity: '',
   license_exp_date: '',
   renewal_reminder: '',
+  serial_number: '',
+  warranty_date: '',
 });
 
 const resetErrors = () => {
@@ -153,6 +158,8 @@ const resetErrors = () => {
     bulk_quantity: '',
     license_exp_date: '',
     renewal_reminder: '',
+    serial_number: '',
+    warranty_date: '',
   };
 };
 
@@ -175,6 +182,14 @@ watch(() => form.image_url_name, v => { if (v && errors.value.image_url) errors.
 watch(() => form.vehicle_registration, v => { if (v && errors.value.vehicle_registration) errors.value.vehicle_registration = ''; });
 watch(() => form.bulk_quantity, v => { if (v !== '' && errors.value.bulk_quantity) errors.value.bulk_quantity = ''; });
 
+const isBulkMultiple = computed(() => form.is_bulk && Number(form.bulk_quantity) > 1);
+watch(isBulkMultiple, (multiple) => {
+  if (multiple) {
+    form.serial_number = '';
+    errors.value.serial_number = '';
+  }
+});
+
 const onSelectBurden = (burden: 'Corporate' | 'Project') => {
   form.burden = burden;
   if (burden !== 'Project') {
@@ -195,6 +210,7 @@ watch(() => props.open, (val) => {
   form.qc_pass = null;
   form.type = '';
   form.classification = '';
+  form.is_non_owned = false;
   form.burden = 'Corporate';
   form.project_id = '';
   form.specification = '';
@@ -202,6 +218,8 @@ watch(() => props.open, (val) => {
   form.image_url_name = '';
   form.license_exp_date = null;
   form.renewal_reminder = null;
+  form.serial_number = '';
+  form.warranty_date = null;
   form.license_type = 'Subscription';
 });
 
@@ -287,7 +305,6 @@ const handleSubmit = () => {
   if (!form.type) { errors.value.type = t('inventory.typeRequired'); isValid = false; }
   if (!isSoft.value) {
     if (!form.condition) { errors.value.condition = t('inventory.conditionRequired'); isValid = false; }
-    if (!form.location_id) { errors.value.location_id = t('inventory.locationRequired'); isValid = false; }
   } else {
     form.condition = '';
     form.location_id = '';
@@ -317,16 +334,19 @@ const handleSubmit = () => {
     const fd: any = {
       _method: 'POST',
       lot_id: data.lot_id,
-      location_id: isSoft.value ? null : data.location_id,
+      location_id: isSoft.value ? null : (data.location_id || null),
       status: data.status,
       condition: isSoft.value ? null : data.condition,
       qc_pass: isSoft.value ? null : data.qc_pass,
       type: data.type,
       borrowing_type: data.type,
       classification: data.classification,
+      is_non_owned: Boolean(data.is_non_owned),
       burden: data.burden,
       project_id: data.burden === 'Project' ? data.project_id : null,
       price: data.price !== '' && data.price !== null ? parseCurrencyToNumber(data.price) : null,
+      serial_number: isBulkMultiple.value ? null : (data.serial_number || null),
+      warranty_date: data.warranty_date || null,
     };
     if (isVehicle.value) fd.vehicle_registration = data.vehicle_registration;
     if (isComp.value) {
@@ -465,28 +485,12 @@ const handleSubmit = () => {
                           </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="start" class="w-(--reka-dropdown-menu-trigger-width) min-w-(--reka-dropdown-menu-trigger-width) rounded-[14px] z-[1001]">
+                          <DropdownMenuItem @select="form.qc_pass = null">{{ t('inventory.selectQualityControl') }}</DropdownMenuItem>
                           <DropdownMenuItem class="text-emerald-600 dark:text-emerald-500 font-semibold" @select="form.qc_pass = true">{{ t('inventory.qcPass') }}</DropdownMenuItem>
                           <DropdownMenuItem class="text-rose-600 dark:text-rose-500 font-semibold" @select="form.qc_pass = false">{{ t('inventory.qcFail') }}</DropdownMenuItem>
                         </DropdownMenuContent>
                       </DropdownMenu>
                     </FieldContent>
-                  </Field>
-
-                  <!-- Location -->
-                  <Field v-if="!isSoft" :data-invalid="!!errors.location_id || undefined">
-                    <FieldLabel>
-                      <span>{{ t('inventory.location') }}<span class="text-rose-500">*</span></span>
-                    </FieldLabel>
-                    <FieldContent>
-                      <LocationCombobox
-                        v-model="form.location_id"
-                        :locations="locations"
-                        :placeholder="t('inventory.selectLocation')"
-                        :error="!!errors.location_id"
-                        :active-only="true"
-                      />
-                    </FieldContent>
-                    <FieldError v-if="errors.location_id">{{ errors.location_id }}</FieldError>
                   </Field>
 
                   <!-- Software License Expiration Date (with integrated License Type Dropdown) -->
@@ -569,6 +573,41 @@ const handleSubmit = () => {
                     <FieldError v-if="errors.renewal_reminder">{{ errors.renewal_reminder }}</FieldError>
                   </Field>
 
+                  <!-- Serial Number (Single asset creation only) -->
+                  <Field v-if="!isBulkMultiple" :data-invalid="!!errors.serial_number || undefined">
+                    <FieldLabel for="create-asset-serial-number">
+                      <span>{{ t('inventory.serialNumber') }}</span>
+                    </FieldLabel>
+                    <FieldContent>
+                      <input
+                        id="create-asset-serial-number"
+                        type="text"
+                        v-model="form.serial_number"
+                        :placeholder="t('inventory.serialNumberPlaceholder')"
+                        class="w-full px-4 py-2 text-sm border rounded-[14px] bg-background focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors h-10"
+                        :class="[errors.serial_number ? 'border-destructive' : 'border-input']"
+                      />
+                    </FieldContent>
+                    <FieldError v-if="errors.serial_number">{{ errors.serial_number }}</FieldError>
+                  </Field>
+
+                  <!-- Warranty End Date -->
+                  <Field :data-invalid="!!errors.warranty_date || undefined">
+                    <FieldLabel for="create-asset-warranty-date">
+                      <span>{{ t('inventory.warrantyDate') }}</span>
+                    </FieldLabel>
+                    <FieldContent>
+                      <input
+                        id="create-asset-warranty-date"
+                        type="date"
+                        v-model="form.warranty_date"
+                        class="w-full px-4 py-2 border rounded-[14px] bg-background focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors h-10 text-sm"
+                        :class="[errors.warranty_date ? 'border-destructive focus:ring-destructive/20 focus:border-destructive' : 'border-input']"
+                      />
+                    </FieldContent>
+                    <FieldError v-if="errors.warranty_date">{{ errors.warranty_date }}</FieldError>
+                  </Field>
+
                   <!-- Bulk Creation (Only when not vehicle category) -->
                   <Field v-if="!isVehicle" :data-invalid="!!errors.bulk_quantity || undefined">
                     <FieldContent>
@@ -590,6 +629,24 @@ const handleSubmit = () => {
 
                 <!-- Right Column -->
                 <div class="space-y-6">
+                  <!-- Location -->
+                  <Field v-if="!isSoft" :data-invalid="!!errors.location_id || undefined">
+                    <FieldLabel>
+                      <span>{{ t('inventory.location') }}</span>
+                    </FieldLabel>
+                    <FieldContent>
+                      <LocationCombobox
+                        v-model="form.location_id"
+                        :locations="locations"
+                        :placeholder="t('inventory.selectLocation')"
+                        :error="!!errors.location_id"
+                        :active-only="true"
+                        :default-label="t('inventory.selectLocation')"
+                      />
+                    </FieldContent>
+                    <FieldError v-if="errors.location_id">{{ errors.location_id }}</FieldError>
+                  </Field>
+
                   <!-- Price -->
                   <Field :data-invalid="!!errors.price || undefined">
                     <FieldLabel for="create-asset-price">
@@ -626,6 +683,27 @@ const handleSubmit = () => {
                       </DropdownMenu>
                     </FieldContent>
                     <FieldError v-if="errors.classification">{{ errors.classification }}</FieldError>
+                  </Field>
+
+                  <!-- Ownership (Kepemilikan) -->
+                  <Field>
+                    <FieldLabel>
+                      <span>{{ t('inventory.ownership') }}<span class="text-rose-500">*</span></span>
+                    </FieldLabel>
+                    <FieldContent>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="outline" class="w-full justify-between rounded-[14px] font-normal h-10 px-4 text-foreground">
+                            {{ form.is_non_owned ? t('inventory.managedOnly') : t('inventory.companyOwned') }}
+                            <ChevronDown class="w-4 h-4 opacity-50" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="start" class="w-(--reka-dropdown-menu-trigger-width) min-w-(--reka-dropdown-menu-trigger-width) rounded-[14px] z-[1001]">
+                          <DropdownMenuItem @select="form.is_non_owned = false">{{ t('inventory.companyOwned') }}</DropdownMenuItem>
+                          <DropdownMenuItem @select="form.is_non_owned = true">{{ t('inventory.managedOnly') }}</DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </FieldContent>
                   </Field>
 
                   <!-- Burden -->

@@ -46,11 +46,12 @@ class AssetController extends Controller
         $rules = [
             'number' => 'required|string|max:50|unique:assets,number',
             'lot_id' => 'required|exists:lots,id',
-            'location_id' => 'required|exists:locations,id',
+            'location_id' => 'nullable|exists:locations,id',
             'status' => 'nullable|string|max:255',
             'condition' => 'required|string|max:255',
             'borrowing_type' => 'required|string|in:LT,ST',
             'classification' => 'required|string|in:Aset,Inventaris',
+            'is_non_owned' => 'required|boolean',
             'comp_specification' => 'nullable|string|max:255',
             'specification' => 'nullable|string|max:255',
             'price' => 'nullable|numeric|min:0|max:999999999.99',
@@ -59,6 +60,8 @@ class AssetController extends Controller
             'burden' => 'nullable|string|in:Corporate,Project',
             'project_id' => 'required_if:burden,Project|nullable|integer',
             'qc_pass' => 'nullable|boolean',
+            'serial_number' => 'nullable|string|max:255',
+            'warranty_date' => 'nullable|date',
         ];
  
         $isSoft = ($lot->model?->type?->category?->code === 'SOFT' || strtolower($lot->model?->type?->category?->name ?? '') === 'software');
@@ -148,6 +151,10 @@ class AssetController extends Controller
         $validated['project_id'] = $validated['burden'] === 'Project' ? ($validated['project_id'] ?? null) : null;
         $validated['license_exp_date'] = $isSoft ? ($request->input('license_exp_date') ?: null) : null;
         $validated['renewal_reminder'] = $isSoft ? ($request->input('renewal_reminder') !== null && $request->input('renewal_reminder') !== '' ? (int)$request->input('renewal_reminder') : null) : null;
+        $validated['serial_number'] = $request->input('serial_number') ?: null;
+        $validated['warranty_date'] = $request->input('warranty_date') ?: null;
+        $validated['is_non_owned'] = $request->boolean('is_non_owned');
+
         if ($request->has('qc_pass') && $request->input('qc_pass') !== null && $request->input('qc_pass') !== '') {
             $validated['qc_pass'] = $request->boolean('qc_pass');
             $validated['last_qc'] = now();
@@ -368,6 +375,7 @@ class AssetController extends Controller
             'condition' => ['required', 'string', 'in:Bagus,Rusak,Ditandai Rusak Total,Rusak Total,Hilang'],
             'borrowing_type' => ['required', 'string', 'in:LT,ST'],
             'classification' => ['required', 'string', 'in:Aset,Inventaris'],
+            'is_non_owned' => ['nullable', 'boolean'],
             'comp_specification' => 'nullable|string|max:255',
             'specification' => 'nullable|string|max:255',
             'price' => 'nullable|numeric|min:0|max:999999999.99',
@@ -378,6 +386,8 @@ class AssetController extends Controller
             'project_id' => 'required_if:burden,Project|nullable|integer',
             'is_assigned_to_location' => 'nullable|boolean',
             'qc_pass' => 'nullable|boolean',
+            'serial_number' => 'nullable|string|max:255',
+            'warranty_date' => 'nullable|date',
         ];
 
         if ($request->has('is_assigned_to_location') && $request->input('is_assigned_to_location') !== null) {
@@ -602,6 +612,16 @@ class AssetController extends Controller
             $validated['renewal_reminder'] = null;
         }
 
+        if ($request->has('serial_number')) {
+            $validated['serial_number'] = $request->input('serial_number') ?: null;
+        }
+        if ($request->has('warranty_date')) {
+            $validated['warranty_date'] = $request->input('warranty_date') ?: null;
+        }
+        if ($request->has('is_non_owned')) {
+            $validated['is_non_owned'] = $request->boolean('is_non_owned');
+        }
+
         if ($request->has('qc_pass') && $request->input('qc_pass') !== null && $request->input('qc_pass') !== '') {
             $validated['qc_pass'] = $request->boolean('qc_pass');
             $validated['last_qc'] = now();
@@ -709,6 +729,7 @@ class AssetController extends Controller
             'id' => $asset->id,
             'number' => $asset->number,
             'legacy_number' => $asset->legacy_number,
+            'serial_number' => $asset->serial_number,
             'active_status' => $asset->active_status,
             'status' => $asset->status,
             'approval_status' => $asset->approval_status,
@@ -738,6 +759,7 @@ class AssetController extends Controller
             'type' => $asset->borrowing_type,
             'borrowing_type' => $asset->borrowing_type,
             'classification' => $asset->classification,
+            'is_non_owned' => (bool) $asset->is_non_owned,
             'comp_specification' => $asset->comp_specification,
             'specification' => $asset->comp_specification ?: ($asset->specification ?: ($model?->specification ?? '-')),
             'image_url' => $asset->image_url,
@@ -745,6 +767,7 @@ class AssetController extends Controller
             'is_assigned_to_location' => (bool)$asset->is_assigned_to_location,
             'license_exp_date' => $asset->license_exp_date ? $asset->license_exp_date->format('Y-m-d') : null,
             'renewal_reminder' => $asset->renewal_reminder,
+            'warranty_date' => $asset->warranty_date ? $asset->warranty_date->format('Y-m-d') : null,
             'burden' => $asset->burden,
             'project_id' => $asset->project_id,
             'created_at' => $asset->created_at?->toIso8601String(),

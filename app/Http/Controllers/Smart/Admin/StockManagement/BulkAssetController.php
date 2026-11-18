@@ -35,11 +35,12 @@ class BulkAssetController extends Controller
         $rules = [
             'number' => 'nullable|string|max:50',
             'lot_id' => 'required|exists:lots,id',
-            'location_id' => 'required|exists:locations,id',
+            'location_id' => 'nullable|exists:locations,id',
             'status' => 'nullable|string|max:255',
             'condition' => 'required|string|max:255',
             'borrowing_type' => 'required|string|in:LT,ST',
             'classification' => 'required|string|in:Aset,Inventaris',
+            'is_non_owned' => 'required|boolean',
             'comp_specification' => 'nullable|string|max:255',
             'specification' => 'nullable|string|max:255',
             'price' => 'nullable|numeric|min:0|max:999999999.99',
@@ -49,6 +50,8 @@ class BulkAssetController extends Controller
             'burden' => 'nullable|string|in:Corporate,Project',
             'project_id' => 'required_if:burden,Project|nullable|integer',
             'qc_pass' => 'nullable|boolean',
+            'serial_number' => 'nullable|string|max:255',
+            'warranty_date' => 'nullable|date',
         ];
 
         $lot = Lot::with('model.type.category')->findOrFail($request->input('lot_id'));
@@ -176,9 +179,12 @@ class BulkAssetController extends Controller
             }
 
             $assets = [];
+            $serialNumber = (count($generatedNumbers) === 1) ? ($request->input('serial_number') ?: null) : null;
+            $warrantyDate = $request->input('warranty_date') ?: null;
             foreach ($generatedNumbers as $num) {
                 $asset = Asset::create([
                     'number' => $num,
+                    'serial_number' => $serialNumber,
                     'lot_id' => $validated['lot_id'],
                     'location_id' => $isSoft ? null : ($validated['location_id'] ?? null),
                     'active_status' => $validated['active_status'],
@@ -187,6 +193,7 @@ class BulkAssetController extends Controller
                     'condition' => $isSoft ? null : ($validated['condition'] ?? null),
                     'borrowing_type' => $borrowingType,
                     'classification' => $classification,
+                    'is_non_owned' => $request->boolean('is_non_owned'),
                     'comp_specification' => $finalCompSpec,
                     'price' => $validated['price'] ?? null,
                     'image_url' => $finalImagePath,
@@ -195,6 +202,7 @@ class BulkAssetController extends Controller
                     'project_id' => $projectId,
                     'license_exp_date' => $isSoft ? ($request->input('license_exp_date') ?: null) : null,
                     'renewal_reminder' => $isSoft ? ($request->input('renewal_reminder') !== null && $request->input('renewal_reminder') !== '' ? (int)$request->input('renewal_reminder') : null) : null,
+                    'warranty_date' => $warrantyDate,
                     'qc_pass' => $assetQcPass,
                     'last_qc' => $assetLastQc,
                 ]);
@@ -296,6 +304,7 @@ class BulkAssetController extends Controller
             'borrowing_type' => ['nullable', 'string', 'in:LT,ST'],
             'type' => ['nullable', 'string', 'in:LT,ST'],
             'classification' => ['nullable', 'string', 'in:Aset,Inventaris'],
+            'is_non_owned' => ['nullable', 'boolean'],
             'comp_specification' => 'nullable|string|max:255',
             'specification' => 'nullable|string|max:255',
             'location_id' => 'nullable|exists:locations,id',
@@ -307,6 +316,7 @@ class BulkAssetController extends Controller
             'is_assigned_to_location' => ['nullable', 'boolean'],
             'license_exp_date' => ['nullable', 'date'],
             'renewal_reminder' => ['nullable', 'integer', 'min:0'],
+            'warranty_date' => ['nullable', 'date'],
         ], $messages);
         if ($validator->fails()) {
             if ($validator->errors()->has('borrowing_type')) {
@@ -609,6 +619,12 @@ class BulkAssetController extends Controller
         }
         if ($request->has('renewal_reminder')) {
             $updateData['renewal_reminder'] = $isSoft ? (($request->input('renewal_reminder') !== null && $request->input('renewal_reminder') !== '') ? (int)$request->input('renewal_reminder') : null) : null;
+        }
+        if ($request->has('warranty_date') && $request->input('warranty_date') !== null && $request->input('warranty_date') !== '') {
+            $updateData['warranty_date'] = $request->input('warranty_date');
+        }
+        if ($request->has('is_non_owned') && $request->input('is_non_owned') !== null && $request->input('is_non_owned') !== '') {
+            $updateData['is_non_owned'] = $request->boolean('is_non_owned');
         }
 
         if ($request->has('qc_pass') && $request->input('qc_pass') !== null && $request->input('qc_pass') !== '' && $request->input('qc_pass') !== 'unchanged') {

@@ -280,4 +280,63 @@ describe('ScanResult Componentization, Maintenance Tab, and Parity', () => {
       );
     });
   });
+
+  describe('Serial Number and Warranty Date Parity', () => {
+    it('renders serial_number and conditional warranty_date in ScanAssetDetailTab', async () => {
+      const wrapper = mount(ScanAssetDetailTab, {
+        props: {
+          asset: {
+            ...mockAsset,
+            serial_number: 'SN-SCAN-01',
+            warranty_date: '2099-12-31',
+            is_non_owned: true,
+            lot_age: 3,
+          },
+          locations: mockLocations,
+        },
+        global: { plugins: [i18n] },
+      });
+
+      expect(wrapper.text()).toContain('Tanggal Akhir Garansi');
+      expect(wrapper.text()).toContain('31-12-2099');
+      expect(wrapper.text()).toContain('Umur');
+      expect(wrapper.text()).toContain('3 tahun');
+
+      // Expand More Info to verify Serial Number is above Last Update and Ownership is above Organizer
+      const moreBtn = wrapper.findAll('button').find(b => b.text().toLowerCase().includes('info lebih lanjut'));
+      await moreBtn?.trigger('click');
+      const text = wrapper.text();
+      expect(text).toContain('Nomor Seri');
+      expect(text).toContain('SN-SCAN-01');
+      expect(text.indexOf('Nomor Seri')).toBeLessThan(text.indexOf('Pembaruan Terakhir'));
+      expect(text).toContain('Kepemilikan');
+      expect(text).toContain('Hanya Dikelola');
+      expect(text.indexOf('Kepemilikan')).toBeLessThan(text.indexOf('Organizer'));
+    });
+
+    it('renders serial_number and warranty_date at the bottom of ADDITIONAL DETAILS in ScanEditAssetTab', async () => {
+      const wrapper = mount(ScanEditAssetTab, {
+        props: {
+          asset: {
+            ...mockAsset,
+            serial_number: 'SN-EDIT-01',
+            warranty_date: '2028-05-10',
+          },
+          locations: mockLocations,
+          projects: mockProjects,
+        },
+        global: { plugins: [i18n] },
+      });
+
+      const detailsBtn = wrapper.findAll('button').find(b => b.text().toLowerCase().includes('detail tambahan'));
+      await detailsBtn?.trigger('click');
+
+      const snInput = wrapper.find('#scan-edit-serial-number');
+      const wdInput = wrapper.find('#scan-edit-warranty-date');
+      expect(snInput.exists()).toBe(true);
+      expect(wdInput.exists()).toBe(true);
+      expect((snInput.element as HTMLInputElement).value).toBe('SN-EDIT-01');
+      expect((wdInput.element as HTMLInputElement).value).toBe('2028-05-10');
+    });
+  });
 });

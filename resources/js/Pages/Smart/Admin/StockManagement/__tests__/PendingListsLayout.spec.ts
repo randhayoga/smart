@@ -16,7 +16,7 @@ vi.mock('@/Layouts/AppLayout.vue', () => ({
 vi.mock('../Tabs/NonConsumableListTab.vue', () => ({
   default: {
     name: 'NonConsumableListTab',
-    props: ['units', 'locations', 'organizers', 'vendors', 'statusScope', 'hideStatusFilter', 'hideConditionFilter', 'hideActions', 'hideExport', 'cardless', 'hideHeader', 'title'],
+    props: ['units', 'locations', 'organizers', 'vendors', 'statusScope', 'hideStatusFilter', 'hideConditionFilter', 'hideActions', 'showRowActions', 'hideExport', 'cardless', 'hideHeader', 'title'],
     template: '<div data-testid="non-consumable-list-tab" :data-cardless="cardless" :data-hide-header="hideHeader" :data-title="title"></div>',
   },
 }));
@@ -77,6 +77,8 @@ describe('Pending Lists Layout & Title Tests', () => {
       expect(tab.exists()).toBe(true);
       expect(tab.props('cardless')).toBe(true);
       expect(tab.props('hideHeader')).toBe(true);
+      expect(tab.props('hideActions')).toBe(true);
+      expect(tab.props('showRowActions')).toBe(true);
     });
   });
 

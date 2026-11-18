@@ -227,12 +227,12 @@ const columns = computed<ColumnDef<any>[]>(() => [
 
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant="outline" :class="['w-[180px] justify-between rounded-[14px] font-normal', !typeFilter ? 'text-muted-foreground' : 'text-foreground']">
+            <Button variant="outline" :class="['w-[210px] justify-between rounded-[14px] font-normal', !typeFilter ? 'text-muted-foreground' : 'text-foreground']">
               <span class="truncate">{{ typeFilterLabel }}</span>
               <ChevronDown class="w-4 h-4 opacity-50 shrink-0" />
             </Button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent class="w-[180px] rounded-[14px]" align="start" :side-offset="4">
+          <DropdownMenuContent class="w-[210px] rounded-[14px]" align="start" :side-offset="4">
             <DropdownMenuItem @select="typeFilter = ''">{{ t('fulfillment.allTypes') }}</DropdownMenuItem>
             <DropdownMenuItem @select="typeFilter = 'st'">{{ t('fulfillment.manualRequest.typeSt') }}</DropdownMenuItem>
             <DropdownMenuItem @select="typeFilter = 'rent'">{{ t('fulfillment.manualRequest.typeRent') }}</DropdownMenuItem>

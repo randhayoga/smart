@@ -103,6 +103,7 @@ const lotForm = useForm({
   qc_pass: null as boolean | null,
   price: '' as string | number,
   classification: 'Aset' as 'Aset' | 'Inventaris',
+  is_non_owned: false,
   photo: null as File | null,
   photo_name: '',
   plate_number: '',
@@ -110,6 +111,8 @@ const lotForm = useForm({
   bulk_quantity: '' as string | number,
   license_exp_date: null as string | null,
   renewal_reminder: null as number | string | null,
+  serial_number: '',
+  warranty_date: null as string | null,
   license_type: 'Subscription' as 'Subscription' | 'Perpetual',
 });
 
@@ -345,6 +348,7 @@ watch(() => props.open, (val) => {
   lotForm.qc_pass = null;
   lotForm.price = '';
   lotForm.classification = 'Aset';
+  lotForm.is_non_owned = false;
   lotForm.photo = null;
   lotForm.photo_name = '';
   lotForm.plate_number = '';
@@ -352,6 +356,8 @@ watch(() => props.open, (val) => {
   lotForm.bulk_quantity = '';
   lotForm.license_exp_date = null;
   lotForm.renewal_reminder = null;
+  lotForm.serial_number = '';
+  lotForm.warranty_date = null;
   lotForm.license_type = 'Subscription';
   lotForm.clearErrors();
   resetErrors();
@@ -407,10 +413,6 @@ const handleSubmit = () => {
       errors.value.project_id = t('inventory.projectRequired');
       isValid = false;
     }
-    if (!lotForm.location_id) {
-      errors.value.location_id = t('inventory.locationRequired');
-      isValid = false;
-    }
   } else if (lotForm.input_asset) {
     if (isComp.value && !String(lotForm.asset_specification || '').trim()) {
       errors.value.asset_specification = t('inventory.specificationRequired');
@@ -423,10 +425,6 @@ const handleSubmit = () => {
     if (!isSoft.value) {
       if (!lotForm.condition) {
         errors.value.condition = t('inventory.conditionRequired');
-        isValid = false;
-      }
-      if (!lotForm.location_id) {
-        errors.value.location_id = t('inventory.locationRequired');
         isValid = false;
       }
     } else {
@@ -510,11 +508,15 @@ const handleSubmit = () => {
         fd.condition = isSoft.value ? null : data.condition;
         fd.qc_pass = isSoft.value ? null : data.qc_pass;
         fd.classification = data.classification;
+        fd.is_non_owned = Boolean(data.is_non_owned);
         fd.price = data.price || null;
         if (data.asset_specification) fd.asset_specification = data.asset_specification;
         if (data.plate_number) fd.plate_number = data.plate_number;
         fd.is_bulk = data.is_bulk;
         if (data.is_bulk) fd.bulk_quantity = data.bulk_quantity;
+        const isBulkMultiple = Boolean(data.is_bulk) && Number(data.bulk_quantity) > 1;
+        fd.serial_number = isBulkMultiple ? null : (data.serial_number || null);
+        fd.warranty_date = data.warranty_date || null;
         if (data.photo) fd.photo = data.photo;
         if (isSoft.value) {
           fd.license_exp_date = data.license_type === 'Subscription' ? data.license_exp_date : null;
@@ -857,7 +859,7 @@ const handleSubmit = () => {
                     <!-- Location Selection -->
                     <Field :data-invalid="!!errors.location_id || undefined">
                       <FieldLabel>
-                        <span>{{ t('inventory.location') }}<span class="text-rose-500">*</span></span>
+                        <span>{{ t('inventory.location') }}</span>
                       </FieldLabel>
                       <FieldContent>
                         <LocationCombobox
@@ -866,6 +868,7 @@ const handleSubmit = () => {
                           :placeholder="t('inventory.selectLocation')"
                           :error="!!errors.location_id"
                           :active-only="true"
+                          :default-label="t('inventory.selectLocation')"
                         />
                       </FieldContent>
                       <FieldError v-if="errors.location_id">{{ errors.location_id }}</FieldError>

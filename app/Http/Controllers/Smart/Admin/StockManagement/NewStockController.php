@@ -143,10 +143,13 @@ class NewStockController extends Controller
 
                     $createdAssets = [];
                     $lastApproval = null;
+                    $serialNumber = ($quantity === 1) ? ($validated['serial_number'] ?? null) : null;
+                    $warrantyDate = $validated['warranty_date'] ?? null;
                     foreach ($assetNumbers as $assetNumber) {
                         $assetBurden = $validated['burden'] ?? 'Corporate';
                         $asset = Asset::create([
                             'number' => $assetNumber,
+                            'serial_number' => $serialNumber,
                             'lot_id' => $lot->id,
                             'location_id' => $isSoft ? null : ($validated['location_id'] ?? null),
                             'active_status' => 'Belum Aktif',
@@ -154,6 +157,7 @@ class NewStockController extends Controller
                             'condition' => $isSoft ? null : $condition,
                             'borrowing_type' => $validated['borrowing_type'],
                             'classification' => $validated['classification'],
+                            'is_non_owned' => $request->boolean('is_non_owned'),
                             'comp_specification' => $isComp ? ($validated['asset_specification'] ?? null) : null,
                             'price' => $validated['price'] ?? null,
                             'image_url' => $photoUrl,
@@ -162,6 +166,7 @@ class NewStockController extends Controller
                             'project_id' => $assetBurden === 'Project' ? ($validated['project_id'] ?? null) : null,
                             'license_exp_date' => $isSoft ? ($validated['license_exp_date'] ?? null) : null,
                             'renewal_reminder' => $isSoft ? ($validated['renewal_reminder'] ?? null) : null,
+                            'warranty_date' => $warrantyDate,
                             'qc_pass' => $request->has('qc_pass') && $request->input('qc_pass') !== null && $request->input('qc_pass') !== '' ? $request->boolean('qc_pass') : null,
                             'last_qc' => $request->has('qc_pass') && $request->input('qc_pass') !== null && $request->input('qc_pass') !== '' ? now() : null,
                         ]);

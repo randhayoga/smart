@@ -599,7 +599,7 @@ const viewMemoFileInNewTab = () => {
             <!-- Consumable: Location Selection -->
             <Field v-if="isConsumable" :data-invalid="!!errors.location_id || undefined">
               <FieldLabel>
-                <span>{{ t('inventory.location') }}<span class="text-rose-500">*</span></span>
+                <span>{{ t('inventory.location') }}</span>
               </FieldLabel>
               <FieldContent>
                 <LocationCombobox
@@ -608,6 +608,7 @@ const viewMemoFileInNewTab = () => {
                   :placeholder="t('inventory.selectLocation')"
                   :error="!!errors.location_id"
                   :active-only="true"
+                  :default-label="t('inventory.selectLocation')"
                 />
               </FieldContent>
               <FieldError v-if="errors.location_id">{{ errors.location_id }}</FieldError>

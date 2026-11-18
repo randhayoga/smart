@@ -76,7 +76,7 @@ class AssetMaintenanceController extends Controller
     {
         $validated = $request->validated();
         $actor = Auth::user();
-        $targetUser = User::find($validated['user_id']);
+        $targetUser = ! empty($validated['user_id']) ? User::find($validated['user_id']) : null;
 
         $proofUrl = null;
         if ($request->hasFile('proof_file')) {
@@ -88,13 +88,13 @@ class AssetMaintenanceController extends Controller
 
         $newMaintenance = DB::transaction(function () use ($validated, $asset, $actor, $targetUser, $proofUrl) {
             $costFormatted = number_format((float) $validated['cost'], 0, ',', '.');
-            $targetUserName = $targetUser?->name ?? 'User';
+            $targetUserName = $targetUser?->name ?? '-';
 
             // 1. Create Maintenance record
             $maintenance = AssetMaintenance::create([
                 'asset_id' => $asset->id,
                 'maintainer_id' => $actor->id,
-                'user_id' => $validated['user_id'],
+                'user_id' => $validated['user_id'] ?? null,
                 'type' => $validated['type'],
                 'source' => $validated['source'],
                 'reference' => $validated['source'] === 'TiSu' ? ($validated['reference'] ?? null) : null,

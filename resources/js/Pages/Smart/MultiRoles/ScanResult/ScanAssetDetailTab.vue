@@ -10,6 +10,7 @@ import { Button } from '@/Components/ui/button';
 import StatusBadge from '@/Components/StatusBadge.vue';
 import { formatDate, formatLocation } from '@/lib/utils';
 import { formatQcStatus, getQcColorClass } from '@/lib/qualityControl';
+import { isWarrantyActive, getWarrantyColorClass, formatWarrantyDate } from '@/lib/warranty';
 
 interface Props {
   asset: any;
@@ -26,6 +27,18 @@ const emit = defineEmits<{
 const { t, locale } = useI18n();
 
 const isMoreInfoOpen = ref(false);
+
+const finalLotAge = computed(() => {
+  if (props.lot?.age !== undefined && props.lot?.age !== null) return props.lot.age;
+  if (props.asset?.lot_age !== undefined && props.asset?.lot_age !== null) return props.asset.lot_age;
+  const dateStr = props.lot?.date_of_receipt || props.asset?.lot_date_of_receipt || props.asset?.lot_purchase_grant_date;
+  if (!dateStr || dateStr === '-') return null;
+  const receipt = new Date(dateStr);
+  if (isNaN(receipt.getTime())) return null;
+  const diffTime = new Date().getTime() - receipt.getTime();
+  const years = Math.floor(diffTime / (1000 * 60 * 60 * 24 * 365));
+  return years >= 0 ? years : 0;
+});
 
 const isVehicle = computed(() => {
   const category = (props.asset?.barang_category || props.barang?.category || props.asset?.model_category || '').toLowerCase();
@@ -125,6 +138,15 @@ const qcFormattedDate = computed(() => {
   const formatted = formatDate(lastQc);
   return formatted && formatted !== '-' ? formatted : null;
 });
+
+const isAssignmentOrBorrowing = computed(() => {
+  const s = (props.asset?.status || '').toLowerCase();
+  return s.includes('di-assign') || s.includes('dipinjam');
+});
+
+const activeUserName = computed(() => {
+  return props.asset?.active_borrowing?.user_name || props.asset?.active_borrowing?.employee_name || '-';
+});
 </script>
 
 <template>
@@ -157,7 +179,7 @@ const qcFormattedDate = computed(() => {
           {{ brandAndName }}
         </h2>
         <!-- Specification: purely spec below brand+name -->
-        <p v-if="specDisplay && specDisplay !== '-'" class="text-xs text-muted-foreground font-normal mt-1 break-words">
+        <p v-if="specDisplay && specDisplay !== '-'" class="text-sm text-foreground font-semibold mt-1 break-words">
           {{ specDisplay }}
         </p>
       </div>
@@ -177,10 +199,15 @@ const qcFormattedDate = computed(() => {
           <span class="text-foreground font-semibold text-right">{{ categoryWithSubcategory }}</span>
         </div>
 
-        <!-- 2. Status (+ Software/Vehicle details) -->
+        <!-- 2. Status (+ User if Borrowed/Assigned, Software/Vehicle details) -->
         <div class="flex justify-between items-start gap-4">
           <span class="text-muted-foreground font-medium shrink-0">{{ t('scanner.status') }}</span>
           <StatusBadge :active-status="props.asset.active_status" :status="props.asset.status" :proposed-status="props.asset.proposed_status" :approval-status="props.asset.approval_status" />
+        </div>
+
+        <div v-if="isAssignmentOrBorrowing" class="flex justify-between items-start gap-4">
+          <span class="text-muted-foreground font-medium shrink-0">User</span>
+          <span class="text-foreground font-semibold text-right">{{ activeUserName }}</span>
         </div>
 
         <!-- Software License Information if Software -->
@@ -244,6 +271,22 @@ const qcFormattedDate = computed(() => {
           </span>
         </div>
 
+        <!-- Age (Umur) -->
+        <div class="flex justify-between items-start gap-4">
+          <span class="text-muted-foreground font-medium shrink-0">{{ t('inventory.age') }}</span>
+          <span class="text-foreground font-semibold text-right">
+            {{ finalLotAge !== null && finalLotAge !== undefined ? `${finalLotAge} ${t('inventory.yearUnit')}` : '-' }}
+          </span>
+        </div>
+
+        <!-- Active Warranty End Date (primary info below location) -->
+        <div v-if="isWarrantyActive(props.asset.warranty_date)" class="flex justify-between items-start gap-4">
+          <span class="text-muted-foreground font-medium shrink-0">{{ t('inventory.warrantyDate') }}</span>
+          <span :class="getWarrantyColorClass(props.asset.warranty_date)">
+            {{ formatWarrantyDate(props.asset.warranty_date) }}
+          </span>
+        </div>
+
         <!-- Notes if present -->
         <div v-if="props.asset.admin_note" class="flex justify-between items-start gap-4 text-xs pt-1 border-t border-border/60">
           <span class="text-muted-foreground font-medium shrink-0">{{ t('inventory.adminNote') }}</span>
@@ -300,6 +343,12 @@ const qcFormattedDate = computed(() => {
             <span class="text-foreground font-semibold">{{ getClassificationLabel(props.asset.classification) || '-' }}</span>
           </div>
 
+          <!-- Ownership (Kepemilikan) -->
+          <div class="flex justify-between items-start gap-4">
+            <span class="text-muted-foreground font-medium shrink-0">{{ t('inventory.ownership') }}</span>
+            <span class="text-foreground font-semibold">{{ props.asset.is_non_owned ? t('inventory.managedOnly') : t('inventory.companyOwned') }}</span>
+          </div>
+
           <!-- 4. Organizer -->
           <div class="flex justify-between items-start gap-4">
             <span class="text-muted-foreground font-medium shrink-0">{{ t('inventory.organizer') }}</span>
@@ -310,6 +359,20 @@ const qcFormattedDate = computed(() => {
           <div class="flex justify-between items-start gap-4">
             <span class="text-muted-foreground font-medium shrink-0">{{ t('inventory.burden') }}</span>
             <span class="text-foreground font-semibold text-right max-w-[220px]">{{ burdenDisplay }}</span>
+          </div>
+
+          <!-- Serial Number -->
+          <div class="flex justify-between items-start gap-4">
+            <span class="text-muted-foreground font-medium shrink-0">{{ t('inventory.serialNumber') }}</span>
+            <span class="text-foreground font-semibold text-right">{{ props.asset.serial_number || '-' }}</span>
+          </div>
+
+          <!-- Inactive or Null Warranty End Date -->
+          <div v-if="!isWarrantyActive(props.asset.warranty_date)" class="flex justify-between items-start gap-4">
+            <span class="text-muted-foreground font-medium shrink-0">{{ t('inventory.warrantyDate') }}</span>
+            <span :class="[getWarrantyColorClass(props.asset.warranty_date) || 'text-foreground font-semibold']">
+              {{ formatWarrantyDate(props.asset.warranty_date) }}
+            </span>
           </div>
 
           <!-- 6. Last Update -->

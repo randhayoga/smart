@@ -138,6 +138,7 @@ const form = useForm({
   location_id: null as number | null,
   price: '' as string | number,
   classification: 'Aset' as 'Aset' | 'Inventaris',
+  is_non_owned: false,
   photo: null as File | null,
   photo_name: '',
   plate_number: '',
@@ -145,6 +146,8 @@ const form = useForm({
   bulk_quantity: '' as string | number,
   license_exp_date: null as string | null,
   renewal_reminder: null as number | null,
+  serial_number: '',
+  warranty_date: null as string | null,
   license_type: 'Subscription' as 'Subscription' | 'Perpetual',
 });
 
@@ -249,6 +252,8 @@ const resetFormState = () => {
   form.qc_pass = null;
   form.license_exp_date = null;
   form.renewal_reminder = null;
+  form.serial_number = '';
+  form.warranty_date = null;
   form.license_type = 'Subscription';
 };
 
@@ -371,10 +376,6 @@ const handleSubmit = () => {
             isValid = false;
           }
         }
-        if (!form.location_id) {
-          errors.value.location_id = t('inventory.locationRequired');
-          isValid = false;
-        }
       }
 
       if (!form.organizer_id) { errors.value.organizer_id = t('inventory.organizerRequired'); isValid = false; }
@@ -404,10 +405,10 @@ const handleSubmit = () => {
       if (!form.borrowing_type) { errors.value.borrowing_type = t('inventory.borrowingTypeRequired'); isValid = false; }
       if (!isSoft.value) {
         if (!form.condition) { errors.value.condition = t('inventory.conditionRequired'); isValid = false; }
-        if (!form.location_id) { errors.value.location_id = t('inventory.locationRequired'); isValid = false; }
       } else {
         form.condition = null;
         form.location_id = null;
+  form.is_non_owned = false;
       }
       if (!form.classification) { errors.value.classification = t('inventory.classificationRequired'); isValid = false; }
       if (!form.burden) { errors.value.burden = t('inventory.burdenRequired'); isValid = false; }

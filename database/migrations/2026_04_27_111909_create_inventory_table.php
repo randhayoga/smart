@@ -50,6 +50,7 @@ return new class extends Migration {
             $table->id();
             $table->string('number', 50)->unique();
             $table->string('legacy_number', 50)->nullable()->comment('legacy asset code/number');
+            $table->string('serial_number', 255)->nullable();
             $table->foreignId('lot_id')->constrained('lots')->cascadeOnDelete();
             $table->foreignId('legacy_vendor_id')->nullable()->constrained('vendors')->nullOnDelete()->comment('Refers to local vendors table (legacy migration only)');
             $table->foreignId('location_id')->nullable()->constrained('locations')->nullOnDelete()->comment('current location');
@@ -62,6 +63,7 @@ return new class extends Migration {
             $table->string('comp_specification')->nullable()->comment('Specification for computer category assets only');
             $table->string('borrowing_type', 2)->default('LT')->comment('LT | ST');
             $table->string('classification', 255)->default('Aset')->comment('Aset | Inventaris');
+            $table->boolean('is_non_owned')->default(false);
             $table->decimal('price', 15, 2)->nullable();
             $table->string('image_url')->nullable();
             $table->string('vehicle_registration')->nullable();
@@ -70,6 +72,7 @@ return new class extends Migration {
             $table->boolean('is_assigned_to_location')->default(false);
             $table->date('license_exp_date')->nullable();
             $table->integer('renewal_reminder')->nullable();
+            $table->date('warranty_date')->nullable();
             $table->timestamps();
 
             $table->index('active_status');

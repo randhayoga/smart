@@ -86,7 +86,7 @@ class Asset extends Model
             }
 
             $dirty = $asset->getDirty();
-            $tracked = ['active_status', 'status', 'approval_status', 'condition', 'location_id', 'is_assigned_to_location', 'license_exp_date', 'last_qc', 'qc_pass'];
+            $tracked = ['active_status', 'status', 'approval_status', 'condition', 'location_id', 'is_assigned_to_location', 'license_exp_date', 'last_qc', 'qc_pass', 'warranty_date'];
             $changed = array_intersect(array_keys($dirty), $tracked);
 
             if (!empty($changed)) {
@@ -239,6 +239,29 @@ class Asset extends Model
                     ];
                 }
 
+                // 5. Warranty End Date Change
+                if (!$asset->is_software && $asset->isDirty('warranty_date') && !$isPendingStatus) {
+                    $oldRaw = $asset->getOriginal('warranty_date');
+                    $newRaw = $asset->warranty_date;
+
+                    $oldDate = $oldRaw ? Carbon::parse($oldRaw)->format('d-m-Y') : '-';
+                    $newDate = $newRaw ? Carbon::parse($newRaw)->format('d-m-Y') : '-';
+                    $note = "Tanggal berakhir garansi diubah dari '{$oldDate}' menjadi '{$newDate}'.";
+
+                    $actions[] = [
+                        'action_type' => 'Perubahan garansi',
+                        'note' => $note,
+                        'location_id' => $asset->location_id,
+                        'previous_state' => [
+                            'warranty_date' => $oldRaw ? Carbon::parse($oldRaw)->toDateString() : null,
+                        ],
+                        'new_state' => [
+                            'warranty_date' => $newRaw ? Carbon::parse($newRaw)->toDateString() : null,
+                        ],
+                        'approval' => null,
+                    ];
+                }
+
                 if (!empty($actions)) {
                     $now = now();
                     AssetLifecycle::where('asset_id', $asset->id)
@@ -319,11 +342,13 @@ class Asset extends Model
         'classification' => 'Aset',
         'burden' => 'Corporate',
         'is_assigned_to_location' => false,
+        'is_non_owned' => false,
     ];
 
     protected $fillable = [
         'number',
         'legacy_number',
+        'serial_number',
         'lot_id',
         'location_id',
         'active_status',
@@ -333,6 +358,7 @@ class Asset extends Model
         'borrowing_type',
         'type',
         'classification',
+        'is_non_owned',
         'price',
         'image_url',
         'vehicle_registration',
@@ -343,6 +369,7 @@ class Asset extends Model
         'is_assigned_to_location',
         'license_exp_date',
         'renewal_reminder',
+        'warranty_date',
         'qc_pass',
         'last_qc',
     ];
@@ -352,8 +379,10 @@ class Asset extends Model
         'project_id' => 'integer',
         'legacy_vendor_id' => 'integer',
         'is_assigned_to_location' => 'boolean',
+        'is_non_owned' => 'boolean',
         'license_exp_date' => 'date',
         'renewal_reminder' => 'integer',
+        'warranty_date' => 'date',
         'qc_pass' => 'boolean',
         'last_qc' => 'datetime',
     ];

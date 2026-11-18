@@ -88,13 +88,16 @@ class LotController extends Controller
             $assetRules = [
                 'borrowing_type' => ['required', Rule::in(['LT', 'ST'])],
                 'condition' => $isSoft ? ['nullable', Rule::in(['Bagus', 'Rusak', 'Good', 'Damaged'])] : ['required', Rule::in(['Bagus', 'Rusak', 'Good', 'Damaged'])],
-                'location_id' => $isSoft ? ['nullable', Rule::exists(Location::class, 'id')] : ['required', Rule::exists(Location::class, 'id')],
+                'location_id' => ['nullable', Rule::exists(Location::class, 'id')],
                 'price' => ['nullable', 'numeric', 'min:0', 'max:999999999999.99'],
                 'classification' => ['required', Rule::in(['Aset', 'Inventaris'])],
+                'is_non_owned' => ['required', 'boolean'],
                 'photo' => ['nullable', 'image', 'mimes:jpeg,jpg,png,webp', 'max:1024'],
                 'burden' => ['required', Rule::in(['Corporate', 'Project'])],
                 'project_id' => ['required_if:burden,Project', 'nullable', Rule::exists(TbProject::class, 'id_project')],
                 'qc_pass' => ['nullable', 'boolean'],
+                'serial_number' => ['nullable', 'string', 'max:255'],
+                'warranty_date' => ['nullable', 'date'],
             ];
 
             if ($isSoft) {
@@ -197,17 +200,21 @@ class LotController extends Controller
 
                 $createdAssets = [];
                 $lastApproval = null;
+                $serialNumber = ($quantity === 1) ? ($request->input('serial_number') ?: null) : null;
+                $warrantyDate = $request->input('warranty_date') ?: null;
                 foreach ($assetNumbers as $assetNumber) {
                     $assetBurden = $request->input('burden', 'Corporate');
                     $asset = Asset::create([
                         'number' => $assetNumber,
+                        'serial_number' => $serialNumber,
                         'lot_id' => $createdLot->id,
-                        'location_id' => $isSoft ? null : $request->input('location_id'),
+                        'location_id' => $isSoft ? null : ($request->input('location_id') ?: null),
                         'active_status' => 'Belum Aktif',
                         'status' => 'Belum Diverifikasi',
                         'condition' => $isSoft ? null : $condition,
                         'borrowing_type' => $request->input('borrowing_type'),
                         'classification' => $request->input('classification'),
+                        'is_non_owned' => $request->boolean('is_non_owned'),
                         'comp_specification' => $isComp ? ($request->input('asset_specification') ?? null) : null,
                         'price' => $request->input('price') ?? null,
                         'image_url' => $photoUrl,
@@ -216,6 +223,7 @@ class LotController extends Controller
                         'project_id' => $assetBurden === 'Project' ? ($request->input('project_id') ?? null) : null,
                         'license_exp_date' => $isSoft ? ($request->input('license_exp_date') ?: null) : null,
                         'renewal_reminder' => $isSoft ? ($request->input('renewal_reminder') !== null && $request->input('renewal_reminder') !== '' ? (int)$request->input('renewal_reminder') : null) : null,
+                        'warranty_date' => $warrantyDate,
                         'qc_pass' => $request->has('qc_pass') && $request->input('qc_pass') !== null && $request->input('qc_pass') !== '' ? $request->boolean('qc_pass') : null,
                         'last_qc' => $request->has('qc_pass') && $request->input('qc_pass') !== null && $request->input('qc_pass') !== '' ? now() : null,
                     ]);

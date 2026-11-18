@@ -82,7 +82,7 @@ const isRestrictedAsset = computed(() => {
 const isKondisiDisabled = computed(() => isRestrictedAsset.value);
 
 const isStatusDisabled = computed(() => {
-  if (isRestrictedAsset.value) return true;
+  if (isRestrictedAsset.value || isBorrowedUnit.value) return true;
   return arrInactiveConditions.includes(form.condition);
 });
 
@@ -125,6 +125,7 @@ const form = useForm({
   type: props.asset?.borrowing_type || props.asset?.type || 'LT',
   borrowing_type: props.asset?.borrowing_type || props.asset?.type || 'LT',
   classification: props.asset?.classification || 'Aset',
+  is_non_owned: Boolean(props.asset?.is_non_owned),
   burden: props.asset?.burden || 'Corporate',
   project_id: props.asset?.project_id || '',
   price: props.asset?.price !== null && props.asset?.price !== undefined ? props.asset.price : '',
@@ -132,6 +133,8 @@ const form = useForm({
   image_url_name: props.asset?.image_url ? props.asset.image_url.split('/').pop() || '' : '',
   delete_image: false,
   vehicle_registration: props.asset?.vehicle_registration || '',
+  serial_number: props.asset?.serial_number || '',
+  warranty_date: props.asset?.warranty_date || null,
   memo_file: null as File | null,
   memo_file_name: props.asset?.memo_file_name || (props.asset?.memo_url ? props.asset.memo_url.split('/').pop() || '' : ''),
   lost_doc_file: null as File | null,
@@ -153,6 +156,7 @@ watch(() => props.asset, (newAsset) => {
   form.type = newAsset.borrowing_type || newAsset.type || 'LT';
   form.borrowing_type = newAsset.borrowing_type || newAsset.type || 'LT';
   form.classification = newAsset.classification || 'Aset';
+  form.is_non_owned = Boolean(newAsset.is_non_owned);
   form.burden = newAsset.burden || 'Corporate';
   form.project_id = newAsset.project_id || '';
   form.price = newAsset.price !== null && newAsset.price !== undefined ? newAsset.price : '';
@@ -160,6 +164,8 @@ watch(() => props.asset, (newAsset) => {
   form.image_url_name = newAsset.image_url ? newAsset.image_url.split('/').pop() || '' : '';
   form.delete_image = false;
   form.vehicle_registration = newAsset.vehicle_registration || '';
+  form.serial_number = newAsset.serial_number || '';
+  form.warranty_date = newAsset.warranty_date || null;
   form.memo_file = null;
   form.memo_file_name = newAsset.memo_file_name || (newAsset.memo_url ? newAsset.memo_url.split('/').pop() || '' : '');
   form.lost_doc_file = null;
@@ -187,6 +193,8 @@ const errors = ref({
   burden: '',
   project_id: '',
   price: '',
+  serial_number: '',
+  warranty_date: '',
 });
 
 const resetErrors = () => {
@@ -205,6 +213,8 @@ const resetErrors = () => {
     burden: '',
     project_id: '',
     price: '',
+    serial_number: '',
+    warranty_date: '',
   };
 };
 
@@ -427,9 +437,12 @@ const handleSubmit = () => {
       condition: isSoft.value ? null : data.condition,
       borrowing_type: data.type || data.borrowing_type,
       classification: data.classification,
+      is_non_owned: Boolean(data.is_non_owned),
       burden: data.burden,
       project_id: data.burden === 'Project' ? data.project_id : null,
       price: data.price !== '' && data.price !== null ? parseCurrencyToNumber(data.price) : null,
+      serial_number: data.serial_number || null,
+      warranty_date: data.warranty_date || null,
     };
     if (data.qc_pass !== null && data.qc_pass !== undefined && data.qc_pass !== '') {
       fd.qc_pass = data.qc_pass;
@@ -463,6 +476,8 @@ const handleSubmit = () => {
       if (err.bod_boc_approval_file) errors.value.bod_boc_approval_file = err.bod_boc_approval_file;
       if (err.project_id) errors.value.project_id = err.project_id;
       if (err.price) errors.value.price = err.price;
+      if (err.serial_number) errors.value.serial_number = err.serial_number;
+      if (err.warranty_date) errors.value.warranty_date = err.warranty_date;
       toast.error(t('scanner.assetUpdateError'));
     }
   });
@@ -822,6 +837,27 @@ const handleSubmit = () => {
                 </FieldContent>
               </Field>
 
+              <!-- Ownership (Kepemilikan) -->
+              <Field>
+                <FieldLabel>
+                  <span>{{ t('inventory.ownership') }}<span class="text-rose-500">*</span></span>
+                </FieldLabel>
+                <FieldContent>
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="outline" class="w-full justify-between rounded-xl font-normal h-10 px-4 text-foreground">
+                        {{ form.is_non_owned ? t('inventory.managedOnly') : t('inventory.companyOwned') }}
+                        <ChevronDown class="w-4 h-4 opacity-50" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="start" class="w-(--reka-dropdown-menu-trigger-width) min-w-(--reka-dropdown-menu-trigger-width) rounded-xl z-[1001]">
+                      <DropdownMenuItem @select="form.is_non_owned = false">{{ t('inventory.companyOwned') }}</DropdownMenuItem>
+                      <DropdownMenuItem @select="form.is_non_owned = true">{{ t('inventory.managedOnly') }}</DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </FieldContent>
+              </Field>
+
               <!-- Burden (Corporate / Project) -->
               <Field>
                 <FieldLabel>
@@ -859,6 +895,41 @@ const handleSubmit = () => {
                   />
                 </FieldContent>
                 <FieldError v-if="errors.project_id">{{ errors.project_id }}</FieldError>
+              </Field>
+
+              <!-- Serial Number -->
+              <Field :data-invalid="!!errors.serial_number || undefined">
+                <FieldLabel for="scan-edit-serial-number">
+                  <span>{{ t('inventory.serialNumber') }}</span>
+                </FieldLabel>
+                <FieldContent>
+                  <input
+                    id="scan-edit-serial-number"
+                    type="text"
+                    v-model="form.serial_number"
+                    :placeholder="t('inventory.serialNumberPlaceholder')"
+                    class="w-full px-4 py-2 text-sm border rounded-xl bg-background focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors h-10"
+                    :class="[errors.serial_number ? 'border-destructive' : 'border-input']"
+                  />
+                </FieldContent>
+                <FieldError v-if="errors.serial_number">{{ errors.serial_number }}</FieldError>
+              </Field>
+
+              <!-- Warranty End Date -->
+              <Field :data-invalid="!!errors.warranty_date || undefined">
+                <FieldLabel for="scan-edit-warranty-date">
+                  <span>{{ t('inventory.warrantyDate') }}</span>
+                </FieldLabel>
+                <FieldContent>
+                  <input
+                    id="scan-edit-warranty-date"
+                    type="date"
+                    v-model="form.warranty_date"
+                    class="w-full px-4 py-2 text-sm border rounded-xl bg-background focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors h-10"
+                    :class="[errors.warranty_date ? 'border-destructive' : 'border-input']"
+                  />
+                </FieldContent>
+                <FieldError v-if="errors.warranty_date">{{ errors.warranty_date }}</FieldError>
               </Field>
             </div>
           </Transition>

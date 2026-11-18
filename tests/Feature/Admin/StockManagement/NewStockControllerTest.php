@@ -282,6 +282,7 @@ class NewStockControllerTest extends TestCase
             'location_id' => $this->location->id,
             'price' => 15000000,
             'classification' => 'Aset',
+            'is_non_owned' => false,
             'photo' => $photo,
         ]);
 
@@ -363,6 +364,7 @@ class NewStockControllerTest extends TestCase
             'condition' => 'Good',
             'location_id' => $this->location->id,
             'classification' => 'Aset',
+            'is_non_owned' => false,
             'plate_number' => 'B 9999 XYZ',
         ]);
 
@@ -395,6 +397,7 @@ class NewStockControllerTest extends TestCase
             'location_id' => $this->location->id,
             'price' => 12500000,
             'classification' => 'Aset',
+            'is_non_owned' => false,
             'is_bulk' => true,
             'bulk_quantity' => 3,
         ]);
@@ -442,6 +445,7 @@ class NewStockControllerTest extends TestCase
             'condition' => 'Good',
             'location_id' => $this->location->id,
             'classification' => 'Aset',
+            'is_non_owned' => false,
             'plate_number' => 'B 7777 ABC',
             'is_bulk' => true,
             'bulk_quantity' => 3,

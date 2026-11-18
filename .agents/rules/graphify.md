@@ -9,6 +9,7 @@ This project has a graphify knowledge graph at graphify-out/.
 
 Rules:
 
+- This app run on Docker Compose with service name "smart-app"
 - The primary in-app language is English, Indonesian (Bahasa) is the secondary language. The codebase and documentation language is English, but Indonesian (Bahasa) is the database storage language (e.g. status values, category names, master data records)
 - Adheres to CruddyByDesign, KISS, and DRY principles
 - Avoid technical debts!

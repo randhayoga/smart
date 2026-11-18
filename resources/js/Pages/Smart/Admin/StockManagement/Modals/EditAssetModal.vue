@@ -182,11 +182,14 @@ const form = useForm({
   qc_pass: null as boolean | string | null,
   type: '',
   classification: '',
+  is_non_owned: null as boolean | null,
   price: '' as string | number,
   specification: '',
   image_url: null as File | null,
   image_url_name: '',
   vehicle_registration: '',
+  serial_number: '',
+  warranty_date: null as string | null,
   memo_file: null as File | null,
   memo_file_name: '',
   lost_doc_file: null as File | null,
@@ -223,6 +226,8 @@ const errors = ref({
   project_id: '',
   license_exp_date: '',
   renewal_reminder: '',
+  serial_number: '',
+  warranty_date: '',
 });
 
 const resetErrors = () => {
@@ -244,6 +249,8 @@ const resetErrors = () => {
     project_id: '',
     license_exp_date: '',
     renewal_reminder: '',
+    serial_number: '',
+    warranty_date: '',
   };
 };
 
@@ -345,6 +352,7 @@ const resetModalState = () => {
   form.condition = '';
   form.type = '';
   form.classification = '';
+  form.is_non_owned = null;
   form.price = '';
   form.specification = '';
   form.image_url = null;
@@ -364,6 +372,8 @@ const resetModalState = () => {
   form.project_id = '';
   form.license_exp_date = null;
   form.renewal_reminder = null;
+  form.serial_number = '';
+  form.warranty_date = null;
   form.license_type = 'Subscription';
 
   const inputIds = [
@@ -401,6 +411,7 @@ watch(() => props.open, (val) => {
     form.qc_pass = null;
     form.type = item.type || item.borrowing_type || '';
     form.classification = item.classification || '';
+    form.is_non_owned = Boolean(item.is_non_owned);
     if (!isRestrictedStatus(item.status, item.approval_status) && arrInactiveConditions.includes(form.condition)) {
       form.approval_status = 'Pending:DM';
     }
@@ -426,6 +437,8 @@ watch(() => props.open, (val) => {
     form.license_type = hasExpDate ? 'Subscription' : 'Perpetual';
     form.license_exp_date = hasExpDate ? item.license_exp_date : null;
     form.renewal_reminder = item.renewal_reminder !== null && item.renewal_reminder !== undefined ? item.renewal_reminder : null;
+    form.serial_number = item.serial_number || '';
+    form.warranty_date = item.warranty_date || null;
   } else {
     form.number = '';
     form.legacy_number = '';
@@ -438,6 +451,7 @@ watch(() => props.open, (val) => {
     form.qc_pass = null;
     form.type = '';
     form.classification = '';
+    form.is_non_owned = null;
     form.price = '';
     form.specification = '';
     form.vehicle_registration = '';
@@ -445,6 +459,8 @@ watch(() => props.open, (val) => {
     form.project_id = '';
     form.license_exp_date = null;
     form.renewal_reminder = null;
+    form.serial_number = '';
+    form.warranty_date = null;
     form.license_type = 'Subscription';
   }
 }, { immediate: true });
@@ -721,9 +737,12 @@ const handleSubmit = () => {
         type: data.type,
         borrowing_type: data.type,
         classification: data.classification,
+        is_non_owned: Boolean(data.is_non_owned),
         price: data.price !== '' && data.price !== null ? parseCurrencyToNumber(data.price) : null,
         burden: data.burden,
         project_id: data.burden === 'Project' ? data.project_id : null,
+        serial_number: data.serial_number || null,
+        warranty_date: data.warranty_date || null,
       };
       if (!isSoft.value && data.qc_pass !== null && data.qc_pass !== 'unchanged') {
         fd.qc_pass = data.qc_pass;
@@ -787,9 +806,11 @@ const handleSubmit = () => {
       (canShowAssignToLocation.value && form.is_assigned_to_location !== null) ||
       form.type ||
       form.classification ||
+      form.is_non_owned !== null ||
       form.location_id || form.price ||
       (isComp.value && form.specification) ||
       (isSoft.value && (form.license_exp_date || form.renewal_reminder !== null || form.license_type === 'Perpetual')) ||
+      !!form.warranty_date ||
       form.image_url || form.memo_file || form.lost_doc_file || form.bod_boc_approval_file || form.bod_boc_disapproval_file ||
       (form.burden && form.burden !== 'Tidak berubah')
     );
@@ -827,6 +848,7 @@ const handleSubmit = () => {
       payload.borrowing_type = form.type;
     }
     if (form.classification) payload.classification = form.classification;
+    if (form.is_non_owned !== null) payload.is_non_owned = form.is_non_owned;
     if (isComp.value && form.specification) {
       payload.comp_specification = form.specification;
       payload.specification = form.specification;
@@ -846,6 +868,7 @@ const handleSubmit = () => {
       payload.location_id = form.location_id;
     }
     if (form.price) payload.price = parseCurrencyToNumber(form.price).toString();
+    if (form.warranty_date) payload.warranty_date = form.warranty_date;
     if (form.burden && form.burden !== 'Tidak berubah') {
       payload.burden = form.burden;
       if (form.burden === 'Project') {

@@ -89,6 +89,7 @@ export const buildLocationTargetSetMap = (allLocs: any[]): Map<number, Set<numbe
 export function useNonConsumableColumns(options: {
   props: {
     hideActions?: boolean;
+    showRowActions?: boolean;
     hideBarangColumns?: boolean;
     hideQc?: boolean;
   };
@@ -471,7 +472,7 @@ export function useNonConsumableColumns(options: {
       });
     }
 
-    if (!props.hideActions) {
+    if (!props.hideActions || props.showRowActions) {
       list.push({
         id: 'actions',
         size: 80,

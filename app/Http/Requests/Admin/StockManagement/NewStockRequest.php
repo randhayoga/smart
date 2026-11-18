@@ -149,7 +149,7 @@ class NewStockRequest extends FormRequest
 
                 if ($isConsumable) {
                     $rules['initial_quantity'] = ['required', 'integer', 'min:0', 'max:2147483647'];
-                    $rules['location_id'] = ['required', Rule::exists(Location::class, 'id')];
+                    $rules['location_id'] = ['nullable', Rule::exists(Location::class, 'id')];
                     $rules['unit_price'] = ['nullable', 'numeric', 'min:0', 'max:999999999999.99'];
                     $rules['lot_photo'] = ['nullable', 'image', 'mimes:jpeg,jpg,png,webp', 'max:1024'];
                     $rules['use_parent_image'] = ['nullable', 'boolean'];
@@ -165,12 +165,15 @@ class NewStockRequest extends FormRequest
                     $rules['location_id'] = ['nullable', Rule::exists(Location::class, 'id')];
                 } else {
                     $rules['condition'] = ['required', Rule::in(['Bagus', 'Rusak', 'Good', 'Damaged'])];
-                    $rules['location_id'] = ['required', Rule::exists(Location::class, 'id')];
+                    $rules['location_id'] = ['nullable', Rule::exists(Location::class, 'id')];
                 }
                 $rules['price'] = ['nullable', 'numeric', 'min:0', 'max:999999999999.99'];
                 $rules['classification'] = ['required', Rule::in(['Aset', 'Inventaris'])];
+                $rules['is_non_owned'] = ['required', 'boolean'];
                 $rules['photo'] = ['nullable', 'image', 'mimes:jpeg,jpg,png,webp', 'max:1024'];
                 $rules['qc_pass'] = ['nullable', 'boolean'];
+                $rules['serial_number'] = ['nullable', 'string', 'max:255'];
+                $rules['warranty_date'] = ['nullable', 'date'];
 
                 if ($isComp) {
                     $rules['asset_specification'] = ['required', 'string', 'max:1000'];

@@ -48,6 +48,7 @@ interface Props {
   hideStatusFilter?: boolean;
   hideConditionFilter?: boolean;
   hideActions?: boolean;
+  showRowActions?: boolean;
   hideQc?: boolean;
   customPrintHandler?: (items: any[]) => void;
   lot?: any;
@@ -69,6 +70,7 @@ const props = withDefaults(defineProps<Props>(), {
   hideStatusFilter: false,
   hideConditionFilter: false,
   hideActions: false,
+  showRowActions: false,
   hideQc: false,
   filterVariant: 'full',
   hideExport: false,
@@ -104,6 +106,7 @@ const brandFilter = ref('');
 const locationFilter = ref('');
 const organizerFilter = ref(getInitialOrganizerFilter());
 const vendorFilter = ref('');
+const ownershipFilter = ref('');
 const showAdvancedFilters = ref(false);
 const showInactiveAssets = ref(false);
 const rowsPerPage = ref<'all' | '10' | '25' | '50'>('50');
@@ -344,6 +347,12 @@ const filteredUnits = computed(() => {
     list = list.filter((u: any) => String(u.vendor_id) === venStr || String(u.legacy_vendor_id) === venStr);
   }
 
+  if (ownershipFilter.value === '0') {
+    list = list.filter((u: any) => !u.is_non_owned);
+  } else if (ownershipFilter.value === '1') {
+    list = list.filter((u: any) => Boolean(u.is_non_owned));
+  }
+
   return list;
 });
 
@@ -405,6 +414,7 @@ const hasActiveFilters = computed(() => {
     locationFilter.value ||
     organizerFilter.value ||
     vendorFilter.value ||
+    ownershipFilter.value ||
     showInactiveAssets.value
   );
 });
@@ -420,6 +430,7 @@ const clearFilters = () => {
   locationFilter.value = '';
   organizerFilter.value = '';
   vendorFilter.value = '';
+  ownershipFilter.value = '';
   showInactiveAssets.value = false;
 };
 
@@ -572,6 +583,7 @@ const totalAsetTerpilihCount = computed(() => {
             v-model:brand-filter="brandFilter"
             v-model:organizer-filter="organizerFilter"
             v-model:vendor-filter="vendorFilter"
+            v-model:ownership-filter="ownershipFilter"
             v-model:show-advanced-filters="showAdvancedFilters"
             v-model:show-inactive-assets="showInactiveAssets"
             :show-inactive-toggle="!props.statusScope || props.statusScope === 'standard'"

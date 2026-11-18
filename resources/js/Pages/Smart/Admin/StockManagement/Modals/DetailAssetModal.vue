@@ -11,6 +11,7 @@ import { X, FileText, Upload, Loader2, ExternalLink, ChevronDown } from 'lucide-
 import { Button } from '@/Components/ui/button';
 import { formatDate, formatLocation, isLocationActive } from '@/lib/utils';
 import { formatQcStatus, getQcColorClass } from '@/lib/qualityControl';
+import { isWarrantyActive, getWarrantyColorClass, formatWarrantyDate } from '@/lib/warranty';
 import { hasAssetStatus, isMaintenanceAllowed } from '@/lib/assetStatus';
 import StatusBadge from '@/Components/StatusBadge.vue';
 import Tabs from '@/Components/Tabs.vue';
@@ -551,6 +552,11 @@ const isAssetLocationActive = computed(() => {
                       </a>
                     </div>
 
+                    <!-- User (if Borrowed/Assigned) -->
+                    <p v-if="isAssignmentOrBorrowing" class="text-foreground">
+                      User: <span class="font-semibold">{{ asset.active_borrowing?.user_name || asset.active_borrowing?.employee_name || '-' }}</span>
+                    </p>
+
                     <!-- 9. Kondisi -->
                     <p v-if="!isSoft" class="text-foreground">
                       {{ t('inventory.condition') }}: 
@@ -583,6 +589,11 @@ const isAssetLocationActive = computed(() => {
                     <!-- 11. Lokasi (not "Lokasi Penyimpanan") -->
                     <p v-if="!isSoft" class="text-foreground">
                       {{ t('inventory.location') }}: <span :class="!isAssetLocationActive ? 'text-destructive font-semibold' : ''">{{ formatLocation(asset.location, asset.floor, asset.room) }}</span>
+                    </p>
+
+                    <!-- Active Warranty End Date (primary info below location) -->
+                    <p v-if="isWarrantyActive(asset.warranty_date)" class="text-foreground">
+                      {{ t('inventory.warrantyDate') }}: <span :class="getWarrantyColorClass(asset.warranty_date)">{{ formatWarrantyDate(asset.warranty_date) }}</span>
                     </p>
 
                     <!-- 12. Umur (calculate from lot's date) -->
@@ -630,6 +641,11 @@ const isAssetLocationActive = computed(() => {
                           {{ t('inventory.classification') }}: {{ getClassificationLabel(asset.classification) }}
                         </p>
 
+                        <!-- Ownership (Kepemilikan) -->
+                        <p class="text-foreground">
+                          {{ t('inventory.ownership') }}: {{ asset.is_non_owned ? t('inventory.managedOnly') : t('inventory.companyOwned') }}
+                        </p>
+
                         <!-- 16. Organizer -->
                         <p class="text-foreground">
                           {{ t('inventory.organizer') }}: {{ finalLotOrganizer || '-' }}
@@ -638,6 +654,16 @@ const isAssetLocationActive = computed(() => {
                         <!-- 17. Pembebanan (also shows the project number if project) -->
                         <p class="text-foreground">
                           {{ t('inventory.burden') }}: {{ burdenDisplay }}
+                        </p>
+
+                        <!-- Serial Number -->
+                        <p class="text-foreground">
+                          {{ t('inventory.serialNumber') }}: {{ asset.serial_number || '-' }}
+                        </p>
+
+                        <!-- Inactive or Null Warranty End Date -->
+                        <p v-if="!isWarrantyActive(asset.warranty_date)" class="text-foreground">
+                          {{ t('inventory.warrantyDate') }}: <span :class="getWarrantyColorClass(asset.warranty_date)">{{ formatWarrantyDate(asset.warranty_date) }}</span>
                         </p>
 
                         <!-- 18. Pembaruan Terakhir -->

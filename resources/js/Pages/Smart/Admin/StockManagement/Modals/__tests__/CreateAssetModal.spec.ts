@@ -137,7 +137,7 @@ describe('CreateAssetModal.vue', () => {
 
     expect(typeLabel?.text()).toContain('*');
     expect(conditionLabel?.text()).toContain('*');
-    expect(locationLabel?.text()).toContain('*');
+    expect(locationLabel?.text()).not.toContain('*');
     expect(classificationLabel?.text()).toContain('*');
     expect(burdenLabel?.text()).toContain('*');
   });
@@ -236,5 +236,37 @@ describe('CreateAssetModal.vue', () => {
     expect((reminderInput.element as HTMLInputElement).disabled).toBe(true);
     expect(vm.form.license_exp_date).toBeNull();
     expect(vm.form.renewal_reminder).toBeNull();
+  });
+
+  it('hides and clears serial_number when bulk creation > 1, keeps warranty_date visible, and allows unselecting QC to null', async () => {
+    setI18nLanguage('en');
+    const wrapper = mountModal();
+    const vm = wrapper.vm as any;
+
+    expect(wrapper.find('#create-asset-serial-number').exists()).toBe(true);
+    expect(wrapper.find('#create-asset-warranty-date').exists()).toBe(true);
+
+    // QC dropdown includes "Select Quality Control" placeholder option to reset qc_pass to null
+    vm.form.qc_pass = true;
+    await wrapper.vm.$nextTick();
+    const qcNullOption = wrapper.findAll('[role="menuitem"], .dropdown-item, div').find(el => el.text() === 'Select Quality Control');
+    expect(qcNullOption).toBeDefined();
+    await qcNullOption!.trigger('click');
+    expect(vm.form.qc_pass).toBeNull();
+
+    // Enter serial number & bulk quantity = 1 -> still visible
+    vm.form.serial_number = 'SN-TEST-001';
+    vm.form.is_bulk = true;
+    vm.form.bulk_quantity = 1;
+    await wrapper.vm.$nextTick();
+    expect(wrapper.find('#create-asset-serial-number').exists()).toBe(true);
+    expect(vm.form.serial_number).toBe('SN-TEST-001');
+
+    // Bulk quantity > 1 -> serial_number becomes hidden and cleared
+    vm.form.bulk_quantity = 2;
+    await wrapper.vm.$nextTick();
+    expect(wrapper.find('#create-asset-serial-number').exists()).toBe(false);
+    expect(vm.form.serial_number).toBe('');
+    expect(wrapper.find('#create-asset-warranty-date').exists()).toBe(true);
   });
 });

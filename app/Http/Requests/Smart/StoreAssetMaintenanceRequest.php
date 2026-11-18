@@ -26,7 +26,7 @@ class StoreAssetMaintenanceRequest extends FormRequest
             'source' => 'required|string|in:SMART,TiSu',
             'reference' => 'nullable|required_if:source,TiSu|string|max:255',
             'type' => 'required|string|in:Preventive,Corrective',
-            'user_id' => 'required|integer',
+            'user_id' => 'nullable|integer',
             'date' => 'required|date',
             'cost' => 'required|numeric|min:0|max:999999999999',
             'problem' => 'required|string',

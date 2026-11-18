@@ -370,6 +370,41 @@ const qcLabel = computed(() => {
         </FieldContent>
         <FieldError v-if="isSingle && errors.renewal_reminder">{{ errors.renewal_reminder }}</FieldError>
       </Field>
+
+      <!-- Serial Number (Single asset edit only) -->
+      <Field v-if="isSingle" :data-invalid="!!errors.serial_number || undefined">
+        <FieldLabel for="edit-asset-serial-number">
+          <span>{{ t('inventory.serialNumber') }}</span>
+        </FieldLabel>
+        <FieldContent>
+          <input
+            id="edit-asset-serial-number"
+            type="text"
+            v-model="form.serial_number"
+            :placeholder="t('inventory.serialNumberPlaceholder')"
+            class="w-full px-4 py-2 text-sm border rounded-[14px] bg-background focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors h-10"
+            :class="[errors.serial_number ? 'border-destructive' : 'border-input']"
+          />
+        </FieldContent>
+        <FieldError v-if="errors.serial_number">{{ errors.serial_number }}</FieldError>
+      </Field>
+
+      <!-- Warranty End Date (Single & Mass edit) -->
+      <Field :data-invalid="(isSingle && !!errors.warranty_date) || undefined">
+        <FieldLabel for="edit-asset-warranty-date">
+          <span>{{ t('inventory.warrantyDate') }}</span>
+        </FieldLabel>
+        <FieldContent>
+          <input
+            id="edit-asset-warranty-date"
+            type="date"
+            v-model="form.warranty_date"
+            class="w-full px-4 py-2 border rounded-[14px] bg-background focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors h-10 text-sm"
+            :class="[(isSingle && errors.warranty_date) ? 'border-destructive focus:ring-destructive/20 focus:border-destructive' : 'border-input']"
+          />
+        </FieldContent>
+        <FieldError v-if="isSingle && errors.warranty_date">{{ errors.warranty_date }}</FieldError>
+      </Field>
     </div>
 
     <!-- Right Column: Location, Price, Classification, Burden, Project, Photo, Plate Number -->
@@ -433,6 +468,31 @@ const qcLabel = computed(() => {
           </DropdownMenu>
         </FieldContent>
         <FieldError v-if="isSingle && errors.classification">{{ errors.classification }}</FieldError>
+      </Field>
+
+      <!-- Ownership (Kepemilikan) -->
+      <Field>
+        <FieldLabel>
+          <span>{{ t('inventory.ownership') }}<span v-if="isSingle" class="text-rose-500">*</span></span>
+        </FieldLabel>
+        <FieldContent>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button
+                variant="outline"
+                :class="['w-full justify-between rounded-[14px] font-normal h-10 px-4', form.is_non_owned === null ? 'text-muted-foreground' : 'text-foreground']"
+              >
+                {{ form.is_non_owned === null ? t('inventory.unchanged') : (form.is_non_owned ? t('inventory.managedOnly') : t('inventory.companyOwned')) }}
+                <ChevronDown class="w-4 h-4 opacity-50" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="start" class="w-(--reka-dropdown-menu-trigger-width) min-w-(--reka-dropdown-menu-trigger-width) rounded-[14px] z-[1001]">
+              <DropdownMenuItem @select="form.is_non_owned = false">{{ t('inventory.companyOwned') }}</DropdownMenuItem>
+              <DropdownMenuItem @select="form.is_non_owned = true">{{ t('inventory.managedOnly') }}</DropdownMenuItem>
+              <DropdownMenuItem v-if="!isSingle" @select="form.is_non_owned = null">{{ t('inventory.unchanged') }}</DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </FieldContent>
       </Field>
 
       <!-- Burden -->
